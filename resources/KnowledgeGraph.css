@@ -1,0 +1,38 @@
+/* stylesheet for MediaWiki:KnowledgeGraph.js */
+
+.KnowledgeGraph {
+  width: 100%;
+  height: 600px;
+  /*border: 1px solid lightgray;*/
+}
+
+.custom-menu {
+  display: none;
+  z-index: 1000;
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid #CCC;
+  white-space: nowrap;
+  font-family: sans-serif;
+  background: #FFF;
+  color: #333;
+  border-radius: 5px;
+}
+
+.custom-menu li {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.custom-menu li:hover {
+  background-color: #DEF;
+}
+
+.isg-popup {
+  display: none;
+  position: absolute;
+  top: 350px;
+  left: 170px;
+  right: unset;
+  bottom: unset;
+}

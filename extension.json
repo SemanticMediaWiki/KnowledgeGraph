@@ -1,0 +1,70 @@
+{
+    "manifest_version":2,
+    "name":"KnowledgeGraph",
+    "version":"0.1",
+    "author":[
+        "[https://github.com/simontaurus Simon Stier]",
+        "[https://github.com/AlexanderPraktikum2021 Alexander Triol]",
+        "[https://www.mediawiki.org/wiki/User:Thomas-topway-it thomas-topway-it]"
+    ],
+    "url":"https://github.com/SemanticMediaWiki/KnowledgeGraph",
+    "descriptionmsg":"knowledge-graph-desc",
+    "namemsg":"knowledge-graph-name",
+    "license-name":"AGPL-3.0-or-later",
+    "type":"editor",
+    "requires":{
+        "MediaWiki":">= 1.31"
+    },
+    "MessagesDirs":{
+        "KnowledgeGraph":[
+            "i18n"
+        ]
+    },
+	"ExtensionMessagesFiles": {
+		"KnowledgeGraphMagic": "KnowledgeGraph.i18n.magic.php"
+	},
+    "ResourceModules":{
+        "ext.KnowledgeGraph":{
+            "localBasePath":"resources",
+            "remoteExtPath":"KnowledgeGraph/resources",
+            "styles":[
+                "KnowledgeGraph.css"
+            ],
+            "scripts":[
+                "visNetwork/vis-network.min.js",
+                "KnowledgeGraph.js",
+                "KnowledgeGraphData.js",
+                "KnowledgeGraphUI.js",
+                "KnowledgeGraphUtils.js",
+                "KnowledgeGraphBrowser.js",
+                "KnowledgeGraph_init.js"
+            ],
+            "dependencies": [
+                "ext.MwJson"
+            ],
+            "position":"top"
+        },
+		"ext.MwJson":{
+            "localBasePath":"resources/MwJson",
+            "remoteExtPath":"KnowledgeGraph/resources/MwJson",
+            "styles":[
+            ],
+            "scripts":[
+            	"MwJson.js",
+            	"MwJson_api.js",
+            	"MwJson_util.js"
+            ],
+            "dependencies": [
+            ],
+            "position":"top"
+        }
+    },
+    "AutoloadClasses":{
+        "KnowledgeGraph":"includes/KnowledgeGraph.php"
+    },
+    "Hooks":{
+        "BeforePageDisplay":"KnowledgeGraph::onBeforePageDisplay",
+		"ParserFirstCallInit": "KnowledgeGraph::onParserFirstCallInit",
+		"OutputPageParserOutput": "KnowledgeGraph::onOutputPageParserOutput"
+    }
+}
