@@ -20,7 +20,7 @@
 	"mwjson-editor-fetch-external-data": "Load external data from $1",
 	"mwjson-editor-fetch-external-data-requires": "Requires $1",
 	"mwjson-editor-optional": "optional",
-	"mwjson-editor-required": "erforderlich",
+	"mwjson-editor-required": "required",
 	"mwjson-editor-edit-comment-input-label": "Comment / Change description",
 	"mwjson-editor-edit-comment-input-placeholder" : "What has changed and why?",
 	"mwjson-editor-edit-comment-input-tooltip" : "Add a comment to your edit for documentation",
