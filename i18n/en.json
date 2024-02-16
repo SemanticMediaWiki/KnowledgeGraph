@@ -1,10 +1,10 @@
 {
 	"@metadata": {
-		"authors": ["Simon Stier", "Alexander Triol"]
+		"authors": ["Simon Stier", "Alexander Triol", "Bernhard Krabina"]
 	},
-	"knowledge-graph-editor-desc": "KnowledgeGraph for mediawiki extensions",
-	"knowledge-graph-editor-name": "KnowledgeGraph",
-	"knowledge-graph-wrapper-loading": "graph is loading...",
+	"kg-desc": "KnowledgeGraph for mediawiki extensions",
+	"kg-name": "KnowledgeGraph",
+	"kg-wrapper-loading": "graph is loading...",
 	
 	"mw-json-desc": "Jsonschema based Api for Mediawiki",
 	"mw-json-name": "MwJson",
