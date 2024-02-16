@@ -55,7 +55,7 @@
 	"json-editor-error_property_names_exceeds_maxlength": "This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
 	"json-editor-error_property_names_enum_mismatch": "This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
 	"json-editor-error_property_names_const_mismatch": "This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
-	"json-editor-error_property_names_pattern_mismatch": This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
+	"json-editor-error_property_names_pattern_mismatch": "This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
 	"json-editor-error_property_names_false": "This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
 	"json-editor-error_property_names_maxlength": "This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
 	"json-editor-error_property_names_enum": "This is the text of an error message.\n\n* \"$1\" is the reference identifier.",
