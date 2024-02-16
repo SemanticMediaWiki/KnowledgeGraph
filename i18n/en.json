@@ -2,8 +2,8 @@
 	"@metadata": {
 		"authors": ["Simon Stier", "Alexander Triol", "Bernhard Krabina"]
 	},
-	"kg-desc": "KnowledgeGraph for mediawiki extensions",
-	"kg-name": "KnowledgeGraph",
+	"kg-desc": "Visualize the knowledge graph within [https://www.semantic-mediawiki.org Semantic MediaWiki]",
+	"kg-name": "Knowledge Graph",
 	"kg-wrapper-loading": "graph is loading...",
 	
 	"mw-json-desc": "Jsonschema based Api for Mediawiki",
