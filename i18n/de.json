@@ -1,13 +1,13 @@
 {
 	"@metadata": {
 		"authors": [
-			"Simon Stier"
+			"Simon Stier", "Bernhard Krabina"
 		]
 	},
 	
-	"knowledge-graph-editor-desc": "KnowledgeGraph for mediawiki extensions",
-	"knowledge-graph-editor-name": "KnowledgeGraph",
-	"knowledge-graph-wrapper-loading": "graph is loading...",
+	"kg-editor-desc": "Visualisierung des Wissensgeraphen in [https://www.semantic-mediawiki.org Semantic MediaWiki]",
+	"kg-name": "Knowledge Graph",
+	"kg-wrapper-loading": "Graph lädt...",
 
 	"mw-json-desc": "Jsonschema basierte API für Mediawiki",
 	"mw-json-name": "MwJson",
