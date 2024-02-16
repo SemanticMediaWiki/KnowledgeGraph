@@ -25,7 +25,7 @@
 	"mwjson-editor-edit-comment-input-placeholder" : "This is the text of an interface message.",
 	"mwjson-editor-edit-comment-input-tooltip" : "This is the text of an interface message.",
 	"@section_json-editor": "--------- JSON Editor -----------",
-	"json-editor-error_notset": "This is the text of an error message.,
+	"json-editor-error_notset": "This is the text of an error message.",
 	"json-editor-error_notempty": "This is the text of an error message.",
 	"json-editor-error_enum": "This is the text of an error message.",
 	"json-editor-error_const": "This is the text of an error message.",
