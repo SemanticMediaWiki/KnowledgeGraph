@@ -1,38 +1,66 @@
-/* stylesheet for MediaWiki:KnowledgeGraph.js */
-
 .KnowledgeGraph {
-  width: 100%;
-  height: 600px;
-  /*border: 1px solid lightgray;*/
+	border: 1px solid #ccc;
 }
 
-.custom-menu {
-  display: none;
-  z-index: 1000;
-  position: absolute;
-  overflow: hidden;
-  border: 1px solid #CCC;
-  white-space: nowrap;
-  font-family: sans-serif;
-  background: #FFF;
-  color: #333;
-  border-radius: 5px;
+.KnowledgeGraphPopupMenu {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 160px;
+	border: 1px solid #ccc;
+	height: auto;
+	background: white;
+	box-shadow: 0px 2px 18px 0px rgba(0,0,0,0.12);
 }
 
-.custom-menu li {
-  padding: 8px 12px;
-  cursor: pointer;
+.KnowledgeGraphPopupMenu ul {
+	margin: 0;
+	padding: 0;
+	padding-right: 16px;
 }
 
-.custom-menu li:hover {
-  background-color: #DEF;
+.KnowledgeGraphPopupMenu li {
+	width: 100%;
+	padding: 8px;
+	list-style: none;
+	cursor: pointer;
+	
+}
+.KnowledgeGraphPopupMenu li span {
+	margin-right: 8px;
 }
 
-.isg-popup {
-  display: none;
-  position: absolute;
-  top: 350px;
-  left: 170px;
-  right: unset;
-  bottom: unset;
+.KnowledgeGraphPopupMenu li:hover {
+	background: #e8e8e9;	
 }
+
+.KnowledgeGraphTable .vis-configuration-wrapper {
+	width: auto;
+}
+
+.OOUI-dialogs-non-modal {
+	position: -webkit-sticky;
+	position: sticky;
+	bottom: 1em;
+	width: 100%;
+	background-color: #fff;
+}
+
+.OOUI-dialogs-non-modal .oo-ui-window {
+	border: 1px solid #a2a9b1;
+	box-shadow: 0 0 4px 0 rgba( 0, 0, 0, 0.25 );
+    position: relative;
+	margin: 0 32px;
+}
+
+.KnowledgeGraphTable .oo-ui-toolbar-position-top > .oo-ui-toolbar-bar {
+	border-bottom: none;
+	box-shadow: none;
+}
+
+.legend-element-container {
+	margin: 2px;
+	padding: 4px;
+}
+
+
