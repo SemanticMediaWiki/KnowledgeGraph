@@ -12,6 +12,7 @@
 
 	"specialpages-group-knowledgegraph": "KnowledgeGraph",
 	"knowledgegraphdesigner": "KnowledgeGraph Designer",
+	
 	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer ",
 	"knowledgegraph-toolbar-info": "Impressum",
 	"knowledgegraph-toolbar-help": "Hilfe",
@@ -29,8 +30,10 @@
 	"knowledgegraph-dialog-edit-limit": "Limit",
 	"knowledgegraph-dialog-edit-offset": "Versatz",
 	"knowledgegraph-dialog-tabs-by-article": "nach Seite",
+	"knowledgegraph-dialog-select-categories": "Eine oder mehrere Kategorien wählen",
 	"knowledgegraph-dialog-select-properties": "Eines oder mehrere Attribute wählen",
 	"knowledgegraph-dialog-tabs-by-properties": "nach Attributen",
+	"knowledgegraph-dialog-tabs-by-categories": "nach Kategorien",
 	"knowledgegraph-dialog-results-no-properties": "keine Attribute",
 	"knowledgegraph-dialog-results-no-articles": "keine Seiten",
 	"knowledgegraph-dialog-results-existing-node": "existierender Knoten",
@@ -44,16 +47,5 @@
 	"knowledgegraph-toolbar-export-graph": "exportiere Wikitext",
 	"knowledgegraph-credits": "Impressum:",
 	"knowledgegraph-credits-list": "<ul><li>KM-A (<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">Website</a>)</li></ul>",
-
-	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer",
-	
-	"apihelp-knowledgegraph-load-nodes-summary": "rufe Attribute der angegebenen Seiten ab",
-	"apihelp-knowledgegraph-load-nodes-example-1": "",
-	"apihelp-knowledgegraph-load-nodes-param-pageids": "",
-	
-	"specialpages-group-knowledgegraph": "KnowledgeGraph",
-	"knowledgegraphdesigner": "KnowledgeGraph Designer",
-	
-	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer"
 
 }
