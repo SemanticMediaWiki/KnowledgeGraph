@@ -14,7 +14,7 @@
 	"knowledgegraphdesigner": "KnowledgeGraph Designer",
 	
 	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer ",
-	"knowledgegraph-toolbar-info": "Impressum",
+	"knowledgegraph-toolbar-info": "Info",
 	"knowledgegraph-toolbar-help": "Hilfe",
 	"knowledgegraph-graph-options-message": "Klicken Sie auf die Schaltfläche unten und kopieren Sie den Inhalt der Tasten \"nodes\" und \"edges\" in einen Artikel <a target=\"_blank\" href=\"$1\">wie diesen</a>. Dann setzen Sie ihn als Wert der Parameter \"graph-options\" oder \"property-options?[Property label] der Parser-Funktion des KnowledgeGraphs.",
 	"knowledgegraph-menu-open-article": "Seite öffnen",
