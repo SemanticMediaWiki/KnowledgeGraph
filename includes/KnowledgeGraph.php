@@ -14,38 +14,38 @@ use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
 class KnowledgeGraph {
 
 	/**
-     * Configuration options for Semantic MediaWiki.
-     *
-     * @var array|null
-     */
+	 * Configuration options for Semantic MediaWiki.
+	 *
+	 * @var array|null
+	 */
 	protected static $SMWOptions = null;
 
 	/**
-     * Factory instance for creating Semantic MediaWiki application components.
-     *
-     * @var SMW\ApplicationFactory|null
-     */
+	 * Factory instance for creating Semantic MediaWiki application components.
+	 *
+	 * @var SMW\ApplicationFactory|null
+	 */
 	protected static $SMWApplicationFactory = null;
 
 	/**
-     * Store instance for Semantic MediaWiki data.
-     *
-     * @var SMW\Store|null
-     */
+	 * Store instance for Semantic MediaWiki data.
+	 *
+	 * @var SMW\Store|null
+	 */
 	protected static $SMWStore = null;
 
 	/**
-     * Factory instance for creating Semantic MediaWiki data values.
-     *
-     * @var SMW\DataValueFactory|null
-     */
+	 * Factory instance for creating Semantic MediaWiki data values.
+	 *
+	 * @var SMW\DataValueFactory|null
+	 */
 	protected static $SMWDataValueFactory = null;
 
 	/**
-     * An array to hold various data values.
-     *
-     * @var array
-     */
+	 * An array to hold various data values.
+	 *
+	 * @var array
+	 */
 	public static $data = [];
 
 	public static function initSMW() {
@@ -573,9 +573,9 @@ nodes=TestPage
 					$obj_ = [];
 					if ( $typeID === '_wpg' ) {
 						$title_ = $dataItem->getTitle();
-					 	if ( $title_ && $title_->isKnown() ) {
-					 		if ( !isset( self::$data[$title_->getFullText()] ) ) {
-					 			if ( $depth < $maxDepth ) {
+						if ( $title_ && $title_->isKnown() ) {
+							if ( !isset( self::$data[$title_->getFullText()] ) ) {
+								if ( $depth < $maxDepth ) {
 									self::setSemanticData( $title_, $onlyProperties, ++$depth, $maxDepth );
 								} else {
 									// not loaded
