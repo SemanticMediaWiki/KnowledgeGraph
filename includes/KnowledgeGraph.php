@@ -120,7 +120,7 @@ class KnowledgeGraph {
 	public static $categories = [];
 
 	/**
-	 * @param OutputPage $outputPage
+	 * @param OutputPage $out
 	 * @param Skin $skin
 	 * @return void
 	 */
