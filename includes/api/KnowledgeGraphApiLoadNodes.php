@@ -33,7 +33,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 		$output = $context->getOutput();
 
 		\KnowledgeGraph::initSMW();
-		
+
 		$params['properties'] = ( !empty( $params['properties'] ) ?
 			json_decode( $params['properties'], true ) : [] );
 
@@ -68,7 +68,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 				ApiBase::PARAM_TYPE => 'integer',
 				ApiBase::PARAM_REQUIRED => true
 			],
-			
+
 		];
 	}
 

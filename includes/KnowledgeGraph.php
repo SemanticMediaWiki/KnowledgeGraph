@@ -152,7 +152,7 @@ class KnowledgeGraph {
 		$slotContent = ContentHandler::makeContent( $text, $title, $modelId );
 		$slotName = SlotRecord::MAIN;
 		$pageUpdater->setContent( $slotName, $slotContent );
-				
+
 		$summary = "KnowledgeGraph";
 		$flags = EDIT_INTERNAL;
 		$comment = CommentStoreComment::newUnsavedComment( $summary );
@@ -492,7 +492,7 @@ nodes=TestPage
 			// 	self::$categories[$text_] = [];
 			// }
 
-			// if ( !in_array( $title->getFullText(), self::$categories[$text_] ) ) { 
+			// if ( !in_array( $title->getFullText(), self::$categories[$text_] ) ) {
 			// 	self::$categories[$text_][] = $title->getFullText();
 			// }
 		}
@@ -531,9 +531,9 @@ nodes=TestPage
 			$preferredLabel = $property->getPreferredLabel();
 
 			if ( count( $onlyProperties )
-				&& !in_array( $canonicalLabel, $onlyProperties ) 
+				&& !in_array( $canonicalLabel, $onlyProperties )
 				&& !in_array( $preferredLabel, $onlyProperties ) ) {
-				continue;	
+				continue;
 			}
 
 			$description = $propertyRegistry->findPropertyDescriptionMsgKeyById( $key );
@@ -575,7 +575,7 @@ nodes=TestPage
 						$title_ = $dataItem->getTitle();
 					 	if ( $title_ && $title_->isKnown() ) {
 					 		if ( !isset( self::$data[$title_->getFullText()] ) ) {
-					 			if ( $depth < $maxDepth ) {					 		
+					 			if ( $depth < $maxDepth ) {
 									self::setSemanticData( $title_, $onlyProperties, ++$depth, $maxDepth );
 								} else {
 									// not loaded
@@ -583,7 +583,7 @@ nodes=TestPage
 								}
 							}
 							$obj_['value'] = $title_->getFullText();
-	
+
 							if ( $title_->getNamespace() === NS_FILE ) {
 								$img_ = $services->getRepoGroup()->findFile( $title_ );
 								if ( $img_ ) {

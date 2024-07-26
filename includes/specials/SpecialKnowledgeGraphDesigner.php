@@ -24,7 +24,7 @@ class SpecialKnowledgeGraphDesigner extends SpecialPage {
 		$out->addModules( [ 'ext.KnowledgeGraph' ] );
 
 		$this->addHelpLink( 'Extension:KnowledgeGraph' );
-		
+
 		$defaultParameters = [
 			'nodes' => [ '', 'array' ],
 			'properties' => [ '', 'array' ],
