@@ -9,7 +9,6 @@
 		<exclude name="MediaWiki.Commenting.FunctionComment.ParamNameNoMatch" />
 		<exclude name="MediaWiki.Commenting.EmptyTag.FunctionSee" />
 		<exclude name="Squiz.WhiteSpace.OperatorSpacing.NoSpaceAfter" />
-		<exclude name="Generic.Functions.FunctionCallArgumentSpacing.SpaceBeforeComma" />
 		<exclude name="Universal.WhiteSpace.CommaSpacing.SpaceBeforeInFunctionCall" />
 		<exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterKeyword" />
 		<exclude name="MediaWiki.WhiteSpace.SpaceyParenthesis.SingleSpaceBeforeCloseParenthesis" />

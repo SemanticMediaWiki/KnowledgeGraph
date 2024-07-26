@@ -421,7 +421,7 @@ nodes=TestPage
 		$dbr = wfGetDB( DB_REPLICA );
 		$res = $dbr->select( 'categorylinks',
 			[ 'pageid' =>'cl_from' ],
-			[ 'cl_to' => str_replace( ' ', '_' , $category ) ],
+			[ 'cl_to' => str_replace( ' ', '_', $category ) ],
 			__METHOD__
 		);
 		$ret = [];
