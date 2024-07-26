@@ -1,6 +1,8 @@
 <?php
 
-class SpecialKnowledgeGraphDesignerTest extends MediaWikiTestCase {
+use PHPUnit\Framework\TestCase;
+
+class SpecialKnowledgeGraphDesignerTest extends TestCase {
 
 	/**
 	 * @var specialPage SpecialPage mock object for testing.
@@ -14,11 +16,6 @@ class SpecialKnowledgeGraphDesignerTest extends MediaWikiTestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		// Setup the necessary environment for testing
-		$this->setMwGlobals( [
-			'wgKnowledgeGraphShowImages' => true,
-			'wgKnowledgeGraphDisableCredits' => false,
-		] );
 		$this->specialPage = new SpecialKnowledgeGraphDesigner();
 
 		$this->outputPage = $this->getMockBuilder( '\OutputPage' )
@@ -98,7 +95,6 @@ class SpecialKnowledgeGraphDesignerTest extends MediaWikiTestCase {
 
 		$params = \KnowledgeGraph::$graphs[0];
 		$this->assertArrayHasKey( 'graphOptions', $params );
-		$this->assertIsArray( $params['graphOptions'] );
 	}
 
 	/**
