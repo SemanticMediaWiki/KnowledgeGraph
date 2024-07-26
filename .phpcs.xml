@@ -14,7 +14,6 @@
 		<exclude name="MediaWiki.WhiteSpace.SpaceyParenthesis.SingleSpaceBeforeCloseParenthesis" />
 		<exclude name="MediaWiki.Usage.ExtendClassUsage.FunctionVarUsage" />
 		<exclude name="Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed" />
-		<exclude name="PSR2.ControlStructures.ElseIfDeclaration.NotAllowed" />
 	</rule>
 	<file>.</file>
     <exclude-pattern>/(vendor|conf)/</exclude-pattern>

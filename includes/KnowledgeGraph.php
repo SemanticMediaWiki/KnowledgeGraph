@@ -560,7 +560,7 @@ nodes=TestPage
 									$obj_['src'] = $img_->getFullUrl();
 								}
 							}
-						} else if ( !isset( self::$data[str_replace( '_', ' ', $dataValue->getWikiValue())] ) ) {
+						} elseif ( !isset( self::$data[str_replace( '_', ' ', $dataValue->getWikiValue())] ) ) {
 							$obj_['value'] = str_replace( '_', ' ', $dataValue->getWikiValue());
 						}
 					} else {
