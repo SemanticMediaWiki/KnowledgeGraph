@@ -544,7 +544,7 @@ nodes=TestPage
 					if ( $typeID === '_wpg' ) {
 						$title_ = $dataItem->getTitle();
 					 	if ( $title_ && $title_->isKnown() ) {
-					 		if( !isset( self::$data[$title_->getFullText()] ) ) {
+					 		if ( !isset( self::$data[$title_->getFullText()] ) ) {
 					 			if ( $depth < $maxDepth ) {					 		
 									self::setSemanticData( $title_, $onlyProperties, ++$depth, $maxDepth );
 								} else {
