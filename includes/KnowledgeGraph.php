@@ -10,7 +10,6 @@
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Revision\SlotRecord;
 use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
-use SMW\MediaWiki\Specials\SearchByProperty\QueryResultLookup;
 
 class KnowledgeGraph {
 	protected static $SMWOptions = null;
