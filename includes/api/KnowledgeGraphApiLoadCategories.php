@@ -97,7 +97,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	/**
 	 * @inheritDoc
 	 */
-	protected function getExamplesMessages() {
+	public function getExamplesMessages() {
 		return [
 			'action=knowledgegraph-load-categories'
 			=> 'apihelp-knowledgegraph-load-categories-example-1'

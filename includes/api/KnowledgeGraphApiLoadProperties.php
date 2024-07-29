@@ -97,7 +97,7 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 	/**
 	 * @inheritDoc
 	 */
-	protected function getExamplesMessages() {
+	public function getExamplesMessages() {
 		return [
 			'action=knowledgegraph-load-properties'
 			=> 'apihelp-knowledgegraph-load-properties-example-1'

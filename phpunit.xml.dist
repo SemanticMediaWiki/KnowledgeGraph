@@ -1,6 +1,6 @@
 <phpunit colors="true">
     <testsuites>
-        <testsuite name="tests">
+        <testsuite name="Unit">
             <directory>tests/phpunit/Unit</directory>
         </testsuite>
     </testsuites>

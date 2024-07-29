@@ -82,7 +82,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 	/**
 	 * @inheritDoc
 	 */
-	protected function getExamplesMessages() {
+	public function getExamplesMessages() {
 		return [
 			'action=knowledgegraph-load-nodes'
 			=> 'apihelp-knowledgegraph-load-nodes-example-1'
