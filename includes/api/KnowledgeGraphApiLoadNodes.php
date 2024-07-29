@@ -3,7 +3,7 @@
 /**
  * KnowledgeGraph
  *
- * @licence GPL-2.0-or-later
+ * @license GPL-2.0-or-later
  * @author thomas-topway-it for KM-A
  */
 
@@ -33,7 +33,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 		$output = $context->getOutput();
 
 		\KnowledgeGraph::initSMW();
-		
+
 		$params['properties'] = ( !empty( $params['properties'] ) ?
 			json_decode( $params['properties'], true ) : [] );
 
@@ -68,7 +68,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 				ApiBase::PARAM_TYPE => 'integer',
 				ApiBase::PARAM_REQUIRED => true
 			],
-			
+
 		];
 	}
 
@@ -82,7 +82,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 	/**
 	 * @inheritDoc
 	 */
-	protected function getExamplesMessages() {
+	public function getExamplesMessages() {
 		return [
 			'action=knowledgegraph-load-nodes'
 			=> 'apihelp-knowledgegraph-load-nodes-example-1'

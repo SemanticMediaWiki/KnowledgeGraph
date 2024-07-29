@@ -3,7 +3,7 @@
 /**
  * KnowledgeGraph
  *
- * @licence GPL-2.0-or-later
+ * @license GPL-2.0-or-later
  * @author thomas-topway-it for KM-A
  */
 
@@ -39,7 +39,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 		$titles = [];
 		foreach ( $categories as $categoryText ) {
 			$category_ = Title::makeTitleSafe( NS_CATEGORY, $categoryText );
-			//  && $category_->isKnown() 
+			// && $category_->isKnown()
 			if ( $category_ ) {
 				$titles_ = \KnowledgeGraph::articlesInCategories( $categoryText );
 
@@ -83,7 +83,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 				ApiBase::PARAM_TYPE => 'integer',
 				ApiBase::PARAM_REQUIRED => true
 			],
-			
+
 		];
 	}
 
@@ -97,7 +97,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	/**
 	 * @inheritDoc
 	 */
-	protected function getExamplesMessages() {
+	public function getExamplesMessages() {
 		return [
 			'action=knowledgegraph-load-categories'
 			=> 'apihelp-knowledgegraph-load-categories-example-1'

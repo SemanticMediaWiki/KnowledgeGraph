@@ -3,20 +3,49 @@
 /**
  * KnowledgeGraph
  *
- * @licence GPL-2.0-or-later
+ * @license GPL-2.0-or-later
  * @author thomas-topway-it for KM-A
  */
 
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Revision\SlotRecord;
 use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
-use SMW\MediaWiki\Specials\SearchByProperty\QueryResultLookup;
 
 class KnowledgeGraph {
+
+	/**
+	 * Configuration options for Semantic MediaWiki.
+	 *
+	 * @var array|null
+	 */
 	protected static $SMWOptions = null;
+
+	/**
+	 * Factory instance for creating Semantic MediaWiki application components.
+	 *
+	 * @var SMW\ApplicationFactory|null
+	 */
 	protected static $SMWApplicationFactory = null;
+
+	/**
+	 * Store instance for Semantic MediaWiki data.
+	 *
+	 * @var SMW\Store|null
+	 */
 	protected static $SMWStore = null;
+
+	/**
+	 * Factory instance for creating Semantic MediaWiki data values.
+	 *
+	 * @var SMW\DataValueFactory|null
+	 */
 	protected static $SMWDataValueFactory = null;
+
+	/**
+	 * An array to hold various data values.
+	 *
+	 * @var array
+	 */
 	public static $data = [];
 
 	public static function initSMW() {
@@ -91,7 +120,7 @@ class KnowledgeGraph {
 	public static $categories = [];
 
 	/**
-	 * @param OutputPage $outputPage
+	 * @param OutputPage $out
 	 * @param Skin $skin
 	 * @return void
 	 */
@@ -123,7 +152,7 @@ class KnowledgeGraph {
 		$slotContent = ContentHandler::makeContent( $text, $title, $modelId );
 		$slotName = SlotRecord::MAIN;
 		$pageUpdater->setContent( $slotName, $slotContent );
-				
+
 		$summary = "KnowledgeGraph";
 		$flags = EDIT_INTERNAL;
 		$comment = CommentStoreComment::newUnsavedComment( $summary );
@@ -414,15 +443,15 @@ nodes=TestPage
 	}
 
 	/**
-	 * @see 
+	 *
 	 * @param string $category
 	 * @return array
 	 */
 	public static function articlesInCategories( $category ) {
 		$dbr = wfGetDB( DB_REPLICA );
 		$res = $dbr->select( 'categorylinks',
-			[ 'pageid' =>'cl_from' ],
-			[ 'cl_to' => str_replace( ' ', '_' , $category ) ],
+			[ 'pageid' => 'cl_from' ],
+			[ 'cl_to' => str_replace( ' ', '_', $category ) ],
 			__METHOD__
 		);
 		$ret = [];
@@ -463,7 +492,7 @@ nodes=TestPage
 			// 	self::$categories[$text_] = [];
 			// }
 
-			// if ( !in_array( $title->getFullText(), self::$categories[$text_] ) ) { 
+			// if ( !in_array( $title->getFullText(), self::$categories[$text_] ) ) {
 			// 	self::$categories[$text_][] = $title->getFullText();
 			// }
 		}
@@ -502,9 +531,9 @@ nodes=TestPage
 			$preferredLabel = $property->getPreferredLabel();
 
 			if ( count( $onlyProperties )
-				&& !in_array( $canonicalLabel, $onlyProperties ) 
+				&& !in_array( $canonicalLabel, $onlyProperties )
 				&& !in_array( $preferredLabel, $onlyProperties ) ) {
-				continue;	
+				continue;
 			}
 
 			$description = $propertyRegistry->findPropertyDescriptionMsgKeyById( $key );
@@ -544,9 +573,9 @@ nodes=TestPage
 					$obj_ = [];
 					if ( $typeID === '_wpg' ) {
 						$title_ = $dataItem->getTitle();
-					 	if ( $title_ && $title_->isKnown() ) {
-					 		if( !isset( self::$data[$title_->getFullText()] ) ) {
-					 			if ( $depth < $maxDepth ) {					 		
+						if ( $title_ && $title_->isKnown() ) {
+							if ( !isset( self::$data[$title_->getFullText()] ) ) {
+								if ( $depth < $maxDepth ) {
 									self::setSemanticData( $title_, $onlyProperties, ++$depth, $maxDepth );
 								} else {
 									// not loaded
@@ -554,15 +583,15 @@ nodes=TestPage
 								}
 							}
 							$obj_['value'] = $title_->getFullText();
-	
+
 							if ( $title_->getNamespace() === NS_FILE ) {
 								$img_ = $services->getRepoGroup()->findFile( $title_ );
 								if ( $img_ ) {
 									$obj_['src'] = $img_->getFullUrl();
 								}
 							}
-						} else if ( !isset( self::$data[str_replace( '_', ' ', $dataValue->getWikiValue())] ) ) {
-							$obj_['value'] = str_replace( '_', ' ', $dataValue->getWikiValue());
+						} elseif ( !isset( self::$data[str_replace( '_', ' ', $dataValue->getWikiValue() )] ) ) {
+							$obj_['value'] = str_replace( '_', ' ', $dataValue->getWikiValue() );
 						}
 					} else {
 						$obj_['value'] = $dataValue->getWikiValue();

@@ -3,7 +3,7 @@
 /**
  * KnowledgeGraph
  *
- * @licence GPL-2.0-or-later
+ * @license GPL-2.0-or-later
  * @author thomas-topway-it for KM-A
  */
 
@@ -39,7 +39,10 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 		foreach ( $titles_ as $titleText ) {
 			$title_ = Title::makeTitleSafe( SMW_NS_PROPERTY, $titleText );
 			if ( $title_ && $title_->isKnown() ) {
-				$subjects = \KnowledgeGraph::getSubjectsByProperty( $title_->getText(), $params['limit'], $params['offset'] );
+				$subjects = \KnowledgeGraph::getSubjectsByProperty(
+												$title_->getText(),
+												$params['limit'],
+												$params['offset'] );
 				foreach ( $subjects as $title__ ) {
 					$titles[$title__->getFullText()] = $title__;
 				}
@@ -80,7 +83,7 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 				ApiBase::PARAM_TYPE => 'integer',
 				ApiBase::PARAM_REQUIRED => true
 			],
-			
+
 		];
 	}
 
@@ -94,7 +97,7 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 	/**
 	 * @inheritDoc
 	 */
-	protected function getExamplesMessages() {
+	public function getExamplesMessages() {
 		return [
 			'action=knowledgegraph-load-properties'
 			=> 'apihelp-knowledgegraph-load-properties-example-1'
