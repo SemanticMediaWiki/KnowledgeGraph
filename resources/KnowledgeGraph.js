@@ -576,7 +576,7 @@ KnowledgeGraph = function () {
 	function HideNodesRec(nodeId) {
 		var children = Network.getConnectedNodes(nodeId);
 		// children = children.filter((x) => excludedIds.indexOf(x) === -1);
-		console.log('children', children);
+		// console.log('children', children);
 		var updateNodes = [];
 		for (var nodeId_ of children) {
 			if (!(nodeId_ in Data)) {
@@ -2026,7 +2026,7 @@ $(document).ready(async function () {
 			container.style.height = config.height;
 		}
 
-		console.log('config', config);
+		// console.log('config', config);
 		graph.initialize(container, containerToolbar, containerOptions, config);
 	});
 });
