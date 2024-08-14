@@ -2012,7 +2012,7 @@ $(document).ready(async function () {
 			config.graphOptions.configure.enabled = false;
 
 			$(container).width(config.width);
-			$(container).height(config.width);
+			$(container).height(config.height);
 		}
 
 		console.log('config', config);
