@@ -648,8 +648,12 @@ KnowledgeGraph = function () {
 			LegendDiv.id = 'legendContainer';
 			// var legendColors = {};
 			container.parentElement.append(LegendDiv);
-			$(LegendDiv).width(Config.width);
-			$(LegendDiv).height(Config.width);
+			// *** attention!! this generates absolute values
+			// when used in conjunction with Chameleon !!
+			// $(LegendDiv).width(Config.width);
+			// $(LegendDiv).height(Config.height);
+			LegendDiv.style.width = Config.width;
+			LegendDiv.style.height = Config.height;
 		}
 
 		createNodes(Config.data);
@@ -2014,9 +2018,12 @@ $(document).ready(async function () {
 			}
 		} else {
 			config.graphOptions.configure.enabled = false;
-
-			$(container).width(config.width);
-			$(container).height(config.height);
+			// *** attention!! this generates absolute values
+			// when used in conjunction with Chameleon !!
+			// $(container).width(config.width);
+			// $(container).height(config.height);
+			container.style.width = config.width;
+			container.style.height = config.height;
 		}
 
 		console.log('config', config);
