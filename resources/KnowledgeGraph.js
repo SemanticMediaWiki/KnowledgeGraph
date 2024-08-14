@@ -1335,9 +1335,13 @@ ${propertyOptions}|show-property-type=true
 |properties-panel=false
 |categories-panel=false
 }}`;
-					navigator.clipboard.writeText(text).then(function () {
-						alert(mw.msg('knowledgegraph-copied-to-clipboard'));
-					});
+					if ( navigator.clipboard ) {
+						navigator.clipboard.writeText(text).then(function () {
+							alert(mw.msg('knowledgegraph-copied-to-clipboard'));
+						});
+					} else {
+						alert( 'clipboard not available');
+					}
 
 					break;
 
