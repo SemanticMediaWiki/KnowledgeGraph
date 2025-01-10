@@ -17,37 +17,43 @@ jobs:
     strategy:
       matrix:
         include:
-          - mediawiki_version: '1.35'
-            php_version: 7.4
-            database_type: mysql
-            database_image: "mysql:5.7"
-            coverage: false
-            experimental: false
           - mediawiki_version: '1.39'
+            smw_version: dev-master
             php_version: 8.1
             database_type: mysql
-            database_image: "mysql:8"
+            database_image: "mariadb:10"
             coverage: false
+            experimental: false
+          - mediawiki_version: '1.40'
+            smw_version: dev-master
+            php_version: 8.1
+            database_type: mysql
+            database_image: "mariadb:11.2"
+            coverage: true
             experimental: false
           - mediawiki_version: '1.41'
+            smw_version: dev-master
             php_version: 8.1
             database_type: mysql
-            database_image: "mysql:8"
+            database_image: "mariadb:11.2"
             coverage: false
             experimental: false
           - mediawiki_version: '1.42'
-            php_version: 8.2
+            smw_version: dev-master
+            php_version: 8.1
             database_type: mysql
-            database_image: "mysql:8"
+            database_image: "mariadb:11.2"
             coverage: false
             experimental: false
 
     env:
       MW_VERSION: ${{ matrix.mediawiki_version }}
+      SMW_VERSION: ${{ matrix.smw_version }}
       PHP_VERSION: ${{ matrix.php_version }}
       DB_TYPE: ${{ matrix.database_type }}
       DB_IMAGE: ${{ matrix.database_image }}
 
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,7 +62,7 @@ jobs:
                    
       - name: Update submodules
         run: git submodule update --init --remote
-  
+
       - name: Run tests
         run: make ci
         if: matrix.coverage == false
