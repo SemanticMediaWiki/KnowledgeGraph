@@ -8,7 +8,7 @@ class KnowledgeGraphApiLoadNodesTest extends TestCase {
 	 * @covers KnowledgeGraphApiLoadNodes::getExamplesMessages
 	 */
 	public function testGetExamples() {
-		$instance = new KnowledgeGraphApiLoadNodes( new ApiMain(), null );
+		$instance = new KnowledgeGraphApiLoadNodes( new ApiMain(), '' );
 		$messages = $instance->getExamplesMessages();
 		$this->assertCount( 1, $messages );
 	}
