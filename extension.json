@@ -1,29 +1,28 @@
 {
-    "manifest_version": 2,
-    "name": "KnowledgeGraph",
-    "version": "1.0",
-    "author": "Thomas-topway-it for [https://knowledge.wiki KM-A]",
-    "url": "https://github.com/SemanticMediaWiki/KnowledgeGraph",
-    "descriptionmsg": "knowledge-graph-desc",
-    "namemsg": "knowledge-graph-name",
-    "type":"semantic",
-    "requires":{
-        "MediaWiki":">= 1.31"
-    },
-    "MessagesDirs": {
-        "KnowledgeGraph":[
-            "i18n"
-        ]
-    },
+	"name": "KnowledgeGraph",
+	"version": "2.0-beta",
+	"author": "Thomas-topway-it for [https://knowledge.wiki KM-A]",
+	"url": "https://github.com/SemanticMediaWiki/KnowledgeGraph",
+	"descriptionmsg": "knowledge-graph-desc",
+	"namemsg": "knowledge-graph-name",
+	"type":"semantic",
+	"requires":{
+		"MediaWiki": ">= 1.39"
+	},
+	"MessagesDirs": {
+		"KnowledgeGraph":[
+			"i18n"
+		]
+	},
 	"ExtensionMessagesFiles": {
 		"KnowledgeGraphMagic": "KnowledgeGraph.i18n.magic.php"
 	},
-    "AutoloadClasses": {
-        "KnowledgeGraph":"includes/KnowledgeGraph.php",
-        "SpecialKnowledgeGraphDesigner":"includes/specials/SpecialKnowledgeGraphDesigner.php",
-        "KnowledgeGraphApiLoadNodes": "includes/api/KnowledgeGraphApiLoadNodes.php",
-        "KnowledgeGraphApiLoadProperties": "includes/api/KnowledgeGraphApiLoadProperties.php",
-        "KnowledgeGraphApiLoadCategories": "includes/api/KnowledgeGraphApiLoadCategories.php"
+	"AutoloadClasses": {
+		"KnowledgeGraph":"includes/KnowledgeGraph.php",
+		"SpecialKnowledgeGraphDesigner":"includes/specials/SpecialKnowledgeGraphDesigner.php",
+		"KnowledgeGraphApiLoadNodes": "includes/api/KnowledgeGraphApiLoadNodes.php",
+		"KnowledgeGraphApiLoadProperties": "includes/api/KnowledgeGraphApiLoadProperties.php",
+		"KnowledgeGraphApiLoadCategories": "includes/api/KnowledgeGraphApiLoadCategories.php"
 	},
 	"APIModules": {
 		"knowledgegraph-load-nodes": "KnowledgeGraphApiLoadNodes",
@@ -33,25 +32,25 @@
 	"SpecialPages": {
 		"KnowledgeGraphDesigner": "SpecialKnowledgeGraphDesigner"
 	},
-    "Hooks":{
+	"Hooks":{
 		"LoadExtensionSchemaUpdates": "KnowledgeGraph::onLoadExtensionSchemaUpdates",
 		"BeforePageDisplay":"KnowledgeGraph::onBeforePageDisplay",
 		"ParserFirstCallInit": "KnowledgeGraph::onParserFirstCallInit",
 		"OutputPageParserOutput": "KnowledgeGraph::onOutputPageParserOutput",
 		"SidebarBeforeOutput": "KnowledgeGraph::onSidebarBeforeOutput"
-    },
+	},
 	"ResourceModules":{
-        "ext.KnowledgeGraph":{
-            "localBasePath":"resources",
-            "remoteExtPath":"KnowledgeGraph/resources",
-            "styles":[
-                "KnowledgeGraph.css"
-            ],
-            "scripts":[
-                "visNetwork/vis-network.min.js",
-                "KnowledgeGraph.js"
-            ],
-            "dependencies": [
+		"ext.KnowledgeGraph":{
+			"localBasePath":"resources",
+			"remoteExtPath":"KnowledgeGraph/resources",
+			"styles":[
+				"KnowledgeGraph.css"
+			],
+			"scripts":[
+				"visNetwork/vis-network.min.js",
+				"KnowledgeGraph.js"
+			],
+			"dependencies": [
 				"mediawiki.util",
 				"mediawiki.base",
 				"mediawiki.cookie",
@@ -67,10 +66,10 @@
 				"oojs-ui.styles.icons-editing-core",
 				"oojs-ui.styles.icons-interactions",
 				"oojs-ui.styles.icons-accessibility"
-            ],
-            "position":"top",
-            "messages": [
-            	"knowledgegraph-toolbar-info",
+			],
+			"position":"top",
+			"messages": [
+				"knowledgegraph-toolbar-info",
 				"knowledgegraph-toolbar-help",
 				"knowledgegraph-graph-options-message",
 				"knowledgegraph-menu-open-article",
@@ -104,8 +103,8 @@
 				"knowledgegraph-credits",
 				"knowledgegraph-credits-list"
 			]
-        }
-    },
+		}
+	},
 	"config": {
 		"KnowledgeGraphDisableCredits": {
 			"value": false
@@ -116,5 +115,6 @@
 		"KnowledgeGraphShowSidebarLink": {
 			"value": false
 		}
-	}
+	},
+	"manifest_version": 2
 }
