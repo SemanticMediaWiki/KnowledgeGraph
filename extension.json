@@ -1,6 +1,6 @@
 {
 	"name": "KnowledgeGraph",
-	"version": "2.0-beta",
+	"version": "2.1-beta",
 	"author": "Thomas-topway-it for [https://knowledge.wiki KM-A]",
 	"url": "https://github.com/SemanticMediaWiki/KnowledgeGraph",
 	"descriptionmsg": "knowledge-graph-desc",
@@ -48,6 +48,13 @@
 			],
 			"scripts":[
 				"visNetwork/vis-network.min.js",
+				"KnowledgeGraphFunctions.js",
+				"KnowledgeGraphOptions.js",
+				"KnowledgeGraphNonModalDialog.js",
+				"KnowledgeGraphDialog.js",
+				"KnowledgeGraphToolbar.js",
+				"KnowledgeGraphActionToolbar.js",
+				"KnowledgeGraphContextMenu.js",
 				"KnowledgeGraph.js"
 			],
 			"dependencies": [
