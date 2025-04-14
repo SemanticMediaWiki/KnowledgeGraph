@@ -7,7 +7,7 @@
  * @author thomas-topway-it for KM-A
  */
 
-use MediaWiki\Extension\KnowledgeGraph\Aliases\Category as CategoryClass;
+// use MediaWiki\Extension\KnowledgeGraph\Aliases\Category as CategoryClass;
 use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Revision\SlotRecord;
@@ -452,23 +452,23 @@ nodes=TestPage
 	 */
 	public static function articlesInCategories( $category, $limit, $offset ) {
 		 $options = [
-		 	'LIMIT' => $limit,
-		 	'OFFSET' => $offset
+			'LIMIT' => $limit,
+			'OFFSET' => $offset
 		 ];
 		 $dbr = wfGetDB( DB_REPLICA );
 		 $res = $dbr->select( 'categorylinks',
-		 	[ 'pageid' => 'cl_from' ],
-		 	[ 'cl_to' => str_replace( ' ', '_', $category ) ],
-		 	__METHOD__,
-		 	$options
+			[ 'pageid' => 'cl_from' ],
+			[ 'cl_to' => str_replace( ' ', '_', $category ) ],
+			__METHOD__,
+			$options
 		 );
 		 $ret = [];
-		 foreach ( $res as $row ) {
-		 	$title_ = TitleClass::newFromID( $row->pageid );
-		 	if ( $title_ ) {
-		 		$ret[] = $title_;
-		 	}
-		 }
+		foreach ( $res as $row ) {
+			$title_ = TitleClass::newFromID( $row->pageid );
+			if ( $title_ ) {
+				$ret[] = $title_;
+			}
+		}
 		return $ret;
 
 		// *** this does not work with numerical offset
@@ -625,4 +625,3 @@ nodes=TestPage
 	}
 
 }
-
