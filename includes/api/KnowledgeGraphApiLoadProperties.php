@@ -7,6 +7,8 @@
  * @author thomas-topway-it for KM-A
  */
 
+use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
+
 class KnowledgeGraphApiLoadProperties extends ApiBase {
 
 	/**
@@ -37,12 +39,13 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 		$titles_ = explode( '|', $params['properties'] );
 		$titles = [];
 		foreach ( $titles_ as $titleText ) {
-			$title_ = Title::makeTitleSafe( SMW_NS_PROPERTY, $titleText );
+			$title_ = TitleClass::makeTitleSafe( SMW_NS_PROPERTY, $titleText );
 			if ( $title_ && $title_->isKnown() ) {
 				$subjects = \KnowledgeGraph::getSubjectsByProperty(
-												$title_->getText(),
-												$params['limit'],
-												$params['offset'] );
+					$title_->getText(),
+					$params['limit'],
+					$params['offset']
+				);
 				foreach ( $subjects as $title__ ) {
 					$titles[$title__->getFullText()] = $title__;
 				}

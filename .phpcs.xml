@@ -2,6 +2,7 @@
 <ruleset>
 	<rule ref="./vendor/mediawiki/mediawiki-codesniffer/MediaWiki">
 		<exclude name="MediaWiki.Usage.ExtendClassUsage.FunctionVarUsage" />
+		<exclude name="Generic.Files.OneObjectStructurePerFile.MultipleFound" />
 	</rule>
 	<file>.</file>
     <exclude-pattern>/(vendor|conf)/</exclude-pattern>

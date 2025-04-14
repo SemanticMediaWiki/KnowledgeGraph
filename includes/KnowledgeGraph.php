@@ -7,6 +7,8 @@
  * @author thomas-topway-it for KM-A
  */
 
+use MediaWiki\Extension\KnowledgeGraph\Aliases\Category as CategoryClass;
+use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Revision\SlotRecord;
 use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
@@ -142,7 +144,7 @@ class KnowledgeGraph {
 	public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater = null ) {
 		$text = file_get_contents( __DIR__ . '/../data/KnowledgeGraphOptions.js' );
 		$user = RequestContext::getMain()->getUser();
-		$title = Title::makeTitleSafe( NS_MEDIAWIKI, 'KnowledgeGraphOptions' );
+		$title = TitleClass::makeTitleSafe( NS_MEDIAWIKI, 'KnowledgeGraphOptions' );
 
 		$wikiPage = self::getWikiPage( $title );
 		$pageUpdater = $wikiPage->newPageUpdater( $user );
@@ -226,7 +228,7 @@ nodes=TestPage
 		// property-related options
 		foreach ( $values as $val ) {
 			if ( preg_match( '/^property-options(\?(.+))?=(.+)/', $val, $match ) ) {
-				$title_ = Title::makeTitleSafe( \SMW_NS_PROPERTY, $match[2] );
+				$title_ = TitleClass::makeTitleSafe( \SMW_NS_PROPERTY, $match[2] );
 				if ( $title_ ) {
 					$propertyOptions[$title_->getText()] = $match[3];
 				}
@@ -234,7 +236,7 @@ nodes=TestPage
 		}
 
 		foreach ( $params['nodes'] as $titleText ) {
-			$title_ = Title::newFromText( $titleText );
+			$title_ = TitleClass::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
 				if ( !isset( self::$data[$title_->getFullText()] ) ) {
 					self::setSemanticData( $title_, $params['properties'], 0, $params['depth'] );
@@ -245,7 +247,7 @@ nodes=TestPage
 		$graphOptions = [];
 		if ( !empty( $params['graph-options'] ) ) {
 			// , NS_KNOWLEDGEGRAPH
-			$title_ = Title::newFromText( $params['graph-options'], NS_MEDIAWIKI );
+			$title_ = TitleClass::newFromText( $params['graph-options'], NS_MEDIAWIKI );
 
 			if ( $title_ && $title_->isKnown() ) {
 				// $graphOptions = json_decode( self::getWikipageContent( $title_ ), true );
@@ -254,7 +256,7 @@ nodes=TestPage
 		}
 
 		foreach ( $propertyOptions as $property => $titleText ) {
-			$title_ = Title::newFromText( $titleText, NS_MEDIAWIKI );
+			$title_ = TitleClass::newFromText( $titleText, NS_MEDIAWIKI );
 			if ( $title_ && $title_->isKnown() ) {
 				// $propertyOptions[$property] = json_decode( self::getWikipageContent( $title_ ), true );
 				$propertyOptions[$property] = self::getWikipageContent( $title_ );
@@ -320,7 +322,7 @@ nodes=TestPage
 	}
 
 	/**
-	 * @param Title $title
+	 * @param Title|MediaWiki\Title\Title $title $title
 	 * @return string|null
 	 */
 	public static function getWikipageContent( $title ) {
@@ -337,7 +339,7 @@ nodes=TestPage
 	}
 
 	/**
-	 * @param Title $title
+	 * @param Title|MediaWiki\Title\Title $title
 	 * @return WikiPage|null
 	 */
 	public static function getWikiPage( $title ) {
@@ -443,30 +445,46 @@ nodes=TestPage
 	}
 
 	/**
-	 *
 	 * @param string $category
+	 * @param int $limit
+	 * @param int $offset
 	 * @return array
 	 */
-	public static function articlesInCategories( $category ) {
-		$dbr = wfGetDB( DB_REPLICA );
-		$res = $dbr->select( 'categorylinks',
-			[ 'pageid' => 'cl_from' ],
-			[ 'cl_to' => str_replace( ' ', '_', $category ) ],
-			__METHOD__
-		);
-		$ret = [];
-		foreach ( $res as $row ) {
-			$title_ = Title::newFromID( $row->pageid );
-			if ( $title_ ) {
-				$ret[] = $title_;
-			}
-		}
+	public static function articlesInCategories( $category, $limit, $offset ) {
+		 $options = [
+		 	'LIMIT' => $limit,
+		 	'OFFSET' => $offset
+		 ];
+		 $dbr = wfGetDB( DB_REPLICA );
+		 $res = $dbr->select( 'categorylinks',
+		 	[ 'pageid' => 'cl_from' ],
+		 	[ 'cl_to' => str_replace( ' ', '_', $category ) ],
+		 	__METHOD__,
+		 	$options
+		 );
+		 $ret = [];
+		 foreach ( $res as $row ) {
+		 	$title_ = TitleClass::newFromID( $row->pageid );
+		 	if ( $title_ ) {
+		 		$ret[] = $title_;
+		 	}
+		 }
 		return $ret;
+
+		// *** this does not work with numerical offset
+		// $cat = CategoryClass::newFromName( str_replace( ' ', '_', $category ) );
+		// $iterator_ = $cat->getMembers( $limit, $offset );
+		// $ret = [];
+		// while ( $iterator_->valid() ) {
+		// 	$ret[] = $iterator_->current();
+		// 	$iterator_->next();
+		// }
+		// return $ret;
 	}
 
 	/**
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/refs/heads/1.0.3/includes/PageProperties.php
-	 * @param Title $title
+	 * @param Title|MediaWiki\Title\Title $title
 	 * @param array $onlyProperties
 	 * @param int $depth
 	 * @param int $maxDepth
@@ -532,7 +550,8 @@ nodes=TestPage
 
 			if ( count( $onlyProperties )
 				&& !in_array( $canonicalLabel, $onlyProperties )
-				&& !in_array( $preferredLabel, $onlyProperties ) ) {
+				&& !in_array( $preferredLabel, $onlyProperties )
+			) {
 				continue;
 			}
 
@@ -606,3 +625,4 @@ nodes=TestPage
 	}
 
 }
+
