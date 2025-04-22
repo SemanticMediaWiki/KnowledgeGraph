@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "vis-network": "9.1.9"
+  },
+  "scripts": {
+    "postinstall": "copy-files-from-to && node resources/utility/inject-nomin.js"
+  },
+  "copyFiles": [
+    {
+      "from": "node_modules/vis-network/dist/vis-network.min.js",
+      "to": "resources/visNetwork/vis-network.min.js"
+    },
+    {
+      "from": "node_modules/vis-network/dist/vis-network.min.js.map",
+      "to": "resources/visNetwork/vis-network.min.js.map"
+    }
+  ],
+  "copyFilesSettings": {
+    "whenFileExists": "overwrite"
+  },
+  "devDependencies": {
+    "copy-files-from-to": "^3.12.1",
+    "insert-line": "^1.1.0"
+  }
+}

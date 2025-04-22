@@ -31,6 +31,34 @@ nodes=Page A, Page B
 }}
 ```
 
+## Updating `vis-network` Library
+
+This extension uses the [`vis-network`](https://www.npmjs.com/package/vis-network) JavaScript library for rendering network diagrams. The version is managed via `npm` and bundled into the extension using a post-install script.
+
+### How It Works
+
+After running `npm install`, the following happens automatically:
+
+1. **Copying Files**  
+   The `copy-files-from-to` tool copies the minified `vis-network` files from `node_modules` to the `resources/visNetwork/` directory:
+   - `vis-network.min.js`
+   - `vis-network.min.js.map`
+
+2. **Injecting Comment**  
+   A custom script (`inject-nomin.js`) prepends the line `/*@nomin*/` to `vis-network.min.js`.  
+   This comment prevents MediaWiki's ResourceLoader from re-minifying the file.
+
+### To Update `vis-network`
+
+1. Open `package.json` and change the version under `"vis-network"`  
+   (e.g., `"vis-network": "latest"` or a specific version like `"9.1.9"`).
+
+2. Run:
+
+   ```bash
+   npm install
+   ```
+
 
 ## Credits
 https://github.com/OpenSemanticLab/mediawiki-extensions-InteractiveSemanticGraph
