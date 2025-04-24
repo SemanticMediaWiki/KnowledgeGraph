@@ -17,6 +17,9 @@
 	"ExtensionMessagesFiles": {
 		"KnowledgeGraphMagic": "KnowledgeGraph.i18n.magic.php"
 	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\KnowledgeGraph\\Aliases\\": "includes/aliases/"
+	},
 	"AutoloadClasses": {
 		"KnowledgeGraph":"includes/KnowledgeGraph.php",
 		"SpecialKnowledgeGraphDesigner":"includes/specials/SpecialKnowledgeGraphDesigner.php",
