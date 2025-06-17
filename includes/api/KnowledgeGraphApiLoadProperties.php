@@ -35,29 +35,26 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 		$output = $context->getOutput();
 
 		\KnowledgeGraph::initSMW();
-
-		$titles_ = explode( '|', $params['properties'] );
-		$titles = [];
-		foreach ( $titles_ as $titleText ) {
-			$title_ = TitleClass::makeTitleSafe( SMW_NS_PROPERTY, $titleText );
-			if ( $title_ && $title_->isKnown() ) {
-				$subjects = \KnowledgeGraph::getSubjectsByProperty(
-					$title_->getText(),
-					$params['limit'],
-					$params['offset']
-				);
-				foreach ( $subjects as $title__ ) {
-					$titles[$title__->getFullText()] = $title__;
-				}
+		$params['properties'] = explode( '|', $params['properties'] );
+		if ( $params['inversePropsIncluded'] ) {
+			foreach ( $params['properties'] as $property ) {
+				$inverseKey = '-' . $property;
+				$params['properties'][] = $inverseKey;
 			}
 		}
 
-		$params['properties'] = [];
-		// $params['depth'] = 0;
-
-		foreach ( $titles as $titleText => $title_ ) {
-			if ( !isset( self::$data[$titleText] ) ) {
-				\KnowledgeGraph::setSemanticData( $title_, $params['properties'], 0, $params['depth'] );
+		$params['nodes'] = explode( '|', $params['nodes'] );
+		foreach ( $params['nodes'] as $titleText ) {
+			$title_ = TitleClass::newFromText( $titleText );
+			if ( $title_ && $title_->isKnown() ) {
+				if ( !isset( self::$data[$title_->getFullText()] ) ) {
+					\KnowledgeGraph::setSemanticDataForParserFunction(
+						$title_,
+						$params['properties'],
+						0,
+						$params['depth']
+					);
+				}
 			}
 		}
 
@@ -74,6 +71,10 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 				ApiBase::PARAM_TYPE => 'string',
 				ApiBase::PARAM_REQUIRED => true
 			],
+			'nodes' => [
+				ApiBase::PARAM_TYPE => 'string',
+				ApiBase::PARAM_REQUIRED => true
+			],
 			'depth' => [
 				ApiBase::PARAM_TYPE => 'integer',
 				ApiBase::PARAM_REQUIRED => true
@@ -86,7 +87,10 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 				ApiBase::PARAM_TYPE => 'integer',
 				ApiBase::PARAM_REQUIRED => true
 			],
-
+			'inversePropsIncluded' => [
+				ApiBase::PARAM_TYPE => 'boolean',
+				ApiBase::PARAM_REQUIRED => false
+			]
 		];
 	}
 

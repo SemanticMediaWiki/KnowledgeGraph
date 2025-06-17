@@ -96,6 +96,8 @@
 				"knowledgegraph-dialog-edit-offset",
 				"knowledgegraph-dialog-tabs-by-article",
 				"knowledgegraph-dialog-select-properties",
+				"knowledgegraph-dialog-select-nodes",
+				"knowledgegraph-dialog-include-inverse",
 				"knowledgegraph-dialog-select-categories",
 				"knowledgegraph-dialog-tabs-by-properties",
 				"knowledgegraph-dialog-tabs-by-categories",

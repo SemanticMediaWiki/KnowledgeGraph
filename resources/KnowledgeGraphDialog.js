@@ -132,6 +132,35 @@ KnowledgeGraphDialog = (function () {
 				})
 			);
 
+			self.includeInverseCheckbox = new OO.ui.CheckboxInputWidget({
+				selected: false,
+			});
+
+			items.push(
+				new OO.ui.FieldLayout(self.includeInverseCheckbox, {
+					label: mw.msg('knowledgegraph-dialog-include-inverse'),
+					align: 'inline'
+				})
+			);
+
+			self.titlesInputWidget = new mw.widgets.TitlesMultiselectWidget({
+				autocomplete: true,
+				// namespace: 102,
+				// suggestions: true,
+				// addQueryInput: true,
+				// $overlay: true,
+				// allowSuggestionsWhenEmpty: true,
+			});
+
+			items.push(
+				new OO.ui.FieldLayout(self.titlesInputWidget, {
+					label: mw.msg('knowledgegraph-dialog-select-nodes'),
+					align: 'top',
+					// helpInline: true,
+					// help: 'Type an article title in the "MediaWiki" namespace',
+				})
+			);
+
 			self.depthInputWidgetProperties = new OO.ui.NumberInputWidget({
 				value: Config.depth,
 			});
