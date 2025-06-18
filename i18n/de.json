@@ -32,6 +32,8 @@
 	"knowledgegraph-dialog-tabs-by-article": "nach Seite",
 	"knowledgegraph-dialog-select-categories": "Eine oder mehrere Kategorien wählen",
 	"knowledgegraph-dialog-select-properties": "Eines oder mehrere Attribute wählen",
+	"knowledgegraph-dialog-select-nodes": "Einen oder mehrere Knoten wählen",
+	"knowledgegraph-dialog-include-inverse": "Inverse Attribute einbeziehen",
 	"knowledgegraph-dialog-tabs-by-properties": "nach Attributen",
 	"knowledgegraph-dialog-tabs-by-categories": "nach Kategorien",
 	"knowledgegraph-dialog-results-no-properties": "keine Attribute",
