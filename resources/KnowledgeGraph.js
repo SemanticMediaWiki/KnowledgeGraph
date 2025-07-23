@@ -842,7 +842,17 @@ ${propertyOptions}|show-property-type=true
 						nodes: Nodes,
 						edges: Edges,
 						addNode: function(node) { if (!this.nodes.get(node.id)) this.nodes.add(node); },
-						addEdge: function(edge) { if (!this.edges.get(edge.id)) this.edges.add(edge); }
+						addEdge: function(edge) { if (!this.edges.get(edge.id)) this.edges.add(edge); },
+						removeNode: function(nodeId) {
+							if (this.nodes.get(nodeId)) {
+								this.nodes.remove(nodeId);
+							}
+						},
+						removeEdge: function(edgeId) {
+							if (this.edges.get(edgeId)) {
+								this.edges.remove(edgeId);
+							}
+						}
 					};
 
 					Network = new vis.Network(Container, { nodes: Nodes, edges: Edges }, Config.graphOptions);
