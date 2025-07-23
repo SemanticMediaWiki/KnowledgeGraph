@@ -171,9 +171,20 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 			}
 
 			$params['properties'] = array_unique( $params['properties'] );
+
+			$params['properties'] = array_unique(
+				array_merge(
+					$params['properties'],
+					array_map(
+						fn ( $prop ) => '-' . $prop,
+						$params['properties']
+					)
+				)
+			);
+
 			if ( $title_ && $title_->isKnown() ) {
 				if ( !isset( self::$data[$title_->getFullText()] ) ) {
-					\KnowledgeGraph::setSemanticDataForDesigner( $title_, $params['properties'], 0, $params['depth'] );
+					\KnowledgeGraph::setSemanticDataFromApi( $title_, $params['properties'], 0, $params['depth'] );
 				}
 			}
 		}

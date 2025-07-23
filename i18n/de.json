@@ -39,6 +39,8 @@
 	"knowledgegraph-dialog-results-no-properties": "keine Attribute",
 	"knowledgegraph-dialog-results-no-articles": "keine Seiten",
 	"knowledgegraph-dialog-results-existing-node": "existierender Knoten",
+	"knowledgegraph-dialog-results-skipped-existing": "die folgenden Knoten existieren bereits und wurden übersprungen:",
+	"knowledgegraph-dialog-results-no-new-nodes": "Keine neuen Knoten zum Hinzufügen",
 	"knowledgegraph-dialog-results-has-properties": "hat Attribute:",
 	"knowledgegraph-dialog-results-importing-nodes": "importiert Knoten:",
 	"knowledgegraph-copied-to-clipboard": "In die Zwischenablage kopiert!",
