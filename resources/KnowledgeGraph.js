@@ -27,6 +27,7 @@ KnowledgeGraph = function () {
 	var Categories = {};
 	var LegendDiv;
 	var PropIdPropLabelMap = {};
+	var nodePropertiesCache = {};
 
 	function addLegendEntry(id, label, color) {
 		if ($(LegendDiv).find('#' + id.replace(/ /g, '_')).length) {
@@ -130,6 +131,9 @@ KnowledgeGraph = function () {
 				properties: JSON.stringify(Config['properties']),
 			};
 		} else if (obj.properties !== null) {
+			if (obj.properties === undefined) {
+				obj.properties = [];
+			}
 			var payload = {
 				action: 'knowledgegraph-load-properties',
 				properties: obj.properties.join('|'),
@@ -149,15 +153,12 @@ KnowledgeGraph = function () {
 			};
 		}
 
-		// console.log('payload', payload);
-
 		return new Promise((resolve, reject) => {
 			mw.loader.using('mediawiki.api', function () {
 				new mw.Api()
 					.postWithToken('csrf', payload)
 					.done(function (thisRes) {
 						if ('data' in thisRes[payload.action]) {
-							// console.log('data', data);
 							var data_ = JSON.parse(thisRes[payload.action].data);
 							resolve(data_);
 						} else {
@@ -209,10 +210,12 @@ KnowledgeGraph = function () {
 		return panel.$element.get(0);
 	}
 
-	function addArticleNode(data, label, options) {
+	function addArticleNode(data, label, options, typeID) {
 		if (Nodes.get(label) !== null) {
 			return;
 		}
+
+		let cleanLabel = label.split('#')[0];
 
 		var nodeConfig = jQuery.extend(
 			JSON.parse(JSON.stringify(Config.graphOptions.nodes)),
@@ -220,11 +223,12 @@ KnowledgeGraph = function () {
 			{
 				id: label,
 				label:
-					label.length <= maxPropValueLength
-						? label
-						: label.substring(0, maxPropValueLength) + '…',
+					cleanLabel.length <= maxPropValueLength
+						? cleanLabel
+						: cleanLabel.substring(0, maxPropValueLength) + '…',
 				shape: 'box',
 				font: { size: 30 },
+				typeID: typeID || 9,
 
 				// https://visjs.github.io/vis-network/examples/network/other/popups.html
 				// title: createHTMLTitle(label),
@@ -257,12 +261,19 @@ KnowledgeGraph = function () {
 
 	function createNodes(data) {
 		for (var label in data) {
-			if (label in Data && Data[label] !== null) continue;
+			if (label in Data && Data[label] !== null) {
+				continue;
+			}
 
 			addArticleNode(data, label);
-			if (data[label] === null) continue;
 
-			if (!(label in Categories)) Categories[label] = [];
+			if (data[label] === null) {
+				continue;
+			}
+
+			if (!(label in Categories)) {
+				Categories[label] = [];
+			}
 
 			for (var i in data[label].categories) {
 				var category = data[label].categories[i];
@@ -272,14 +283,15 @@ KnowledgeGraph = function () {
 			}
 
 			for (var i in data[label].properties) {
-				let seenValues = new Set();
 				var property = data[label].properties[i];
 
 				if (!(property.canonicalLabel in PropColors)) {
-					let color_;
+					var color_;
 					function colorExists() {
 						for (var j in PropColors) {
-							if (PropColors[j] === color_) return true;
+							if (PropColors[j] === color_) {
+								return true;
+							}
 						}
 						return false;
 					}
@@ -289,7 +301,7 @@ KnowledgeGraph = function () {
 					PropColors[property.canonicalLabel] = color_;
 				}
 
-				let options =
+				var options =
 					property.preferredLabel in Config.propertyOptions
 						? Config.propertyOptions[property.preferredLabel]
 						: property.canonicalLabel in Config.propertyOptions
@@ -303,110 +315,113 @@ KnowledgeGraph = function () {
 					options.color = PropColors[property.canonicalLabel];
 				}
 
-				let legendLabel = property.preferredLabel !== '' ? property.preferredLabel : property.canonicalLabel;
+				var legendLabel =
+					property.preferredLabel !== ''
+						? property.preferredLabel
+						: property.canonicalLabel;
+
 				if (!(legendLabel in PropIdPropLabelMap)) {
 					PropIdPropLabelMap[legendLabel] = [];
 				}
-				let propLabel = legendLabel + (!Config['show-property-type'] ? '' : ' (' + property.typeLabel + ')');
+
+				var propLabel =
+					legendLabel +
+					(!Config['show-property-type']
+						? ''
+						: ' (' + property.typeLabel + ')');
 
 				if (Config['properties-panel']) {
-					addLegendEntry(property.canonicalLabel, legendLabel, PropColors[property.canonicalLabel]);
+					addLegendEntry(
+						property.canonicalLabel,
+						legendLabel,
+						PropColors[property.canonicalLabel]
+					);
 				}
-				
+
 				switch (property.typeId) {
 					case '_wpg':
-						for (let value of property.values) {
-							if (seenValues.has(value.value)) continue;
-							seenValues.add(value.value);
+						for (var ii in property.values) {
+							var targetLabel = property.values[ii].value;
+							PropIdPropLabelMap[legendLabel].push(targetLabel);
 
-							PropIdPropLabelMap[legendLabel].push(value.value);
-							let edgeConfig = jQuery.extend(
+							var from = property.inverse ? targetLabel : label;
+							var to = property.inverse ? label : targetLabel;
+
+							let edgeId = KnowledgeGraphFunctions.makeEdgeId(from, to, property.canonicalLabel, 9, Nodes);
+
+							var edgeConfig = jQuery.extend(
 								JSON.parse(JSON.stringify(Config.graphOptions.edges)),
-								value.direction === 'inverse'
-									? {
-											from: value.value,
-											to: label,
-											label: (value.direction === 'inverse' ? '-' : '') + propLabel,
-											group: label,
+								{
+									id: edgeId,
+									from: from,
+									to: to,
+									label: propLabel,
+									group: label,
+									arrows: {
+										to: { enabled: true }
 									}
-									: {
-											from: label,
-											to: value.value,
-											label: propLabel,
-											group: label,
-									}
+								}
 							);
 
-							let exists = false;
-							Edges.forEach((edge) => {
-								const labelsMatch = edge.label === edgeConfig.label || edge.label === '-' + edgeConfig.label || '-' + edge.label === edgeConfig.label;
-								const sameDirection = edge.from === edgeConfig.from && edge.to === edgeConfig.to;
-								const oppositeDirection = edge.from === edgeConfig.to && edge.to === edgeConfig.from;
+							// Edges.add(edgeConfig);
+							graphModel.addEdge(edgeConfig);
 
-								if (labelsMatch && (sameDirection || oppositeDirection)) {
-									exists = true;
-								}
-							});
-
-							edgeConfig.arrows.to.enabled = true;
-
-							if (!exists) {
-								Edges.add(edgeConfig);
-							}
-
-							if (value.src && mw.config.get('KnowledgeGraphShowImages') === true) {
+							if (
+								property.values[ii].src &&
+								mw.config.get('KnowledgeGraphShowImages') === true
+							) {
 								options.shape = 'image';
-								options.image = value.src;
+								options.image = property.values[ii].src;
 							}
 
-							addArticleNode(data, value.value, options);
+							addArticleNode(data, targetLabel, options, 9);
 						}
 						break;
 
 					default:
-						let filteredValues;
-						// separate logic for KnowledgeGraphDesigner and parserfunction
-						if (data[label]?.context === 'KnowledgeGraphDesigner') {
-							filteredValues = property.values.filter(v => !seenValues.has(v.value));
-						} else {
-							filteredValues = property.values.filter(v => 'direction' in v && !seenValues.has(v.value));
+						const seen = new Set();
+						for (const { value: targetLabel } of property.values) {
+							if (seen.has(targetLabel)) continue;
+							seen.add(targetLabel);
+
+							const typeId = property.typeId === '_txt' ? 2 : property.typeId;
+							const valueId = KnowledgeGraphFunctions.makeNodeId(targetLabel, typeId);
+							const edgeLabel = property.canonicalLabel || propLabel;
+
+							PropIdPropLabelMap[legendLabel].push(valueId);
+
+							const edgeId = KnowledgeGraphFunctions.makeEdgeId(label, valueId, edgeLabel);
+							Edges.add({
+								id: edgeId,
+								from: label,
+								to: valueId,
+								label: propLabel,
+								group: label,
+							});
+
+							if (!Nodes.get(valueId)) {
+								const displayLabel = targetLabel.length <= maxPropValueLength
+									? targetLabel
+									: targetLabel.substring(0, maxPropValueLength) + '…';
+
+								Nodes.add(
+									jQuery.extend({}, options, {
+										id: valueId,
+										label: displayLabel,
+										typeID: typeId,
+									})
+								);
+							}
 						}
-
-						if (filteredValues.length === 0) break;
-
-						for (let val of filteredValues) seenValues.add(val.value);
-
-						let valueId = `${i}#${KnowledgeGraphFunctions.uuidv4()}`;
-						PropIdPropLabelMap[legendLabel].push(valueId);
-
-						Edges.add({
-							from: label,
-							to: valueId,
-							label: propLabel,
-							group: label,
-						});
-
-						let propValue = filteredValues.map((x) => x.value).join(', ');
-
-						Nodes.add(
-							jQuery.extend(options, {
-								id: valueId,
-								label: propValue.length <= maxPropValueLength
-									? propValue
-									: propValue.substring(0, maxPropValueLength) + '…',
-							})
-						);
+					}
 				}
 			}
-		}
-
 		Data = jQuery.extend(Data, data);
 	}
 
 	function HideNodesRec(nodeId) {
 		var children = Network.getConnectedNodes(nodeId);
 		// children = children.filter((x) => excludedIds.indexOf(x) === -1);
-		// console.log('children', children);
 		var updateNodes = [];
 		for (var nodeId_ of children) {
 			if (!(nodeId_ in Data)) {
@@ -473,15 +488,34 @@ KnowledgeGraph = function () {
 									properties = thisDialog.propertiesInputWidget.getValue();
 									titles = thisDialog.titlesInputWidget.getValue();
 
-									if (!titles.length) {
+									if (!titles.length || !properties.length) {
 										resolve();
 										return;
 									}
 
-									if (!properties.length) {
+									const existingTitles = [];
+									const newTitles = [];
+
+									for (let i = 0; i < titles.length; i++) {
+										const titleObj = mw.Title.newFromText( titles[i] );
+										if (!titleObj) continue;
+
+										const fullTitle = titleObj.getPrefixedText();
+										if (fullTitle in Data) {
+											existingTitles.push( fullTitle );
+										} else {
+											newTitles.push( fullTitle );
+										}
+									}
+
+									if (newTitles.length === 0) {
+										thisDialog.actions.setMode('existing-node');
+										thisDialog.initializeResultsPanel('existing-node');
 										resolve();
 										return;
 									}
+									thisDialog._titlesToProcess = newTitles;
+									thisDialog._skippedTitles = existingTitles;
 									depth = thisDialog.depthInputWidgetProperties.getValue();
 									limit = thisDialog.limitInputWidgetProperties.getValue();
 									offset = thisDialog.offsetInputWidgetProperties.getValue();
@@ -499,8 +533,6 @@ KnowledgeGraph = function () {
 									limit = thisDialog.limitInputWidgetCategories.getValue();
 									offset = thisDialog.offsetInputWidgetCategories.getValue();
 									break;
-
-								// console.log('properties', properties);
 							}
 
 							loadNodes({
@@ -512,7 +544,6 @@ KnowledgeGraph = function () {
 								offset: parseInt(offset),
 							})
 								.then(function (data) {
-									// console.log('data', data);
 									// Properties = data[titleFullText];
 									TmpData = data;
 									if (selectedTab === 'by-article') {
@@ -591,69 +622,76 @@ KnowledgeGraph = function () {
 							'</h3>'
 					);
 					var properties = data[titleFullText].properties;
-					Object.keys(properties).forEach(function (k1) {
-						var prop1 = properties[k1];
-
-						if (prop1.typeLabel) return;
-
-						Object.keys(properties).forEach(function (k2) {
-							if (k1 === k2) return;
-
-							var prop2 = properties[k2];
-							if (
-								prop2.canonicalLabel === prop1.canonicalLabel &&
-								prop2.typeLabel &&
-								(!prop1.typeLabel || prop1.typeLabel === '')
-							) {
-								prop1.typeLabel = prop2.typeLabel;
-							}
-						});
-					});
-
 					for (var i in properties) {
-						var prop = properties[i];
 						var url = mw.config.get('wgArticlePath').replace('$1', i);
 
-						var hasDirect = false;
-						var hasInverse = false;
-
-						if (Array.isArray(prop.values)) {
-							for (var j = 0; j < prop.values.length; j++) {
-								var val = prop.values[j];
-								if (val.hasOwnProperty('direction') && val.direction === 'inverse') {
-									hasInverse = true;
-								} else {
-									hasDirect = true;
-								}
-							}
-						}
-
-						if (hasDirect) {
-							var labelDirect =
-								(prop.preferredLabel !== ''
-									? prop.preferredLabel
-									: prop.canonicalLabel) + ' (' + prop.typeLabel + ')';
-
-							$el.append(
-								$('<li><a target="_blank" href="' + url + '">' + labelDirect + '</a></li>')
-							);
-						}
-
-						if (hasInverse) {
-							var labelInverse =
-								'- ' +
-								(prop.preferredLabel !== ''
-									? prop.preferredLabel
-									: prop.canonicalLabel) + ' (' + prop.typeLabel + ')';
-
-							$el.append(
-								$('<li><a target="_blank" href="' + url + '">' + labelInverse + '</a></li>')
-							);
-						}
+						$el.append(
+							$(
+								'<li><a target="_blank" href="' +
+									url +
+									'">' +
+									(properties[i].preferredLabel !== ''
+										? properties[i].preferredLabel
+										: properties[i].canonicalLabel) +
+									'</a> (' +
+									properties[i].typeLabel +
+									')' +
+									'</li>'
+							)
+						);
 					}
 					break;
 
 				case 'by-properties':
+					// mw.msg
+					if (Object.keys(data).some((i) => !(i in Data) && data[i] !== null)) {
+						thisDialog.panelB.$element.append(
+							'<h3>' + mw.msg('knowledgegraph-dialog-results-importing-nodes') + '</h3>'
+						);
+
+						var $newList = $('<ul>');
+						for (var i in data) {
+							if (!(i in Data) && data[i] !== null) {
+								var url = mw.config.get('wgArticlePath').replace('$1', i);
+								$newList.append(
+									$(
+										'<li><a target="_blank" href="' +
+											url +
+											'">' +
+											i +
+											'</a></li>'
+									)
+								);
+							}
+						}
+						thisDialog.panelB.$element.append($newList);
+					}
+
+					if (
+						thisDialog._skippedTitles &&
+						thisDialog._skippedTitles.length > 0
+					) {
+						thisDialog.panelB.$element.append(
+							'<h4>' + mw.msg('knowledgegraph-dialog-results-skipped-existing') + '</h4>'
+						);
+
+						var $skippedList = $('<ul>');
+						thisDialog._skippedTitles.forEach(function (title) {
+							var url = mw.config.get('wgArticlePath').replace('$1', title);
+							$skippedList.append(
+								$(
+									'<li><a target="_blank" href="' +
+										url +
+										'">' +
+										title +
+										'</a></li>'
+								)
+							);
+						});
+						thisDialog.panelB.$element.append($skippedList);
+					}
+					break;
+
 				case 'by-categories':
 					// mw.msg
 					thisDialog.panelB.$element.append(
@@ -661,7 +699,9 @@ KnowledgeGraph = function () {
 							mw.msg('knowledgegraph-dialog-results-importing-nodes') +
 							'</h3>'
 					);
-					// @TODO display a message if all nodes exist
+
+					var $el = $('<ul>');
+					var newNodesCount = 0;
 
 					for (var i in data) {
 						if (!(i in Data) && data[i] !== null) {
@@ -673,10 +713,19 @@ KnowledgeGraph = function () {
 										url +
 										'">' +
 										i +
-										'</a> </li>'
+										'</a></li>'
 								)
 							);
+							newNodesCount++;
 						}
+					}
+
+					if (newNodesCount === 0) {
+						thisDialog.panelB.$element.append(
+							$('<p>' + mw.msg('knowledgegraph-dialog-results-no-new-nodes') + '</p>')
+						);
+					} else {
+						thisDialog.panelB.$element.append($el);
 					}
 			}
 		}
@@ -718,7 +767,6 @@ KnowledgeGraph = function () {
 				break;
 
 			case 'export-graph':
-				// console.log('Data', Data);
 				var nodes = [];
 				var properties = [];
 				var propertyOptions = '';
@@ -730,14 +778,10 @@ KnowledgeGraph = function () {
 						continue;
 					}
 					for (var ii in Data[i].properties) {
-						const property = Data[i].properties[ii];
-						const label = property.canonicalLabel;
-
-						if (properties.indexOf(label) === -1) {
-							properties.push(label);
-							properties.push('-' + label);
-							propertyOptions += `|property-options?${label}=\n`;
-							propertyOptions += `|property-options?-${label}=\n`; 
+						var property = Data[i].properties[ii];
+						if (properties.indexOf(property.canonicalLabel) === -1) {
+							properties.push(property.canonicalLabel);
+							propertyOptions += `|property-options?${property.canonicalLabel}=\n`;
 						}
 					}
 				}
@@ -786,16 +830,35 @@ ${propertyOptions}|show-property-type=true
 
 			case 'reload':
 				if (confirm(mw.msg('knowledgegraph-toolbar-reset-network-confirm'))) {
+					if (Network) {
+						Network.destroy();
+					}
+
 					Data = {};
 					Nodes = new vis.DataSet([]);
 					Edges = new vis.DataSet([]);
 
-					Network.setData({ nodes: Nodes, edges: Edges });
+					graphModel = {
+						nodes: Nodes,
+						edges: Edges,
+						addNode: function(node) { if (!this.nodes.get(node.id)) this.nodes.add(node); },
+						addEdge: function(edge) { if (!this.edges.get(edge.id)) this.edges.add(edge); },
+						removeNode: function(nodeId) {
+							if (this.nodes.get(nodeId)) {
+								this.nodes.remove(nodeId);
+							}
+						},
+						removeEdge: function(edgeId) {
+							if (this.edges.get(edgeId)) {
+								this.edges.remove(edgeId);
+							}
+						}
+					};
+
+					Network = new vis.Network(Container, { nodes: Nodes, edges: Edges }, Config.graphOptions);
 
 					createNodes(InitialData);
-
-					// Network.destroy();
-					// initializeNetwork(InitialData);
+					attachContextMenuListener();
 				}
 		}
 
@@ -852,9 +915,410 @@ ${propertyOptions}|show-property-type=true
 		self.setActive(false);
 	}
 
-	function initialize(container, containerToolbar, containerOptions, config) {
-		// console.log('config', config);
+	function findNodeIdContaining(labelPart) {
+	const allNodes = Nodes.get();
+	for (let node of allNodes) {
+		const nodeLabel = node.id.split('#')[0];
+		if (nodeLabel === labelPart) {
+			return node.id;
+		}
+	}
+	return null;
+}
 
+	
+
+	function attachContextMenuListener() {
+		Network.on('oncontext', function (params) {
+			params.event.preventDefault();
+			// close custom menu if exists
+			$('.custom-menu').hide();
+
+			const pointer = { x: params.pointer.DOM.x, y: params.pointer.DOM.y };
+			const edgeId = Network.getEdgeAt(pointer);
+			const nodeId = Network.getNodeAt(pointer);
+
+			if (nodeId === undefined && edgeId === undefined) {
+				return;
+			}
+
+			// create custom-menu if not exists
+			let $menu = $('.custom-menu');
+			if (!$menu.length) {
+				$menu = $('<ul class="custom-menu"></ul>').appendTo('body').hide().css({
+					position: 'absolute',
+					background: '#fff',
+					border: '1px solid #ccc',
+					padding: '5px',
+					listStyle: 'none',
+					zIndex: 10000,
+					maxHeight: '300px',
+					overflowY: 'auto',
+					margin: 0,
+					boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+					cursor: 'pointer'
+				});
+			} else {
+				$menu.empty();
+			}
+
+			// right click on node should show properties and link to article
+			if (nodeId !== undefined) {
+				let existingNodes = Nodes.get();
+				let hashIndex = nodeId.indexOf('#');
+				let titleLabel = nodeId.split('#')[0];
+				let hashIndexTitle = titleLabel.indexOf('#');
+				if (hashIndexTitle !== -1) {
+					titleLabel = titleLabel.substring(0, hashIndexTitle);
+				}
+				let title = hashIndex !== -1 ? nodeId.substring(0, hashIndex) : nodeId;
+
+				const currentNode = existingNodes.find(n => n.id === nodeId);
+				const nodeTypeId = currentNode ? currentNode.typeID : null;
+
+				if (nodeTypeId !== 2) {
+					let url = mw.config.get('wgArticlePath').replace('$1', titleLabel);
+
+					let liLink = document.createElement('li');
+					liLink.classList.add('custom-menu-link-entry');
+					liLink.innerHTML = '🔗 ' + titleLabel;
+					liLink.addEventListener('click', () => window.open(url, '_blank'));
+					$menu.append(liLink);
+				}
+
+				fetchSemanticDataForNode(nodeId, function (rawProps) {
+					let props = parseProperties(rawProps).filter(p => !p.property.startsWith('_'));
+					nodePropertiesCache[title] = props;
+
+					if (props.length === 0) {
+						$menu.append('<li>(No available properties)</li>');
+					} else {
+						props.forEach(p => {
+							let li = document.createElement('li');
+							li.classList.add('custom-menu-property-entry');
+							li.dataset.action = p.property.replaceAll('_', ' ');
+							li.dataset.direction = p.direction; 
+							let displayName = p.property.replaceAll('_', ' ') + (p.direction === 'inverse' ? ' (inverse)' : '');
+							li.innerHTML = '● ' + displayName;
+							$menu.append(li);
+						});
+					}
+
+					// Add click handler for property entries to create nodes and edges
+					$('.custom-menu li.custom-menu-property-entry').click(function () {
+						let clickedProperty = $(this).data('action');
+						let clickedDirection = $(this).data('direction');
+						$('.custom-menu').hide();
+
+						let propertyData = getPropertyValueForNode(title, clickedProperty, clickedDirection);
+
+						if (propertyData && Array.isArray(propertyData.value)) {
+							let typeID = propertyData.typeID || null;
+							let propKey = clickedDirection === 'inverse' ? `-${clickedProperty}` : clickedProperty;
+
+							if (!(propKey in PropColors)) {
+								let color_;
+								do {
+									color_ = KnowledgeGraphFunctions.randomHSL();
+								} while (Object.values(PropColors).includes(color_));
+								PropColors[propKey] = color_;
+							}
+							let nodeColor = PropColors[propKey];
+
+							let currentNodeId = title.includes('_') ? title : `${title}_${typeID}`;
+							let dataKey = currentNodeId.split('_')[0];
+							if (!Data[dataKey]) {
+								Data[dataKey] = {
+									properties: []
+								};
+							}
+
+							if (!Data[dataKey].properties[propKey]) {
+								Data[dataKey].properties[propKey] = {
+									key: propKey,
+									canonicalLabel: propKey,
+								};
+							}
+
+							let nodesExisting = Nodes.get();
+							let	edgesExisting = Edges.get();
+							let keepNode = Network.getNodeAt(pointer);
+							let normalize = str => str.replace(/^-/, '');
+
+							propertyData.value.forEach(valueItem => {
+								nodesExisting = Nodes.get();
+								edgesExisting = Edges.get();
+
+								let rawLabel = valueItem;
+								let labelWithoutHash = rawLabel.split('#')[0];
+								let displayLabel = labelWithoutHash.replaceAll('_', ' ');
+
+								let existingNode = nodesExisting.find(n => n.label === displayLabel && n.typeID === typeID);
+								let nodeId = existingNode ? existingNode.id : KnowledgeGraphFunctions.makeNodeId(displayLabel, typeID);
+
+								let fromRaw = clickedDirection === 'inverse' ? (nodeId) : (title);
+								let toRaw   = clickedDirection === 'inverse' ? (title) : (nodeId);
+
+								let edgePropKey = clickedDirection === 'inverse' ? `-${clickedProperty}` : clickedProperty;
+
+								let fromNode = Nodes.get(fromRaw) ? fromRaw : findNodeIdContaining(fromRaw) || fromRaw;
+								let toNode   = Nodes.get(toRaw)   ? toRaw   : findNodeIdContaining(toRaw)   || toRaw;
+
+								let edgeId = KnowledgeGraphFunctions.makeEdgeId(fromNode, toNode, edgePropKey, typeID, Nodes);
+
+								// Part to remove edges and nodes
+								let edgeExists = edgesExisting.some(e => e.id === edgeId);
+
+								if (edgeExists) {
+									graphModel.removeEdge(edgeId);
+
+									nodesExisting = Nodes.get();
+									edgesExisting = Edges.get();
+
+									let connectedEdges = Edges.get().filter(e =>
+										(e.from === nodeId || e.to === nodeId) && e.id !== edgeId
+									);
+
+									if (connectedEdges.length === 0) {
+										recursiveDeleteAllChildren(nodeId);
+
+										nodesExisting = Nodes.get();
+										edgesExisting = Edges.get();
+									}
+
+									return;
+								}
+
+								function stripHashSuffix(str) {
+									return str.split('#')[0];
+								}
+
+								let clickedPropertyNormalized = normalize(edgePropKey);
+
+								let edgeToDelete = edgesExisting.find(edge => {
+									if (!edge.id) return false;
+
+									let parts = edge.id.split('→');
+									if (parts.length < 3) return false;
+
+									let fromPart = stripHashSuffix(parts[0]);
+									let labelPart = parts[1];
+									let toPart = stripHashSuffix(parts[2]);
+
+									return (
+										(
+											(fromPart === stripHashSuffix(fromNode) && toPart === stripHashSuffix(toNode)) ||
+											(fromPart === stripHashSuffix(toNode) && toPart === stripHashSuffix(fromNode))
+										) &&
+											normalize(labelPart) === clickedPropertyNormalized
+									);
+								});
+
+								if (edgeToDelete) {
+									graphModel.removeEdge(edgeToDelete.id);
+
+									nodesExisting = Nodes.get();
+									edgesExisting = Edges.get();
+
+									let { from, to } = edgeToDelete;
+									
+									let maybeDeleteNode = from === keepNode ? to : from;
+
+									let connectedEdges = Edges.get().filter(e =>
+										(e.from === maybeDeleteNode || e.to === maybeDeleteNode) &&
+										e.id !== edgeToDelete.id
+									);
+
+									if (connectedEdges.length === 0) {
+										recursiveDeleteAllChildren(maybeDeleteNode);
+										nodesExisting = Nodes.get();
+										edgesExisting = Edges.get();
+									}
+
+									return;
+								}
+
+								if (!nodesExisting.some(n => n.id === nodeId)) {
+									let nodeConfig = {
+										id: nodeId,
+										label: displayLabel,
+										typeID: typeID,
+										color: nodeColor,
+									};
+									if (typeID === 9) {
+										nodeConfig.shape = 'box';
+										nodeConfig.font = { size: 30 };
+
+										if (!Data[nodeId]) {
+											let dataKey = nodeId.split('_')[0];
+											Data[dataKey] = { properties: [] };
+										}
+									}
+									graphModel.addNode(nodeConfig);
+									nodesExisting = Nodes.get();
+									edgesExisting = Edges.get();
+								}
+
+								let edgeConfig = {
+									id: edgeId,
+									from: fromNode,
+									to: toNode,
+									label: edgePropKey,
+								};
+								if (typeID === 9) {
+									edgeConfig.arrows = { to: { enabled: true } };
+								}
+
+								graphModel.addEdge(edgeConfig);
+								nodesExisting = Nodes.get();
+								edgesExisting = Edges.get();
+
+							});
+						}
+					});
+				});
+			}
+
+			// right click on edge should show property and type
+			else if (params.edges && params.edges.length > 0) {
+				let edgeId = params.edges[0];
+				let edge = Edges.get(edgeId);
+				if (!edge || !edge.label) return;
+
+				let cleanedLabel = cleanLabel(edge.label);
+    			let propertyTitle = 'Property:' + cleanedLabel.replaceAll(' ', '_');
+
+				let li = document.createElement('li');
+				let baseUrl = mw.config.get('wgServer') + mw.config.get('wgScriptPath');
+				let fullUrl = `${baseUrl}/index.php/${propertyTitle}`;
+				li.classList.add('custom-menu-edge-entry');
+				li.innerHTML = '🔗 ' + cleanedLabel;
+				li.addEventListener('click', () => window.open(fullUrl, '_blank'));
+
+				$menu.append(li);
+			}
+
+			// show the menu
+			$menu.finish().toggle(100).css({
+				top: params.event.pageY + "px",
+				left: params.event.pageX + "px",
+				display: "block"
+			});
+
+			// hide the menu when clicking outside
+			$(document).one('click', function () {
+				$menu.hide();
+			});
+		});
+	}
+
+	function recursiveDeleteAllChildren(nodeId) {
+		const edges = Edges.get().filter(e => e.from === nodeId);
+		edges.forEach(edge => {
+			let childId = edge.to;
+			recursiveDeleteAllChildren(childId);
+			graphModel.removeEdge(edge.id);
+			graphModel.removeNode(childId);
+		});
+		graphModel.removeNode(nodeId);
+	}
+
+	function fetchSemanticDataForNode(title, callback) {
+		let cleanTitle = title.split('#')[0];
+		let type = title.split('#')[1];
+		if (type === '2') {
+			callback([]);
+        	return;
+		}	
+		mw.loader.using('mediawiki.api').then(function() {
+			new mw.Api().get({
+			action: "smwbrowse",
+			format: "json",
+			browse: "subject",
+			params: JSON.stringify({
+				subject: cleanTitle,
+				ns: 0
+			})
+			}).done(function(data) {
+				if (data && data.query && data.query.data) {
+					const filtered = data.query.data.filter(item => !item.property.startsWith('_'));
+					if (filtered.length > 0) {
+						callback(filtered);
+					} else {
+						console.warn("No semantic *user* properties found for", cleanTitle, data);
+						callback([]);
+					}
+				} else {
+					console.warn("No semantic data found for", cleanTitle, data);
+					callback([]);
+				}
+			}).fail(function(err) {
+				console.error("SMW browse API failed:", err);
+				callback([]);
+			});
+		});
+	}
+
+	function parseProperties(dataArray) {
+		return dataArray.map(item => {
+			let values = [];
+			let typeID = null;
+
+			if (item.dataitem && item.dataitem.length > 0) {
+				values = item.dataitem.map(di => {
+					if (di.label) return di.label;
+					else if (di.title) return di.title;
+					else if (typeof di === 'string') return di;
+					else if (typeof di.item === 'string') return di.item;
+					else return '';
+				}).filter(v => v);
+
+				typeID = item.dataitem[0].type !== undefined ? item.dataitem[0].type : null;
+			}
+
+			return {
+				property: item.property,
+				value: values,
+				typeID: typeID,
+				direction: item.direction
+			};
+		});
+	}
+
+	function cleanLabel(label) {
+		if (label.startsWith('-')) {
+			label = label.substring(1);
+		}
+		label = label.replace(/\s*\([^)]*\)$/, '');
+		return label.trim();
+	}
+
+	function getPropertyValueForNode(nodeId, propertyName, direction) {
+		const props = nodePropertiesCache[nodeId];
+		if (!props) return null;
+
+		const normalizedProperty = propertyName.replaceAll('_', ' ').toLowerCase();
+
+		const prop = props.find(p =>
+			p.property.replaceAll('_', ' ').toLowerCase() === normalizedProperty &&
+			p.direction === direction
+		);
+
+		return prop || null;
+	}
+
+	function normalizeLabel(label) {
+		let cleanLabel = label.startsWith('-') ? label.slice(1) : label;
+		
+		const parenIndex = cleanLabel.indexOf('(');
+		if (parenIndex !== -1) {
+			cleanLabel = cleanLabel.substring(0, parenIndex).trim();
+		}
+
+		return cleanLabel;
+	}
+
+	function initialize(container, containerToolbar, containerOptions, config) {
 		InitialData = JSON.parse(JSON.stringify(config.data));
 		Config = config;
 		Container = container;
@@ -878,6 +1342,38 @@ ${propertyOptions}|show-property-type=true
 		Data = {};
 		Nodes = new vis.DataSet([]);
 		Edges = new vis.DataSet([]);
+
+		graphModel = {
+			nodes: Nodes,
+			edges: Edges,
+
+			addNode: function(node) {
+				if (!this.nodes.get(node.id)) {
+				this.nodes.add(node);
+				}
+			},
+
+			addEdge: function(edge) {
+				if (!this.edges.get(edge.id)) {
+				this.edges.add(edge);
+				}
+			},
+
+			removeNode: function(nodeId) {
+				if (this.nodes.get(nodeId)) {
+					this.nodes.remove(nodeId);
+				}
+			},
+
+			removeEdge: function(edgeId) {
+				if (this.edges.get(edgeId)) {
+					this.edges.remove(edgeId);
+				}
+			}
+		};
+
+		Config.graphOptions.interaction = Config.graphOptions.interaction || {};
+		Config.graphOptions.interaction.hover = true;
 
 		Network = new vis.Network(
 			Container,
@@ -923,96 +1419,61 @@ ${propertyOptions}|show-property-type=true
 		}
 
 		createNodes(Config.data);
-
-		Network.on('oncontext', function (params) {
-			params.event.preventDefault();
-
-			var nodeId = params.nodes[0];
-			//  && nodeId in Data
-			if (nodeId !== undefined) {
-				// console.log('params', params);
-
-				var menuObj = {
-					items: [
-						{
-							label: mw.msg('knowledgegraph-menu-open-article'),
-							icon: 'link',
-							onClick: function () {
-								var hashIndex = nodeId.indexOf('#');
-								var url = mw.config
-									.get('wgArticlePath')
-									.replace(
-										'$1',
-										hashIndex !== -1 ? nodeId.substring(0, hashIndex) : nodeId
-									);
-								window.open(url, '_blank').focus();
-							},
-						},
-					],
-					className: 'KnowledgeGraphPopupMenu',
-				};
-
-				if (Config['show-toolbar'] === true) {
-					menuObj.items.push({
-						label: mw.msg('knowledgegraph-menu-delete-node'),
-						icon: 'trash',
-						onClick: function () {
-							if (confirm(mw.msg('knowledgegraph-delete-node-confirm'))) {
-								deleteNode(nodeId);
-							}
-						},
-					});
-				}
-
-				PopupMenu = new ContextMenu(menuObj);
-				PopupMenu.showAt(params.event.pageX, params.event.pageY);
-			}
-		});
+		attachContextMenuListener();
 
 		Network.on('click', function (params) {
 			if (!params.nodes.length) {
 				return;
 			}
 
-			if (SelectedNode !== params.nodes[0]) {
-				SelectedNode = params.nodes[0];
-				return;
-			}
-
-			// var excludedIds = [params.nodes[0]];
-
 			HideNodesRec(params.nodes[0]);
+		});
+
+		Network.on('hoverNode', function (params) {
+			const nodeId = params.node;
+
+			if (SelectedNode !== nodeId) {
+				SelectedNode = nodeId;
+			}
+		});
+
+		Network.on('hoverEdge', function (params) {
+			const edgeId = params.edge;
+
+			if (SelectedNode !== edgeId) {
+				SelectedNode = edgeId;
+				Network.selectEdges([edgeId]);
+			}
+		});
+
+		Network.on('blurNode', function () {
+			Network.unselectAll();
+		});
+
+		Network.on('blurEdge', function (params) {
+			SelectedNode = null;
+			Network.unselectAll();
 		});
 
 		Network.on('doubleClick', function (params) {
 			if (!params.nodes.length) {
 				return;
 			}
-			var nodeId = params.nodes[0];
-			var node = Nodes.get(nodeId);
-			var wikiBaseUrl = mw.config.get('wgArticlePath').replace('$1', '');
 
-			// open clicked node in new tab
-			var pageUrl = (node && node.url) ? node.url : wikiBaseUrl + encodeURIComponent(nodeId);
-			window.open(pageUrl, '_blank');
+			let nodeId = params.nodes[0];
 
-			if (!(nodeId in Data) || Data[nodeId] === null) {
-				loadNodes({
-					title: params.nodes[0],
-					depth: parseInt(Config.depth),
-				}).then(function (data) {
-					// console.log('data', data);
-					createNodes(data);
-					Nodes.update([
-						{
-							id: nodeId,
-							opacity: 1,
-							shapeProperties: {
-								borderDashes: false,
-							},
-						},
-					]);
-				});
+			if (nodeId !== undefined) {
+				let hashIndex = nodeId.indexOf('#');
+				let titleLabel = nodeId.split('_')[0];
+				let hashIndexTitle = titleLabel.indexOf('#');
+
+				if (hashIndexTitle !== -1) {
+					titleLabel = titleLabel.substring(0, hashIndexTitle);
+				}
+
+				let title = hashIndex !== -1 ? nodeId.substring(0, hashIndex) : nodeId;
+				let url = mw.config.get('wgArticlePath').replace('$1', titleLabel);
+				window.open(url, '_blank');
 			}
 		});
 	}
@@ -1024,8 +1485,6 @@ ${propertyOptions}|show-property-type=true
 
 $(document).ready(async function () {
 	var semanticGraphs = JSON.parse(mw.config.get('knowledgegraphs'));
-
-	// console.log('semanticGraphs', semanticGraphs);
 
 	async function getModule(str) {
 		var module = await import(`data:text/javascript;base64,${btoa(str)}`);
@@ -1162,7 +1621,6 @@ $(document).ready(async function () {
 			container.style.height = config.height;
 		}
 
-		// console.log('config', config);
 		graph.initialize(container, containerToolbar, containerOptions, config);
 	});
 });

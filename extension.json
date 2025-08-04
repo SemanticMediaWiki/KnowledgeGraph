@@ -1,6 +1,6 @@
 {
 	"name": "KnowledgeGraph",
-	"version": "2.2.0",
+	"version": "3.0.0-beta",
 	"author": "Thomas-topway-it for [https://knowledge.wiki KM-A]",
 	"url": "https://github.com/SemanticMediaWiki/KnowledgeGraph",
 	"descriptionmsg": "knowledge-graph-desc",
@@ -104,6 +104,8 @@
 				"knowledgegraph-dialog-results-no-properties",
 				"knowledgegraph-dialog-results-no-articles",
 				"knowledgegraph-dialog-results-existing-node",
+				"knowledgegraph-dialog-results-skipped-existing",
+				"knowledgegraph-dialog-results-no-new-nodes",
 				"knowledgegraph-dialog-results-has-properties",
 				"knowledgegraph-dialog-results-importing-nodes",
 				"knowledgegraph-copied-to-clipboard",

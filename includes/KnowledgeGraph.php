@@ -16,6 +16,13 @@ use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
 class KnowledgeGraph {
 
 	/**
+	 * Tracks seen relations to prevent duplicate processing.
+	 *
+	 * @var array<string, bool>
+	 */
+	private static $relationsSeen = [];
+
+	/**
 	 * Configuration options for Semantic MediaWiki.
 	 *
 	 * @var array|null
@@ -235,18 +242,11 @@ nodes=TestPage
 			}
 		}
 
-		$visited = [];
 		foreach ( $params['nodes'] as $titleText ) {
 			$title_ = TitleClass::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
 				if ( !isset( self::$data[$title_->getFullText()] ) ) {
-					self::setSemanticDataForParserFunction(
-						$title_,
-						$params['properties'],
-						0,
-						$params['depth'],
-						$visited
-					);
+					self::setSemanticDataFromApi( $title_, $params['properties'], 0, $params['depth'] );
 				}
 			}
 		}
@@ -514,863 +514,180 @@ nodes=TestPage
 	}
 
 	/**
-	 * Retrieves semantic data for the given page title, used within the Knowledge Graph Designer context.
-	 * Unlike the parser function version, this method includes additional metadata (such as 'context')
-	 * to support frontend logic specific to the visual graph designer.
-	 *
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/refs/heads/1.0.3/includes/PageProperties.php
 	 * @param Title|MediaWiki\Title\Title $title
 	 * @param array $onlyProperties
 	 * @param int $depth
 	 * @param int $maxDepth
-	 * @param array &$visited
 	 * @return array
 	 */
-	public static function setSemanticDataForDesigner(
-		Title $title,
-		$onlyProperties,
-		$depth,
-		$maxDepth,
-		array &$visited = []
-	) {
-		$services = MediaWikiServices::getInstance();
-		$langCode = \RequestContext::getMain()->getLanguage()->getCode();
-		$propertyRegistry = \SMW\PropertyRegistry::getInstance();
-		$dataTypeRegistry = \SMW\DataTypeRegistry::getInstance();
+	public static function setSemanticDataFromApi( Title $title, $onlyProperties, $depth, $maxDepth ) {
+		$titleText = $title->getFullText();
 
-		$wikiPage = self::getWikiPage( $title );
-		$fullTitleText = $title->getFullText();
-		if ( !in_array( $fullTitleText, $visited, true ) ) {
-			$visited[] = $fullTitleText;
+		if ( isset( self::$data[$titleText] ) ) {
+			return;
 		}
 
-		$categories = [];
-		$iterator = $wikiPage->getCategories();
-
-		while ( $iterator->valid() ) {
-			$text_ = $iterator->current()->getText();
-			$categories[] = $text_;
-			$iterator->next();
+		if ( $depth > $maxDepth ) {
+			return;
 		}
 
-		$output = [
+		self::$data[$titleText] = [
 			'properties' => [],
-			'categories' => $categories
+			'categories' => [],
 		];
 
-		if ( $title->getNamespace() === NS_FILE ) {
-			$img = $services->getRepoGroup()->findFile( $title );
-			if ( $img ) {
-				$output['src'] = $img->getFullUrl();
-			}
-		}
-
-		// ***important, this prevents infinite recursion
-		// no properties
-		self::$data[$title->getFullText()] = [];
-
-		$subject = new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() );
-		$semanticData = self::$SMWStore->getSemanticData( $subject );
-
-		foreach ( $semanticData->getProperties() as $property ) {
-			$key = $property->getKey();
-			if ( in_array( $key, self::$exclude ) ) {
-				continue;
-			}
-
-			$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
-			if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
-				continue;
-			}
-
-			$canonicalLabel = $property->getCanonicalLabel();
-			$preferredLabel = $property->getPreferredLabel();
-
-			if ( count( $onlyProperties )
-				&& !in_array( $canonicalLabel, $onlyProperties )
-				&& !in_array( $preferredLabel, $onlyProperties )
-			) {
-				$onlyProperties[] = $canonicalLabel;
-			}
-
-			$description = $propertyRegistry->findPropertyDescriptionMsgKeyById( $key );
-			$typeID = $property->findPropertyTypeID();
-
-			if ( $description ) {
-				$description = wfMessage( $description )->text();
-			}
-			$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
-
-			if ( empty( $typeLabel ) ) {
-				$typeId_ = $dataTypeRegistry->getFieldType( $typeID );
-				$typeLabel = $dataTypeRegistry->findTypeLabel( $typeId_ );
-			}
-
-			$propertyTitle = $property->getCanonicalDiWikiPage()->getTitle();
-			$objKey = $propertyTitle->getFullText();
-
-			$output['properties'][$objKey] = [
-				// 'url' => $propertyTitle->getFullURL(),
-				'key' => $key,
-				'typeId' => $typeID,
-				'canonicalLabel' => $canonicalLabel,
-				'preferredLabel' => $preferredLabel,
-				'typeLabel' => $typeLabel,
-				'description' => $description,
-				'values' => []
-			];
-
-			foreach ( $semanticData->getPropertyValues( $property ) as $dataItem ) {
-				$dataValue = self::$SMWDataValueFactory->newDataValueByItem( $dataItem, $property );
-				if ( $dataValue->isValid() ) {
-					// *** are they necessary ?
-					$dataValue->setOption( 'no.text.transformation', true );
-					$dataValue->setOption( 'form/short', true );
-
-					$obj_ = [];
-					if ( $typeID === '_wpg' ) {
-						$title_ = $dataItem->getTitle();
-						if ( $title_ && $title_->isKnown() ) {
-							if ( !isset( self::$data[$title_->getFullText()] ) ) {
-								if ( $depth < $maxDepth ) {
-									self::setSemanticDataForDesigner(
-										$title_,
-										$onlyProperties,
-										++$depth,
-										$maxDepth,
-										$visited
-									);
-								} else {
-									// not loaded
-									self::$data[$title_->getFullText()] = null;
-								}
-							}
-							$obj_['value'] = $title_->getFullText();
-
-							if ( $title_->getNamespace() === NS_FILE ) {
-								$img_ = $services->getRepoGroup()->findFile( $title_ );
-								if ( $img_ ) {
-									$obj_['src'] = $img_->getFullUrl();
-								}
-							}
-						} elseif ( !isset( self::$data[str_replace( '_', ' ', $dataValue->getWikiValue() )] ) ) {
-							$obj_['value'] = str_replace( '_', ' ', $dataValue->getWikiValue() );
-						}
-					} else {
-						$obj_['value'] = $dataValue->getWikiValue();
-					}
-
-					$output['properties'][$objKey]['values'][] = $obj_;
-				}
-
-				$propertyDI = \SMW\DIProperty::newFromUserLabel( $canonicalLabel );
-				$results = self::getSubjectsByProperty(
-					$propertyDI,
-					$limit,
-					0,
-					$fullTitleText
-				);
-
-				foreach ( $results as $subjectDI ) {
-					$sourceTitle = Title::newFromText(
-						$subjectDI->getDBkey(),
-						$subjectDI->getNamespace()
-					);
-
-					$subject = new \SMW\DIWikiPage( $sourceTitle->getDbKey(), $sourceTitle->getNamespace() );
-					$semanticData = self::$SMWStore->getSemanticData( $subject );
-
-					foreach ( $semanticData->getProperties() as $property ) {
-						$key = $property->getKey();
-						if ( str_replace( '_', ' ', $key ) === $propertyLabel ) {
-							$typeID = $property->findPropertyTypeID();
-							$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
-
-							if ( $sourceTitle && !in_array( $sourceTitle->getFullText(), $visited, true ) ) {
-								self::addInversePropertyToOutput(
-									$canonicalLabel,
-									$sourceTitle,
-									$preferredLabel,
-									$typeID,
-									$typeLabel,
-									$output
-								);
-
-								if ( !isset( self::$data[$sourceTitle->getFullText()] ) ) {
-									if ( $depth < $maxDepth ) {
-										self::setSemanticDataForDesigner(
-											$sourceTitle,
-											$onlyProperties,
-											$depth + 1,
-											$maxDepth,
-											$visited
-										);
-									} else {
-										self::$data[$sourceTitle->getFullText()] = null;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		$resultsToCheck = [];
-		if ( count( $onlyProperties ) > 0 ) {
-			$countProps = 0;
-			foreach ( $onlyProperties as $property ) {
-				$propertyLabel = str_replace( '_', ' ', $property );
-				$propertyDI = \SMW\DIProperty::newFromUserLabel( $propertyLabel );
-				$results = self::getSubjectsByProperty(
-					$propertyDI,
-					$limit,
-					0,
-					$fullTitleText
-				);
-				$countProps++;
-				$countResults = 0;
-
-				if ( count( $results ) === 0 ) {
-					$visitedTitle = [];
-					foreach ( $resultsToCheck as $subjectDI ) {
-						$sourceTitle = Title::newFromText(
-							$subjectDI->getDBkey(),
-							$subjectDI->getNamespace()
-						);
-
-						if ( in_array( $sourceTitle->getFullText(), $visitedTitle, true ) ) {
-							continue;
-						}
-
-						if ( !isset( self::$data[$sourceTitle->getFullText()] ) ) {
-							if ( $depth < $maxDepth ) {
-								self::setSemanticDataForDesigner(
-									$sourceTitle,
-									$onlyProperties,
-									$depth + 1,
-									$maxDepth,
-									$visited
-								);
-							} else {
-								self::$data[$sourceTitle->getFullText()] = null;
-							}
-
-							$visitedTitle[] = $sourceTitle->getFullText();
-						}
-					}
-				}
-
-				foreach ( $results as $subjectDI ) {
-					$resultsToCheck[] = $subjectDI;
-					$sourceTitle = Title::newFromText(
-						$subjectDI->getDBkey(),
-						$subjectDI->getNamespace()
-					);
-					$countResults++;
-
-					$subject = new \SMW\DIWikiPage( $sourceTitle->getDbKey(), $sourceTitle->getNamespace() );
-					$semanticData = self::$SMWStore->getSemanticData( $subject );
-
-					foreach ( $semanticData->getProperties() as $property ) {
-						$key = $property->getKey();
-
-						if ( str_replace( '_', ' ', $key ) === $propertyLabel ) {
-							$typeID = $property->findPropertyTypeID();
-							$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
-
-							if ( $sourceTitle && !in_array( $sourceTitle->getFullText(), $visited, true ) ) {
-								self::addInversePropertyToOutput(
-									$propertyLabel,
-									$sourceTitle,
-									"",
-									$typeID,
-									$typeLabel,
-									$output
-								);
-
-								foreach ( $semanticData->getProperties() as $property ) {
-									$key = $property->getKey();
-									if ( in_array( $key, self::$exclude ) ) {
-										continue;
-									}
-
-									$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
-									if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
-										continue;
-									}
-
-									$typeID = $property->findPropertyTypeID();
-
-									if ( $typeID === '_wpg' ) {
-										$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
-
-										if ( empty( $typeLabel ) ) {
-											$typeId_ = $dataTypeRegistry->getFieldType( $typeID );
-											$typeLabel = $dataTypeRegistry->findTypeLabel( $typeId_ );
-										}
-
-										$canonicalName = MediaWikiServices::getInstance()
-										->getNamespaceInfo()
-										->getCanonicalName( SMW_NS_PROPERTY );
-
-										$inverseKey = $canonicalName . ':' . $propertyLabel;
-
-										$output['properties'][$inverseKey]['typeLabel'] = $typeLabel;
-									}
-								}
-
-								if ( count( $onlyProperties ) === $countProps ) {
-									$visitedTitle = [];
-									foreach ( $resultsToCheck as $subjectDI ) {
-										$sourceTitle = Title::newFromText(
-											$subjectDI->getDBkey(),
-											$subjectDI->getNamespace()
-										);
-
-										if ( in_array( $sourceTitle->getFullText(), $visitedTitle, true ) ) {
-											continue;
-										}
-
-										if ( !isset( self::$data[$sourceTitle->getFullText()] ) ) {
-											if ( $depth < $maxDepth ) {
-												self::setSemanticDataForDesigner(
-													$sourceTitle,
-													$onlyProperties,
-													$depth + 1,
-													$maxDepth,
-													$visited
-												);
-											} else {
-												self::$data[$sourceTitle->getFullText()] = null;
-											}
-
-											$visitedTitle[] = $sourceTitle->getFullText();
-										}
-									}
-								}
-							}
-
-							if ( $sourceTitle ) {
-								self::addInversePropertyToOutput(
-									$propertyLabel,
-									$sourceTitle,
-									"",
-									$typeID,
-									$typeLabel,
-									$output
-								);
-
-								foreach ( $semanticData->getProperties() as $property ) {
-									$key = $property->getKey();
-									if ( in_array( $key, self::$exclude ) ) {
-										continue;
-									}
-
-									$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
-									if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
-										continue;
-									}
-
-									$typeID = $property->findPropertyTypeID();
-
-									if ( $typeID === '_wpg' ) {
-										$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
-
-										if ( empty( $typeLabel ) ) {
-											$typeId_ = $dataTypeRegistry->getFieldType( $typeID );
-											$typeLabel = $dataTypeRegistry->findTypeLabel( $typeId_ );
-										}
-
-										$canonicalName = MediaWikiServices::getInstance()
-										->getNamespaceInfo()
-										->getCanonicalName( SMW_NS_PROPERTY );
-
-										$inverseKey = $canonicalName . ':' . $propertyLabel;
-
-										$output['properties'][$inverseKey]['typeLabel'] = $typeLabel;
-									}
-								}
-
-								if ( count( $onlyProperties ) === $countProps ) {
-									$visitedTitle = [];
-									foreach ( $resultsToCheck as $subjectDI ) {
-										$sourceTitle = Title::newFromText(
-											$subjectDI->getDBkey(),
-											$subjectDI->getNamespace()
-										);
-
-										if ( in_array( $sourceTitle->getFullText(), $visitedTitle, true ) ) {
-											continue;
-										}
-
-										if ( !isset( self::$data[$sourceTitle->getFullText()] ) ) {
-											if ( $depth < $maxDepth ) {
-												self::setSemanticDataForDesigner(
-													$sourceTitle,
-													$onlyProperties,
-													$depth + 1,
-													$maxDepth,
-													$visited
-												);
-											} else {
-												self::$data[$sourceTitle->getFullText()] = null;
-											}
-
-											$visitedTitle[] = $sourceTitle->getFullText();
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		$output['context'] = 'KnowledgeGraphDesigner';
-		self::$data[$title->getFullText()] = $output;
-	}
-
-	/**
-	 * Retrieves semantic data for the given page title, used within a parser function context.
-	 * Supports recursive traversal of linked pages up to a defined depth.
-	 *
-	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/refs/heads/1.0.3/includes/PageProperties.php
-	 * @param Title|MediaWiki\Title\Title $title
-	 * @param array $onlyProperties
-	 * @param int $depth
-	 * @param int $maxDepth
-	 * @param array &$visited
-	 * @return array
-	 */
-	public static function setSemanticDataForParserFunction(
-		Title $title,
-		$onlyProperties,
-		$depth,
-		$maxDepth,
-		array &$visited = []
-	) {
-		$services = MediaWikiServices::getInstance();
-		$langCode = \RequestContext::getMain()->getLanguage()->getCode();
-		$propertyRegistry = \SMW\PropertyRegistry::getInstance();
-		$dataTypeRegistry = \SMW\DataTypeRegistry::getInstance();
-
-		$wikiPage = self::getWikiPage( $title );
-		$fullTitleText = $title->getFullText();
-		if ( !in_array( $fullTitleText, $visited, true ) ) {
-			$visited[] = $fullTitleText;
-		}
-
-		$categories = [];
-		$iterator = $wikiPage->getCategories();
-
-		while ( $iterator->valid() ) {
-			$text_ = $iterator->current()->getText();
-			$categories[] = $text_;
-			$iterator->next();
-
-			// if ( !array_key_exists( $text_, self::$categories ) ) {
-			// 	self::$categories[$text_] = [];
-			// }
-
-			// if ( !in_array( $title->getFullText(), self::$categories[$text_] ) ) {
-			// 	self::$categories[$text_][] = $title->getFullText();
-			// }
-		}
-
-		$output = [
-			'properties' => [],
-			'categories' => $categories
+		$apiParams = [
+			'action' => 'smwbrowse',
+			'format' => 'json',
+			'browse' => 'subject',
+			'params' => json_encode( [
+				'subject' => $titleText,
+				'ns' => $title->getNamespace(),
+			] ),
 		];
 
+		$request = new \FauxRequest( $apiParams, false );
+		$api = new \ApiMain( $request );
+		$api->execute();
+		$result = $api->getResult()->getResultData();
+
+		if ( isset( $result['error'] ) ) {
+			wfDebugLog( 'SemanticData', 'SMW API error: ' . json_encode( $result['error'] ) );
+			return;
+		}
+
+		$data = $result['query']['data'] ?? [];
+		$output = &self::$data[$titleText];
+
 		if ( $title->getNamespace() === NS_FILE ) {
-			$img = $services->getRepoGroup()->findFile( $title );
-			if ( $img ) {
-				$output['src'] = $img->getFullUrl();
+			$file = MediaWikiServices::getInstance()->getRepoGroup()->findFile( $title );
+			if ( $file ) {
+				$output['src'] = $file->getFullUrl();
 			}
 		}
 
-		// ***important, this prevents infinite recursion
-		// no properties
-		self::$data[$title->getFullText()] = [];
-
-		$subject = new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() );
-		$semanticData = self::$SMWStore->getSemanticData( $subject );
-		$preferredLabel = '';
-
-		foreach ( $semanticData->getProperties() as $property ) {
-			$key = $property->getKey();
-			if ( in_array( $key, self::$exclude ) ) {
-				continue;
-			}
-
-			$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
-			if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
-				continue;
-			}
-
-			$canonicalLabel = $property->getCanonicalLabel();
-			$preferredLabel = $property->getPreferredLabel();
-
-			$description = $propertyRegistry->findPropertyDescriptionMsgKeyById( $key );
-			$typeID = $property->findPropertyTypeID();
-
-			if ( count( $onlyProperties )
-				&& !in_array( $canonicalLabel, $onlyProperties )
-				&& !in_array( $preferredLabel, $onlyProperties )
-			) {
-				continue;
-			}
-
-			if ( $description ) {
-				$description = wfMessage( $description )->text();
-			}
-			$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
-
-			if ( empty( $typeLabel ) ) {
-				$typeId_ = $dataTypeRegistry->getFieldType( $typeID );
-				$typeLabel = $dataTypeRegistry->findTypeLabel( $typeId_ );
-			}
-
-			$propertyTitle = $property->getCanonicalDiWikiPage()->getTitle();
-			$objKey = $propertyTitle->getFullText();
-
-			$output['properties'][$objKey] = [
-				// 'url' => $propertyTitle->getFullURL(),
-				'key' => $key,
-				'typeId' => $typeID,
-				'canonicalLabel' => $canonicalLabel,
-				'preferredLabel' => $preferredLabel,
-				'typeLabel' => $typeLabel,
-				'description' => $description,
-				'isInverse' => false,
-				'values' => [],
-			];
-
-			foreach ( $semanticData->getPropertyValues( $property ) as $dataItem ) {
-				$dataValue = self::$SMWDataValueFactory->newDataValueByItem( $dataItem, $property );
-				if ( $dataValue->isValid() ) {
-					// *** are they necessary ?
-					$dataValue->setOption( 'no.text.transformation', true );
-					$dataValue->setOption( 'form/short', true );
-
-					$obj_ = [];
-					$title_ = null;
-					if ( $typeID === '_wpg' ) {
-						$title_ = $dataItem->getTitle();
-						if ( $title_ && $title_->isKnown() ) {
-							if ( !isset( self::$data[$title_->getFullText()] ) ) {
-								if ( $depth < $maxDepth ) {
-									$obj_['direction'] = 'direct';
-									self::setSemanticDataForParserFunction(
-										$title_,
-										$onlyProperties,
-										$depth + 1,
-										$maxDepth,
-										$visited
-									);
-								} else {
-									// not loaded
-									self::$data[$title_->getFullText()] = null;
-								}
-							}
-
-							$obj_['value'] = $title_->getFullText();
-
-							if ( $title_->getNamespace() === NS_FILE ) {
-								$img_ = $services->getRepoGroup()->findFile( $title_ );
-								if ( $img_ ) {
-									$obj_['src'] = $img_->getFullUrl();
-								}
-							}
-						} elseif ( !isset( self::$data[str_replace( '_', ' ', $dataValue->getWikiValue() )] ) ) {
-							$obj_['direction'] = 'direct';
-							$obj_['value'] = str_replace( '_', ' ', $dataValue->getWikiValue() );
-						}
-					} else {
-						$obj_['direction'] = 'direct';
-						$obj_['value'] = $dataValue->getWikiValue();
-					}
-
-					self::processInverseProperties(
-						$typeID,
-						$typeLabel,
-						$onlyProperties,
-						$fullTitleText,
-						$preferredLabel,
-						$depth,
-						$maxDepth,
-						$visited,
-						$output
-					);
-
-					$output['properties'][$objKey]['values'][] = $obj_;
-				}
-			}
-		}
-
-		self::processInverseProperties(
-			$typeID,
-			$typeLabel,
-			$onlyProperties,
-			$fullTitleText,
-			$preferredLabel,
-			$depth,
-			$maxDepth,
-			$visited,
-			$output
-		);
-
-		self::$data[$title->getFullText()] = $output;
-	}
-
-	/**
-	 * Processes inverse semantic properties for entities of type `_wpg`.
-	 *
-	 * This method identifies and processes all properties from the `$onlyProperties` list that are marked as
-	 * inverse (i.e., start with a `-` prefix). For each such property, it retrieves all subjects that reference
-	 * the current entity (`$fullTitleText`) using that property.
-	 *
-	 * The results are added to the `$output` array, marking them as inverse relationships. If the depth limit
-	 * (`$maxDepth`) has not been reached, the method recursively processes each related subject to build a
-	 * deeper semantic graph.
-	 *
-	 * @param string|null $typeID The type ID of the entity; must be `_wpg` or null to proceed.
-	 * @param string|null $typeLabel The label associated with the type, used for display purposes.
-	 * @param array $onlyProperties A list of property labels to filter by; inverse properties start with `-`.
-	 * @param string $fullTitleText The full title text of the current page, used to match incoming references.
-	 * @param string $preferredLabel The display label to associate with the found inverse properties.
-	 * @param int $depth The current recursion depth.
-	 * @param int $maxDepth The maximum allowed recursion depth.
-	 * @param array &$visited A list of already visited page titles to prevent infinite loops.
-	 * @param array &$output The data structure where inverse property results will be added.
-	 */
-	private static function processInverseProperties(
-		?string $typeID,
-		?string $typeLabel,
-		array $onlyProperties,
-		string $fullTitleText,
-		string $preferredLabel,
-		int $depth,
-		int $maxDepth,
-		array &$visited,
-		array &$output
-	): void {
+		$propertyRegistry = \SMW\PropertyRegistry::getInstance();
 		$dataTypeRegistry = \SMW\DataTypeRegistry::getInstance();
-		if ( ( $typeID !== '_wpg' && $typeID !== null ) || count( $onlyProperties ) === 0 ) {
+		$pendingRecursiveTitles = [];
 
-			if ( $typeID === '_txt' ) {
-				$inverseProps = array_filter( $onlyProperties, static function ( $property ) {
-					return strpos( $property, '-' ) === 0;
-				} );
-
-				foreach ( $inverseProps as $inversePropertyLabel ) {
-					$cleanLabel = ltrim( $inversePropertyLabel, '-' );
-					$propertyDI = \SMW\DIProperty::newFromUserLabel( $cleanLabel );
-
-					$results = self::getSubjectsByProperty(
-						$propertyDI,
-						$limit,
-						0,
-						$fullTitleText
-					);
-
-					$nodes = [];
-					foreach ( $results as $subjectDI ) {
-						$sourceTitle = Title::newFromText(
-							$subjectDI->getDBkey(),
-							$subjectDI->getNamespace()
-						);
-						if ( !in_array( $sourceTitle->getFullText(), $nodes, true ) ) {
-							$nodes[] = $sourceTitle->getFullText();
-						}
-					}
-
-					foreach ( $results as $subjectDI ) {
-						$sourceTitle = Title::newFromText(
-							$subjectDI->getDBkey(),
-							$subjectDI->getNamespace()
-						);
-
-						$subject = new \SMW\DIWikiPage( $sourceTitle->getDbKey(), $sourceTitle->getNamespace() );
-						$semanticData = self::$SMWStore->getSemanticData( $subject );
-
-						foreach ( $semanticData->getProperties() as $property ) {
-							$key = $property->getKey();
-
-							if ( str_replace( '_', ' ', $key ) === $cleanLabel ) {
-								$typeID = $property->findPropertyTypeID();
-								$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
-
-								if ( $sourceTitle && !in_array( $sourceTitle->getFullText(), $visited, true ) ) {
-									self::addInversePropertyToOutput(
-										$cleanLabel,
-										$sourceTitle,
-										$preferredLabel,
-										$typeID,
-										$typeLabel,
-										$output
-									);
-
-									if ( !isset( self::$data[$sourceTitle->getFullText()] ) ) {
-										if ( $depth < $maxDepth ) {
-											self::setSemanticDataForParserFunction(
-												$sourceTitle,
-												$onlyProperties,
-												$depth + 1,
-												$maxDepth,
-												$visited
-											);
-										} else {
-											self::$data[$sourceTitle->getFullText()] = null;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+		foreach ( $data as $entry ) {
+			$direction = $entry['direction'] ?? 'direct';
+			$keyRaw = $entry['property'] ?? null;
+			$key = $keyRaw ? str_replace( '_', ' ', $keyRaw ) : null;
+			if ( !$key ) {
+				continue;
 			}
-		}
 
-		$typeID = '_wpg';
+			$isInverse = $direction === 'inverse';
+			$propKey = $isInverse ? '-' . $key : $key;
 
-		$inverseProps = array_filter( $onlyProperties, static function ( $property ) {
-			return strpos( $property, '-' ) === 0;
-		} );
+			if ( count( $onlyProperties ) ) {
+				$allowed = in_array( $propKey, $onlyProperties )
+					|| in_array( $key, $onlyProperties );
 
-		foreach ( $inverseProps as $inversePropertyLabel ) {
-			$cleanLabel = ltrim( $inversePropertyLabel, '-' );
-			$propertyDI = \SMW\DIProperty::newFromUserLabel( $cleanLabel );
+				if ( $isInverse && !in_array( $propKey, $onlyProperties ) ) {
+					continue;
+				}
 
-			$results = self::getSubjectsByProperty(
-				$propertyDI,
-				$limit,
-				0,
-				$fullTitleText
-			);
-
-			$nodes = [];
-			foreach ( $results as $subjectDI ) {
-				$sourceTitle = Title::newFromText(
-					$subjectDI->getDBkey(),
-					$subjectDI->getNamespace()
-				);
-				if ( !in_array( $sourceTitle->getFullText(), $nodes, true ) ) {
-					$nodes[] = $sourceTitle->getFullText();
+				if ( !$allowed ) {
+					continue;
 				}
 			}
 
-			foreach ( $results as $subjectDI ) {
-				$sourceTitle = Title::newFromText(
-					$subjectDI->getDBkey(),
-					$subjectDI->getNamespace()
-				);
+			if ( !isset( $output['properties'][$propKey] ) ) {
+				$propertyTitle = \Title::newFromText( ltrim( $propKey, '-' ) );
 
-				$subject = new \SMW\DIWikiPage( $sourceTitle->getDbKey(), $sourceTitle->getNamespace() );
-				$semanticData = self::$SMWStore->getSemanticData( $subject );
-
-				foreach ( $semanticData->getProperties() as $property ) {
-					$key = $property->getKey();
-
-					if ( str_replace( '_', ' ', $key ) === $cleanLabel ) {
-						$typeID = $property->findPropertyTypeID();
+				if ( $propertyTitle ) {
+					$diProperty = \SMW\DIProperty::newFromUserLabel( $propKey );
+					if ( $diProperty ) {
+						$typeID = $diProperty->findPropertyTypeID();
+						$canonicalLabel = $diProperty->getCanonicalLabel();
+						$preferredLabel = $diProperty->getPreferredLabel();
 						$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );
+						$descriptionKey = $propertyRegistry->findPropertyDescriptionMsgKeyById( $diProperty->getKey() );
+						$description = $descriptionKey ? wfMessage( $descriptionKey )->text() : null;
 
-						if ( $sourceTitle && !in_array( $sourceTitle->getFullText(), $visited, true ) ) {
-							self::addInversePropertyToOutput(
-								$cleanLabel,
-								$sourceTitle,
-								$preferredLabel,
-								$typeID,
-								$typeLabel,
-								$output
-							);
-
-							if ( !isset( self::$data[$sourceTitle->getFullText()] ) ) {
-								if ( $depth < $maxDepth ) {
-									self::setSemanticDataForParserFunction(
-										$sourceTitle,
-										$onlyProperties,
-										$depth + 1,
-										$maxDepth,
-										$visited
-									);
-								} else {
-									self::$data[$sourceTitle->getFullText()] = null;
-								}
-							}
-						}
-
-						if ( $sourceTitle ) {
-							self::addInversePropertyToOutput(
-								$cleanLabel,
-								$sourceTitle,
-								$preferredLabel,
-								$typeID,
-								$typeLabel,
-								$output
-							);
-
-							if ( !isset( self::$data[$sourceTitle->getFullText()] ) ) {
-								if ( $depth < $maxDepth ) {
-									self::setSemanticDataForParserFunction(
-										$sourceTitle,
-										$onlyProperties,
-										$depth + 1,
-										$maxDepth,
-										$visited
-									);
-								} else {
-									self::$data[$sourceTitle->getFullText()] = null;
-								}
-							}
-						}
+						$output['properties'][$propKey] = [
+							'key' => $propKey,
+							'typeId' => $typeID,
+							'canonicalLabel' => $canonicalLabel,
+							'preferredLabel' => $preferredLabel,
+							'typeLabel' => $typeLabel,
+							'description' => $description,
+							'inverse' => $isInverse,
+							'values' => [],
+						];
+					} else {
+						$output['properties'][$propKey] = [
+							'key' => $propKey,
+							'values' => [],
+						];
 					}
+				} else {
+					$output['properties'][$propKey] = [
+						'key' => $propKey,
+						'values' => [],
+					];
 				}
+			}
+
+			foreach ( $entry['dataitem'] ?? [] as $item ) {
+				if ( $item['type'] === 9 ) {
+					$linkedTitle = explode( '#', $item['item'] )[0];
+					$linkedTitle = $linkedTitle ? str_replace( '_', ' ', $linkedTitle ) : null;
+					if ( !$linkedTitle ) {
+						continue;
+					}
+
+					$source = $titleText;
+					$target = $linkedTitle;
+					$relation = ltrim( $propKey, '-' );
+					$relKey = self::makeRelationKey( $source, $target, $relation );
+
+					if ( isset( self::$relationsSeen[$relKey] ) ) {
+						continue;
+					}
+					self::$relationsSeen[$relKey] = true;
+
+					$output['properties'][$propKey]['values'][] = [ 'value' => $linkedTitle ];
+
+					if ( $depth < $maxDepth && !isset( self::$data[$linkedTitle] ) ) {
+						$pendingRecursiveTitles[] = $linkedTitle;
+					}
+				} else {
+					$output['properties'][$propKey]['values'][] = [
+						'value' => $item['item'],
+						'type' => $item['type'],
+					];
+				}
+			}
+		}
+
+		$page = self::getWikiPage( $title );
+		if ( $page ) {
+			$iterator = $page->getCategories();
+			while ( $iterator->valid() ) {
+				$output['categories'][] = $iterator->current()->getText();
+				$iterator->next();
+			}
+		}
+
+		foreach ( $pendingRecursiveTitles as $linkedTitle ) {
+			$title_ = \Title::newFromText( $linkedTitle );
+			if ( $title_ && $title_->isKnown() ) {
+				self::setSemanticDataFromApi( $title_, $onlyProperties, $depth + 1, $maxDepth );
 			}
 		}
 	}
 
-	/**
-	 * Adds an inverse property entry to the output array.
-	 *
-	 * This method populates the `$output['properties']` structure with details about an inverse property
-	 * relationship, including the source page that references the current entity. The property is marked
-	 * as inverse and is associated with labels and type information.
-	 *
-	 * @param string $cleanLabel The user-defined label of the property, with the '-' prefix removed.
-	 * @param Title $sourceTitle The MediaWiki title object of the page that links to the current entity.
-	 * @param string $preferredLabel The label to use for display purposes.
-	 * @param string $typeID The type ID of the property, usually `_wpg`.
-	 * @param string|null $typeLabel The label associated with the type, used for display purposes.
-	 * @param array &$output The data structure where the inverse property information is stored.
-	 */
-	private static function addInversePropertyToOutput(
-		string $cleanLabel,
-		Title $sourceTitle,
-		string $preferredLabel,
-		string $typeID,
-		?string $typeLabel,
-		array &$output
-	): void {
-		$canonicalName = MediaWikiServices::getInstance()
-							->getNamespaceInfo()
-							->getCanonicalName( SMW_NS_PROPERTY );
+	private static function makeRelationKey( string $a, string $b, string $prop ): string {
+		$sorted = [ $a, $b ];
+		sort( $sorted, SORT_STRING );
+		return $sorted[0] . '::' . $prop . '::' . $sorted[1];
+	}
 
-		$inverseKey = $canonicalName . ':' . $cleanLabel;
-
-		$obj_inv = [
-			'direction' => 'inverse',
-			'value' => $sourceTitle->getFullText(),
-		];
-
-		$output['properties'][$inverseKey]['values'][] = $obj_inv;
-		$output['properties'][$inverseKey]['canonicalLabel'] = $cleanLabel;
-		$output['properties'][$inverseKey]['preferredLabel'] = $preferredLabel;
-		$output['properties'][$inverseKey]['typeId'] = $typeID;
-		$output['properties'][$inverseKey]['typeLabel'] = $typeLabel;
-		$output['properties'][$inverseKey]['isInverse'] = true;
+	public static function resetSeenRelations(): void {
+		self::$relationsSeen = [];
 	}
 }

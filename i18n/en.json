@@ -39,6 +39,8 @@
 	"knowledgegraph-dialog-results-no-properties": "No properties",
 	"knowledgegraph-dialog-results-no-articles": "No articles",
 	"knowledgegraph-dialog-results-existing-node": "Existing node",
+	"knowledgegraph-dialog-results-skipped-existing": "The following nodes already exist and were skipped:",
+	"knowledgegraph-dialog-results-no-new-nodes": "No new nodes to add.",
 	"knowledgegraph-dialog-results-has-properties": "Has properties:",
 	"knowledgegraph-dialog-results-importing-nodes": "Importing nodes:",
 	"knowledgegraph-copied-to-clipboard": "copied to clipboard!",

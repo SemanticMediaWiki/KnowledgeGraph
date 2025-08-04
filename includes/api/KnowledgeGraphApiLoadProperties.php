@@ -48,7 +48,7 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 			$title_ = TitleClass::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
 				if ( !isset( self::$data[$title_->getFullText()] ) ) {
-					\KnowledgeGraph::setSemanticDataForParserFunction(
+					\KnowledgeGraph::setSemanticDataFromApi(
 						$title_,
 						$params['properties'],
 						0,

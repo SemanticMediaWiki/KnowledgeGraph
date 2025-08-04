@@ -31,10 +31,31 @@ KnowledgeGraphFunctions = (function () {
 		return path.reduce((xs, x) => (xs && xs[x] ? xs[x] : null), obj);
 	}
 
+	function makeNodeId(label, typeId) {
+		return `${label}#${typeId}`;
+	}
+
+	function makeEdgeId(from, to, propLabel, typeId = null, Nodes = null) {
+		if (!to.includes('#')) {
+			if (typeId !== null) {
+				to = `${to}#${typeId}`;
+			} else if (Nodes) {
+				const toNode = Nodes.get(to);
+				if (toNode && typeof toNode.typeID !== 'undefined') {
+					to = `${to}#${toNode.typeID}`;
+				}
+			}
+		}
+
+		return `${from}→${propLabel}→${to}`;
+	}
+
 	return {
 		isObject,
 		uuidv4,
 		randomHSL,
 		getNestedProp,
+		makeEdgeId,
+		makeNodeId
 	};
 })();

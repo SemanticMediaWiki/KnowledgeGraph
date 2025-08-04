@@ -63,4 +63,9 @@
 	padding: 4px;
 }
 
-
+.custom-menu li.custom-menu-link-entry:hover,
+.custom-menu li.custom-menu-property-entry:hover,
+.custom-menu li.custom-menu-edge-entry:hover {
+	background-color: #e0f0ff;
+	cursor: pointer;
+}
