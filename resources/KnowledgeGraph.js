@@ -227,7 +227,11 @@ KnowledgeGraph = function () {
 						? cleanLabel
 						: cleanLabel.substring(0, maxPropValueLength) + '…',
 				shape: 'box',
-				font: { size: 30 },
+				font: jQuery.extend(
+					{},
+					Config.graphOptions.nodes.font,
+					{ size: Config.graphOptions.nodes.font.size || 30 }
+				),
 				typeID: typeID || 9,
 
 				// https://visjs.github.io/vis-network/examples/network/other/popups.html
@@ -1147,7 +1151,11 @@ ${propertyOptions}|show-property-type=true
 									};
 									if (typeID === 9) {
 										nodeConfig.shape = 'box';
-										nodeConfig.font = { size: 30 };
+										nodeConfig.font = jQuery.extend(
+											{},
+											Config.graphOptions.nodes.font,
+											{ size: Config.graphOptions.nodes.font.size || 30 }
+										);
 
 										if (!Data[nodeId]) {
 											let dataKey = nodeId.split('_')[0];
