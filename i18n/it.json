@@ -1,0 +1,19 @@
+{
+	"@metadata": {
+		"authors": [
+			"Beta16"
+		]
+	},
+	"knowledge-graph-wrapper-loading": "il grafico si sta caricando...",
+	"knowledgegraph-menu-delete-node": "cancella nodo",
+	"knowledgegraph-dialog-done": "Fatto",
+	"knowledgegraph-dialog-delete": "Cancella",
+	"knowledgegraph-dialog-select-article": "Seleziona una voce con proprietà semantiche",
+	"knowledgegraph-dialog-edit-depth": "Profondità",
+	"knowledgegraph-dialog-select-properties": "Seleziona una o più proprietà",
+	"knowledgegraph-dialog-include-inverse": "Includi proprietà inverse",
+	"knowledgegraph-dialog-results-no-properties": "Nessuna proprietà",
+	"knowledgegraph-dialog-results-no-new-nodes": "Nessun nuovo nodo da aggiungere.",
+	"knowledgegraph-dialog-results-importing-nodes": "Importa nodi:",
+	"knowledgegraph-credits": "Crediti:"
+}

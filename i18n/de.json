@@ -1,19 +1,14 @@
 {
 	"@metadata": {
+		"authors": []
 	},
-
 	"knowledge-graph-name": "KnowledgeGraph",
 	"knowledge-graph-desc": "Stellt den Wissensgraph in Semantic MediaWiki mittels VisNetwork.js dar.",
 	"knowledge-graph-wrapper-loading": "Wissensgraph lädt...",
-
 	"apihelp-knowledgegraph-load-nodes-summary": "rufe Attribute der angegebenen Seiten ab",
-	"apihelp-knowledgegraph-load-nodes-example-1": "",
-	"apihelp-knowledgegraph-load-nodes-param-pageids": "",
-
 	"specialpages-group-knowledgegraph": "KnowledgeGraph",
 	"knowledgegraphdesigner": "KnowledgeGraph Designer",
-	
-	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer ",
+	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer",
 	"knowledgegraph-toolbar-info": "Info",
 	"knowledgegraph-toolbar-help": "Hilfe",
 	"knowledgegraph-graph-options-message": "Klicken Sie auf die Schaltfläche unten und kopieren Sie den Inhalt der Tasten \"nodes\" und \"edges\" in einen Artikel <a target=\"_blank\" href=\"$1\">wie diesen</a>. Dann setzen Sie ihn als Wert der Parameter \"graph-options\" oder \"property-options?[Property label] der Parser-Funktion des KnowledgeGraphs.",
@@ -51,5 +46,4 @@
 	"knowledgegraph-toolbar-export-graph": "exportiere Wikitext",
 	"knowledgegraph-credits": "Info:",
 	"knowledgegraph-credits-list": "<ul><li>KM-A (<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">Website</a>)</li></ul>"
-
 }
