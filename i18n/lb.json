@@ -1,0 +1,35 @@
+{
+	"@metadata": {
+		"authors": [
+			"Volvox"
+		]
+	},
+	"specialpages-group-knowledgegraph": "KnowledgeGraph",
+	"knowledgegraphdesigner": "KnowledgeGraph-Designer",
+	"knowledgegraph-toolbar-help": "Hëllef",
+	"knowledgegraph-menu-open-article": "Artikel opmaachen",
+	"knowledgegraph-menu-delete-node": "Knuet läschen",
+	"knowledgegraph-delete-node-confirm": "Sidd Dir sécher, datt Dir dëse Knuet läsche wëllt?",
+	"knowledgegraph-dialog-continue": "Weider",
+	"knowledgegraph-dialog-back": "Zeréck",
+	"knowledgegraph-dialog-done": "Fäerdeg",
+	"knowledgegraph-dialog-cancel": "Ofbriechen",
+	"knowledgegraph-dialog-delete": "Läschen",
+	"knowledgegraph-dialog-edit-depth": "Déift",
+	"knowledgegraph-dialog-edit-limit": "Limitt",
+	"knowledgegraph-dialog-tabs-by-article": "No Artikel",
+	"knowledgegraph-dialog-select-categories": "Wielt eng oder méi Kategorien",
+	"knowledgegraph-dialog-select-properties": "Wielt eng oder méi Eegenschaften",
+	"knowledgegraph-dialog-select-nodes": "Wielt eng oder méi Säiten",
+	"knowledgegraph-dialog-tabs-by-properties": "No Eegenschaften",
+	"knowledgegraph-dialog-tabs-by-categories": "No Kategorien",
+	"knowledgegraph-dialog-results-no-properties": "Keng Eegenschaften",
+	"knowledgegraph-dialog-results-no-articles": "Keng Artikelen",
+	"knowledgegraph-dialog-results-skipped-existing": "Déi follgend Kniet gëtt et schonn a goufen iwwersprongen:",
+	"knowledgegraph-dialog-results-no-new-nodes": "Keng nei Kniet fir derbäizesetzen.",
+	"knowledgegraph-dialog-results-has-properties": "Huet d'Eegenschaften:",
+	"knowledgegraph-dialog-results-importing-nodes": "Kniet importéieren:",
+	"knowledgegraph-copied-to-clipboard": "an den Tëschespäicher kopéiert!",
+	"knowledgegraph-toolbar-reset-network-confirm": "Sidd Dir sécher, datt Dir d'Netzwierk nei initialiséiere wëllt?",
+	"knowledgegraph-toolbar-add-node": "Knuet derbäisetzen"
+}

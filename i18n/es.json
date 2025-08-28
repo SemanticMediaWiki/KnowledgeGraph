@@ -1,0 +1,23 @@
+{
+	"@metadata": {
+		"authors": [
+			"Yucavalla"
+		]
+	},
+	"knowledge-graph-wrapper-loading": "El gráfico se está cargando...",
+	"apihelp-knowledgegraph-load-nodes-summary": "Recoger las propiedades semánticas de los artículos dados",
+	"specialpages-group-knowledgegraph": "ConocimientoGrafico",
+	"knowledgegraphdesigner": "Conocimiento Diseñador de gráficos",
+	"knowledgegraph-knowledgegraphdesigner-label": "Conocimiento Diseñador de gráficos",
+	"knowledgegraph-graph-options-message": "Presione el botón de abajo y copie y pegue el contenido de las claves \"nodos\" y \"aristas\" en un artículo <a target=\"_blank\" href=\"<span class=\"notranslate\" translate=\"no\">$1 \">like this</a> . Luego, configúrelo como valor de los parámetros \"opciones de gráfico\" o \"opciones de propiedad?[Etiqueta de propiedad] de la función de análisis de KnowledgeGraph.",
+	"knowledgegraph-menu-delete-node": "eliminar / borrar nodo",
+	"knowledgegraph-dialog-done": "Hecho",
+	"knowledgegraph-dialog-delete": "Eliminar / Borrar",
+	"knowledgegraph-dialog-select-article": "Seleccione un artículo con propiedades semánticas",
+	"knowledgegraph-dialog-edit-depth": "Profundidad",
+	"knowledgegraph-dialog-select-properties": "Seleccione una o más propiedades",
+	"knowledgegraph-dialog-include-inverse": "Incluye propiedades invertidas",
+	"knowledgegraph-dialog-results-no-properties": " \"sin propiedades\" o \"ninguna propiedad\"",
+	"knowledgegraph-dialog-results-no-new-nodes": "No hay nuevos nodos que añadir.",
+	"knowledgegraph-credits": "Créditos"
+}

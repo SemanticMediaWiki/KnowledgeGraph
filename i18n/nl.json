@@ -24,6 +24,7 @@
 	"knowledgegraph-dialog-select-article": "Selecteer een artikel met semantische eigenschappen",
 	"knowledgegraph-dialog-edit-depth": "Diepte",
 	"knowledgegraph-dialog-edit-limit": "Limiet",
+	"knowledgegraph-dialog-edit-offset": "Offset",
 	"knowledgegraph-dialog-tabs-by-article": "Op artikel",
 	"knowledgegraph-dialog-select-categories": "Selecteer een of meer categorieën",
 	"knowledgegraph-dialog-select-properties": "Selecteer een of meer eigenschappen",
