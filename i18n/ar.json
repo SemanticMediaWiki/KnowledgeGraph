@@ -1,0 +1,24 @@
+{
+	"@metadata": {
+		"authors": [
+			"Mohammed Qays"
+		]
+	},
+	"knowledgegraph-toolbar-info": "الإئتمانات",
+	"knowledgegraph-toolbar-help": "المساعدة",
+	"knowledgegraph-dialog-continue": "استمر",
+	"knowledgegraph-dialog-back": "العودة",
+	"knowledgegraph-dialog-done": "نفذ",
+	"knowledgegraph-dialog-cancel": "إلغاء",
+	"knowledgegraph-dialog-delete": "إزالة",
+	"knowledgegraph-dialog-edit-limit": "الحد",
+	"knowledgegraph-dialog-tabs-by-article": "حسب المقالة",
+	"knowledgegraph-dialog-select-properties": "حدد خاصية واحدة أو أكثر",
+	"knowledgegraph-dialog-select-nodes": "حدد صفحة واحدة أو أكثر",
+	"knowledgegraph-dialog-tabs-by-properties": "حسب الخصائص",
+	"knowledgegraph-dialog-tabs-by-categories": "حسب التصنيفات",
+	"knowledgegraph-dialog-results-no-properties": "لا يوجد خصائص",
+	"knowledgegraph-dialog-results-no-articles": "لا توجد مقالات",
+	"knowledgegraph-dialog-results-no-new-nodes": "لا توجد عقد جديدة لإضافتها.",
+	"knowledgegraph-dialog-results-has-properties": "له خصائص:"
+}
