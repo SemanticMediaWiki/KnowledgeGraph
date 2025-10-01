@@ -28,28 +28,33 @@ KnowledgeGraph = function () {
 	var LegendDiv;
 	var PropIdPropLabelMap = {};
 	var nodePropertiesCache = {};
+	const colors = mw.config.get('wgKnowledgeGraphColorPalette');
 
 	function addLegendEntry(id, label, color) {
+		if (!LegendDiv) return;
 		if ($(LegendDiv).find('#' + id.replace(/ /g, '_')).length) {
 			return;
 		}
-
+		let fontColor = KnowledgeGraphFunctions.getContrastColor(color); // koristi istu WCAG logiku
+		if (!fontColor) fontColor = '#000000';
+		
 		var container = document.createElement('button');
 		container.className = 'legend-element-container';
 		container.classList.add('btn', 'btn-outline-light');
 		container.id = id.replace(/ /g, '_');
-		container.style.color = 'black';
+		container.style.color = fontColor;
 		container.style.background = color;
 		container.innerHTML = label;
+	    container.innerHTML = id;
 
 		container.dataset.active = true;
 		container.dataset.active_color = color;
 
-		container.addEventListener('click', (event) =>
-			dispatchEvent_LegendClick(event, id)
-		);
-
 		LegendDiv.append(container);
+	}
+
+	function checkAndToogleId(id) {
+		return id.trim().replace(/_/g, ' ').replace(/#.*$/, '');
 	}
 
 	function dispatchEvent_LegendClick(event, id) {
@@ -57,9 +62,20 @@ KnowledgeGraph = function () {
 		if (container.dataset.active === 'true') {
 			container.dataset.active = false;
 			container.style.background = '#FFFFFF';
+			
+			let bgColor = container.style.background;
+			let fontColor = KnowledgeGraphFunctions.getContrastColor(bgColor);
+			if (!fontColor) fontColor = '#000000';
+			container.style.color = fontColor;
+
 		} else {
 			container.dataset.active = true;
 			container.style.background = container.dataset.active_color;
+
+			let bgColor = container.style.background;
+			let fontColor = KnowledgeGraphFunctions.getContrastColor(bgColor);
+			if (!fontColor) fontColor = '#000000';
+			container.style.color = fontColor;
 		}
 		var updateNodes = [];
 		var visited = [];
@@ -78,7 +94,7 @@ KnowledgeGraph = function () {
 
 				var found = false;
 				connectedEdges.forEach((edge) => {
-					if (edge.to === nodeId) {
+					if (edge.to === nodeId || edge.from === nodeId) {
 						found = true;
 					}
 				});
@@ -94,7 +110,11 @@ KnowledgeGraph = function () {
 		}
 
 		Nodes.forEach((node) => {
-			if (PropIdPropLabelMap[id].indexOf(node.id) !== -1) {
+			var idValue = checkAndToogleId(node.id);
+			if (PropIdPropLabelMap[id] === undefined) {
+				PropIdPropLabelMap[id] = [];
+			}
+			if (PropIdPropLabelMap[id].indexOf(idValue) !== -1 || PropIdPropLabelMap[id].indexOf(node.id) !== -1) {
 				updateNodes.push({
 					id: node.id,
 					hidden: container.dataset.active === 'true' ? false : true,
@@ -210,6 +230,23 @@ KnowledgeGraph = function () {
 		return panel.$element.get(0);
 	}
 
+	function wrapLabel(text, maxLength) {
+		const words = text.split(' ');
+		let wrapped = '';
+		let line = '';
+
+		for (let word of words) {
+			if ((line + word).length > maxLength) {
+				if (line) wrapped += line.trim() + '\n';
+				line = word + ' ';
+			} else {
+				line += word + ' ';
+			}
+		}
+		wrapped += line.trim();
+		return wrapped;
+	}
+
 	function addArticleNode(data, label, options, typeID) {
 		if (Nodes.get(label) !== null) {
 			return;
@@ -225,7 +262,7 @@ KnowledgeGraph = function () {
 				label:
 					cleanLabel.length <= maxPropValueLength
 						? cleanLabel
-						: cleanLabel.substring(0, maxPropValueLength) + '…',
+						: wrapLabel(cleanLabel, 20),
 				shape: 'box',
 				font: jQuery.extend(
 					{},
@@ -290,19 +327,29 @@ KnowledgeGraph = function () {
 				var property = data[label].properties[i];
 
 				if (!(property.canonicalLabel in PropColors)) {
-					var color_;
-					function colorExists() {
-						for (var j in PropColors) {
-							if (PropColors[j] === color_) {
-								return true;
+					if (colors && colors.length > 0) {
+						// use d3 palette colors defined in wgKnowledgeGraphColorPalette
+						PropColors[property.canonicalLabel] = KnowledgeGraphFunctions.colorForPropertyLabel(
+							property.canonicalLabel,
+							colors,
+							PropColors
+						);
+					} else {
+						// use random HSL colors if no palette defined
+						let color_;
+						function colorExists() {
+							for (let j in PropColors) {
+								if (PropColors[j] === color_) {
+									return true;
+								}
 							}
+							return false;
 						}
-						return false;
+						do {
+							color_ = KnowledgeGraphFunctions.randomHSL();
+						} while (colorExists());
+						PropColors[property.canonicalLabel] = color_;
 					}
-					do {
-						color_ = KnowledgeGraphFunctions.randomHSL();
-					} while (colorExists());
-					PropColors[property.canonicalLabel] = color_;
 				}
 
 				var options =
@@ -316,7 +363,22 @@ KnowledgeGraph = function () {
 					options = options.nodes;
 				}
 				if (!('color' in options)) {
-					options.color = PropColors[property.canonicalLabel];
+					const nodeColor = PropColors[property.canonicalLabel];
+					const textColor = KnowledgeGraphFunctions.getContrastColor(nodeColor);
+
+					options.color = {
+						background: nodeColor,
+						border: '#333',
+						highlight: {
+							background: nodeColor,
+							border: '#000'
+						}
+					};
+
+					// ensure readable font color when node background is dark
+					options.font = Object.assign({}, options.font, {
+						color: textColor
+					});
 				}
 
 				var legendLabel =
@@ -406,7 +468,7 @@ KnowledgeGraph = function () {
 							if (!Nodes.get(valueId)) {
 								const displayLabel = targetLabel.length <= maxPropValueLength
 									? targetLabel
-									: targetLabel.substring(0, maxPropValueLength) + '…';
+									: wrapLabel(targetLabel, 20);
 
 								Nodes.add(
 									jQuery.extend({}, options, {
@@ -920,23 +982,21 @@ ${propertyOptions}|show-property-type=true
 	}
 
 	function findNodeIdContaining(labelPart) {
-	const allNodes = Nodes.get();
-	for (let node of allNodes) {
-		const nodeLabel = node.id.split('#')[0];
-		if (nodeLabel === labelPart) {
-			return node.id;
+		const allNodes = Nodes.get();
+		for (let node of allNodes) {
+			const nodeLabel = node.id.split('#')[0];
+			if (nodeLabel === labelPart) {
+				return node.id;
+			}
 		}
+		return null;
 	}
-	return null;
-}
-
-	
 
 	function attachContextMenuListener() {
 		Network.on('oncontext', function (params) {
 			params.event.preventDefault();
 			// close custom menu if exists
-			$('.custom-menu').hide();
+			$('.kg-node-properties-menu').hide();
 
 			const pointer = { x: params.pointer.DOM.x, y: params.pointer.DOM.y };
 			const edgeId = Network.getEdgeAt(pointer);
@@ -946,22 +1006,10 @@ ${propertyOptions}|show-property-type=true
 				return;
 			}
 
-			// create custom-menu if not exists
-			let $menu = $('.custom-menu');
+			// create kg-node-properties-menu if not exists
+			let $menu = $('.kg-node-properties-menu');
 			if (!$menu.length) {
-				$menu = $('<ul class="custom-menu"></ul>').appendTo('body').hide().css({
-					position: 'absolute',
-					background: '#fff',
-					border: '1px solid #ccc',
-					padding: '5px',
-					listStyle: 'none',
-					zIndex: 10000,
-					maxHeight: '300px',
-					overflowY: 'auto',
-					margin: 0,
-					boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-					cursor: 'pointer'
-				});
+				$menu = $('<ul class="kg-node-properties-menu"></ul>').appendTo('body').hide();
 			} else {
 				$menu.empty();
 			}
@@ -984,7 +1032,7 @@ ${propertyOptions}|show-property-type=true
 					let url = mw.config.get('wgArticlePath').replace('$1', titleLabel);
 
 					let liLink = document.createElement('li');
-					liLink.classList.add('custom-menu-link-entry');
+					liLink.classList.add('kg-node-properties-menu-link-entry');
 					liLink.innerHTML = '🔗 ' + titleLabel;
 					liLink.addEventListener('click', () => window.open(url, '_blank'));
 					$menu.append(liLink);
@@ -993,26 +1041,59 @@ ${propertyOptions}|show-property-type=true
 				fetchSemanticDataForNode(nodeId, function (rawProps) {
 					let props = parseProperties(rawProps).filter(p => !p.property.startsWith('_'));
 					nodePropertiesCache[title] = props;
+					let nodesExisting = Nodes.get();
+					let	edgesExisting = Edges.get();
 
 					if (props.length === 0) {
 						$menu.append('<li>(No available properties)</li>');
 					} else {
 						props.forEach(p => {
 							let li = document.createElement('li');
-							li.classList.add('custom-menu-property-entry');
+							li.classList.add('kg-node-properties-menu-property-entry');
 							li.dataset.action = p.property.replaceAll('_', ' ');
 							li.dataset.direction = p.direction; 
+
 							let displayName = p.property.replaceAll('_', ' ') + (p.direction === 'inverse' ? ' (inverse)' : '');
+
+							let expectedLabel = p.direction === 'inverse' 
+								? '-' + p.property.replaceAll('_', ' ') 
+								: p.property.replaceAll('_', ' ');
+
+							// check if property already exists in graph
+							let existsInGraph = edgesExisting.some(edge => {
+								let labelMatch = edge.label === expectedLabel;
+								let fromMatch = edge.from === title;
+								let toMatch = edge.to === title;
+
+								if (p.direction === 'direct') {
+									return labelMatch && fromMatch;
+								} else if (p.direction === 'inverse') {
+									return labelMatch && toMatch;
+								}
+								return false;
+							});
+
+							// Style existing properties differently
+							if (existsInGraph) {
+								li.classList.add('kg-node-properties-menu-property-entry-selected');
+							}
+
 							li.innerHTML = '● ' + displayName;
 							$menu.append(li);
 						});
 					}
 
 					// Add click handler for property entries to create nodes and edges
-					$('.custom-menu li.custom-menu-property-entry').click(function () {
+					$('.kg-node-properties-menu li.kg-node-properties-menu-property-entry').click(function () {
 						let clickedProperty = $(this).data('action');
 						let clickedDirection = $(this).data('direction');
-						$('.custom-menu').hide();
+						$('.kg-node-properties-menu').hide();
+
+						if ($(this).hasClass('kg-node-properties-menu-property-entry-selected')) {
+							$(this).removeClass('kg-node-properties-menu-property-entry-selected');
+						} else {
+							$(this).addClass('kg-node-properties-menu-property-entry-selected');
+						}
 
 						let propertyData = getPropertyValueForNode(title, clickedProperty, clickedDirection);
 
@@ -1021,11 +1102,21 @@ ${propertyOptions}|show-property-type=true
 							let propKey = clickedDirection === 'inverse' ? `-${clickedProperty}` : clickedProperty;
 
 							if (!(propKey in PropColors)) {
-								let color_;
-								do {
-									color_ = KnowledgeGraphFunctions.randomHSL();
-								} while (Object.values(PropColors).includes(color_));
-								PropColors[propKey] = color_;
+								if (colors && colors.length > 0) {
+									// use d3 palette colors defined in wgKnowledgeGraphColorPalette
+									PropColors[propKey] = KnowledgeGraphFunctions.colorForPropertyLabel(
+										propKey,
+										colors,
+										PropColors
+									);
+								} else {
+									// use random HSL colors if no palette defined
+									let color_;
+									do {
+										color_ = KnowledgeGraphFunctions.randomHSL();
+									} while (Object.values(PropColors).includes(color_));
+									PropColors[propKey] = color_;
+								}
 							}
 							let nodeColor = PropColors[propKey];
 
@@ -1044,8 +1135,6 @@ ${propertyOptions}|show-property-type=true
 								};
 							}
 
-							let nodesExisting = Nodes.get();
-							let	edgesExisting = Edges.get();
 							let keepNode = Network.getNodeAt(pointer);
 							let normalize = str => str.replace(/^-/, '');
 
@@ -1076,6 +1165,11 @@ ${propertyOptions}|show-property-type=true
 								if (edgeExists) {
 									graphModel.removeEdge(edgeId);
 
+									let stillExists = Edges.get().some(e => e.label === edgePropKey);
+									if (!stillExists) {
+										$('#' + edgePropKey.replace(/ /g, '_')).remove();
+									}
+
 									nodesExisting = Nodes.get();
 									edgesExisting = Edges.get();
 
@@ -1085,6 +1179,8 @@ ${propertyOptions}|show-property-type=true
 
 									if (connectedEdges.length === 0) {
 										recursiveDeleteAllChildren(nodeId);
+										let nodeToClear = nodeId.split('#')[0];
+										recursiveDeleteAllChildren(nodeToClear);
 
 										nodesExisting = Nodes.get();
 										edgesExisting = Edges.get();
@@ -1143,25 +1239,37 @@ ${propertyOptions}|show-property-type=true
 								}
 
 								if (!nodesExisting.some(n => n.id === nodeId)) {
+									let fontColor = KnowledgeGraphFunctions.getContrastColor(nodeColor);
+    								if (!fontColor) fontColor = '#000000';
+
 									let nodeConfig = {
 										id: nodeId,
-										label: displayLabel,
+										label: wrapLabel(displayLabel, 20),
 										typeID: typeID,
 										color: nodeColor,
+										font: jQuery.extend(
+											{},
+											Config.graphOptions.nodes.font,
+											{
+												size: Config.graphOptions.nodes.font.size || 30,
+												color: fontColor,
+											}
+										)
 									};
 									if (typeID === 9) {
 										nodeConfig.shape = 'box';
-										nodeConfig.font = jQuery.extend(
-											{},
-											Config.graphOptions.nodes.font,
-											{ size: Config.graphOptions.nodes.font.size || 30 }
-										);
 
 										if (!Data[nodeId]) {
 											let dataKey = nodeId.split('_')[0];
 											Data[dataKey] = { properties: [] };
 										}
 									}
+
+									if (!(edgePropKey in PropIdPropLabelMap)) {
+										PropIdPropLabelMap[edgePropKey] = [];
+									}
+									PropIdPropLabelMap[edgePropKey].push(displayLabel);
+
 									graphModel.addNode(nodeConfig);
 									nodesExisting = Nodes.get();
 									edgesExisting = Edges.get();
@@ -1178,6 +1286,11 @@ ${propertyOptions}|show-property-type=true
 								}
 
 								graphModel.addEdge(edgeConfig);
+
+								if ($('#' + edgePropKey.replace(/ /g, '_')).length === 0) {
+									addLegendEntry(edgePropKey, clickedProperty, nodeColor);
+								}
+
 								nodesExisting = Nodes.get();
 								edgesExisting = Edges.get();
 
@@ -1199,7 +1312,7 @@ ${propertyOptions}|show-property-type=true
 				let li = document.createElement('li');
 				let baseUrl = mw.config.get('wgServer') + mw.config.get('wgScriptPath');
 				let fullUrl = `${baseUrl}/index.php/${propertyTitle}`;
-				li.classList.add('custom-menu-edge-entry');
+				li.classList.add('kg-node-properties-menu-edge-entry');
 				li.innerHTML = '🔗 ' + cleanedLabel;
 				li.addEventListener('click', () => window.open(fullUrl, '_blank'));
 
@@ -1424,6 +1537,13 @@ ${propertyOptions}|show-property-type=true
 			// $(LegendDiv).height(Config.height);
 			LegendDiv.style.width = Config.width;
 			LegendDiv.style.height = Config.height;
+
+			LegendDiv.addEventListener("click", (e) => {
+				if (e.target.classList.contains("legend-element-container")) {
+					let id = e.target.id.replace(/_/g, " ");
+					dispatchEvent_LegendClick(e, id);
+				}
+			});
 		}
 
 		createNodes(Config.data);

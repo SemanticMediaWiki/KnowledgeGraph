@@ -18,6 +18,11 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 		parent::setUp();
 		$this->specialPage = new SpecialKnowledgeGraphDesigner();
 
+		$GLOBALS['wgKnowledgeGraphColorPalettes'] = [
+			'default' => [ '#1f77b4', '#ff7f0e', '#2ca02c' ],
+			'pastel'  => [ '#aec7e8', '#ffbb78', '#98df8a' ],
+		];
+
 		$this->outputPage = $this->getMockBuilder( '\OutputPage' )
 			->disableOriginalConstructor()
 			->getMock();
@@ -110,6 +115,7 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 		$this->assertArrayHasKey( 'knowledgegraphs', $jsConfigVars );
 		$this->assertArrayHasKey( 'KnowledgeGraphShowImages', $jsConfigVars );
 		$this->assertArrayHasKey( 'KnowledgeGraphDisableCredits', $jsConfigVars );
+		$this->assertArrayHasKey( 'wgKnowledgeGraphColorPalette', $jsConfigVars );
 
 		$this->assertTrue( $jsConfigVars['KnowledgeGraphShowImages'] );
 		$this->assertFalse( $jsConfigVars['KnowledgeGraphDisableCredits'] );
