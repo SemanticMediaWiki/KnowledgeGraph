@@ -60,10 +60,15 @@ class SpecialKnowledgeGraphDesigner extends SpecialPage {
 
 		\KnowledgeGraph::$graphs[] = $params;
 
+		$paletteName = $params['palette'] ?? 'default';
+		$colors = $GLOBALS['wgKnowledgeGraphColorPalettes'][$paletteName]
+				?? $GLOBALS['wgKnowledgeGraphColorPalettes']['default'];
+
 		$out->addJsConfigVars( [
 			'knowledgegraphs' => json_encode( \KnowledgeGraph::$graphs ),
 			'KnowledgeGraphShowImages' => $GLOBALS['wgKnowledgeGraphShowImages'],
-			'KnowledgeGraphDisableCredits' => $GLOBALS['wgKnowledgeGraphDisableCredits']
+			'KnowledgeGraphDisableCredits' => $GLOBALS['wgKnowledgeGraphDisableCredits'],
+			'wgKnowledgeGraphColorPalette' => $colors
 		] );
 
 		$out->addHTML(
