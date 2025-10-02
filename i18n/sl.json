@@ -45,5 +45,6 @@
 	"knowledgegraph-toolbar-add-node": "dodaj vozlišče",
 	"knowledgegraph-toolbar-toggle-config": "preklopi konfiguracijo",
 	"knowledgegraph-toolbar-export-graph": "izvozi graf",
-	"knowledgegraph-credits": "Zasluge:"
+	"knowledgegraph-credits": "Zasluge:",
+	"knowledgegraph-credits-list": "<ul><li>KM-A (<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">spletno mesto</a>)</li></ul>"
 }
