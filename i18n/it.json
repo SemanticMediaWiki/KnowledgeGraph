@@ -6,6 +6,7 @@
 	},
 	"knowledge-graph-wrapper-loading": "il grafico si sta caricando...",
 	"knowledgegraph-menu-delete-node": "cancella nodo",
+	"knowledgegraph-delete-node-confirm": "Sei sicuro di voler cancellare questo nodo?",
 	"knowledgegraph-dialog-done": "Fatto",
 	"knowledgegraph-dialog-delete": "Cancella",
 	"knowledgegraph-dialog-select-article": "Seleziona una voce con proprietà semantiche",
@@ -15,5 +16,6 @@
 	"knowledgegraph-dialog-results-no-properties": "Nessuna proprietà",
 	"knowledgegraph-dialog-results-no-new-nodes": "Nessun nuovo nodo da aggiungere.",
 	"knowledgegraph-dialog-results-importing-nodes": "Importa nodi:",
+	"knowledgegraph-toolbar-reset-network-confirm": "Sei sicuro di voler reinizializzare la rete?",
 	"knowledgegraph-credits": "Crediti:"
 }
