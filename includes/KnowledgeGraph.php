@@ -222,6 +222,7 @@ nodes=TestPage
 			'show-property-type' => [ 'false', 'boolean' ],
 			'properties-panel' => [ 'false', 'boolean' ],
 			'categories-panel' => [ 'false', 'boolean' ],
+			'palette' => [ 'default', 'string' ],
 		];
 
 		self::initSMW();
@@ -279,9 +280,14 @@ nodes=TestPage
 
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
 
+		$paletteName = $params['palette'] ?? 'default';
+		$colors = $GLOBALS['wgKnowledgeGraphColorPalettes'][$paletteName]
+				?? $GLOBALS['wgKnowledgeGraphColorPalettes']['default'];
+
 		$out->addJsConfigVars( [
 			'KnowledgeGraphShowImages' => $GLOBALS['wgKnowledgeGraphShowImages'],
-			'KnowledgeGraphDisableCredits' => $GLOBALS['wgKnowledgeGraphDisableCredits']
+			'KnowledgeGraphDisableCredits' => $GLOBALS['wgKnowledgeGraphDisableCredits'],
+			'wgKnowledgeGraphColorPalette' => $colors
 		] );
 
 		return [

@@ -63,9 +63,29 @@
 	padding: 4px;
 }
 
-.custom-menu li.custom-menu-link-entry:hover,
-.custom-menu li.custom-menu-property-entry:hover,
-.custom-menu li.custom-menu-edge-entry:hover {
-	background-color: #e0f0ff;
-	cursor: pointer;
+.kg-node-properties-menu li.kg-node-properties-menu-link-entry:hover,
+.kg-node-properties-menu li.kg-node-properties-menu-property-entry:hover,
+.kg-node-properties-menu li.kg-node-properties-menu-edge-entry:hover {
+    background-color: #e0f0ff;
+    cursor: pointer;
+}
+
+.kg-node-properties-menu {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 5px;
+    list-style: none;
+    z-index: 10000;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+.kg-node-properties-menu-property-entry-selected {
+    font-style: italic;
+    font-weight: bold;
+    color: #2B7CE9;
 }
