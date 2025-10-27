@@ -1,6 +1,7 @@
 {
 	"@metadata": {
 		"authors": [
+			"SaldırganSincap",
 			"Yucavalla"
 		]
 	},
@@ -9,7 +10,7 @@
 	"specialpages-group-knowledgegraph": "ConocimientoGrafico",
 	"knowledgegraphdesigner": "Conocimiento Diseñador de gráficos",
 	"knowledgegraph-knowledgegraphdesigner-label": "Conocimiento Diseñador de gráficos",
-	"knowledgegraph-graph-options-message": "Presione el botón de abajo y copie y pegue el contenido de las claves \"nodos\" y \"aristas\" en un artículo <a target=\"_blank\" href=\"<span class=\"notranslate\" translate=\"no\">$1 \">like this</a> . Luego, configúrelo como valor de los parámetros \"opciones de gráfico\" o \"opciones de propiedad?[Etiqueta de propiedad] de la función de análisis de KnowledgeGraph.",
+	"knowledgegraph-graph-options-message": "Presione el botón de abajo y copie y pegue el contenido de las claves \"nodos\" y \"aristas\" en un artículo <a target=\"_blank\" href=\"$1\">like this</a> . Luego, configúrelo como valor de los parámetros \"opciones de gráfico\" o \"opciones de propiedad?[Etiqueta de propiedad] de la función de análisis de KnowledgeGraph.",
 	"knowledgegraph-menu-delete-node": "eliminar / borrar nodo",
 	"knowledgegraph-dialog-done": "Hecho",
 	"knowledgegraph-dialog-delete": "Eliminar / Borrar",

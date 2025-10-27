@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Hedda"
+			"Hedda",
+			"SaldırganSincap"
 		]
 	},
 	"knowledge-graph-desc": "SemanticMediawiki'deki bilgi grafiğini, VisNetwork.js ile görselleştirir",
@@ -12,7 +13,7 @@
 	"knowledgegraph-knowledgegraphdesigner-label": "BilgiGrafiği Tasarımcısı",
 	"knowledgegraph-toolbar-info": "katkıda bulunanlar",
 	"knowledgegraph-toolbar-help": "yardım",
-	"knowledgegraph-graph-options-message": "Aşağıdaki butona tıklayın ve \"nodes\" ve \"edges\" anahtarlarının içeriklerini <a target=\"_blank\" href=\"<span class=\"notranslate\" translate=\"no\">$1 \">bunun gibi</a> bir maddeye kopyalayıp yapıştırın. Ardından bunu BilgiGrafiği'nin ayrıştırıcı işlevinin \"graph-options\" veya \"property-options?[Özellik etiketi]\" parametrelerinin değeri olarak ayarlayın.",
+	"knowledgegraph-graph-options-message": "Aşağıdaki butona tıklayın ve \"nodes\" ve \"edges\" anahtarlarının içeriklerini <a target=\"_blank\" href=\"$1\">bunun gibi</a> bir maddeye kopyalayıp yapıştırın. Ardından bunu BilgiGrafiği'nin ayrıştırıcı işlevinin \"graph-options\" veya \"property-options?[Özellik etiketi]\" parametrelerinin değeri olarak ayarlayın.",
 	"knowledgegraph-menu-open-article": "maddeyi aç",
 	"knowledgegraph-menu-delete-node": "düğümü sil",
 	"knowledgegraph-delete-node-confirm": "Bu düğümü silmek istediğinizden emin misiniz?",

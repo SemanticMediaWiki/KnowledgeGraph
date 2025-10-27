@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Eleassar"
+			"Eleassar",
+			"SaldırganSincap"
 		]
 	},
 	"knowledge-graph-desc": "Vizualizira graf znanja v SemanticMediaWiki z VisNetwork.js",
@@ -12,7 +13,7 @@
 	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer",
 	"knowledgegraph-toolbar-info": "zasluge",
 	"knowledgegraph-toolbar-help": "pomoč",
-	"knowledgegraph-graph-options-message": "Pritisnite spodnji gumb in kopirajte/prilepite vsebino ključev »nodes« in »edges« v članku <a target=\"_blank\" href=\"<span class=\"notranslate\" translate=\"no\">$1 \">takole</a>. Nato jo nastavite kot vrednost parametrov »graph-options« ali »property-options?[Oznaka lastnosti] funkcije razčlenjevalnika KnowledgeGraph.",
+	"knowledgegraph-graph-options-message": "Pritisnite spodnji gumb in kopirajte/prilepite vsebino ključev »nodes« in »edges« v članku <a target=\"_blank\" href=\"$1\">$1 \">takole</a>. Nato jo nastavite kot vrednost parametrov »graph-options« ali »property-options?[Oznaka lastnosti] funkcije razčlenjevalnika KnowledgeGraph.",
 	"knowledgegraph-menu-open-article": "odpri članek",
 	"knowledgegraph-menu-delete-node": "izbriši vozlišče",
 	"knowledgegraph-delete-node-confirm": "Ali res želite izbrisati to vozlišče?",
