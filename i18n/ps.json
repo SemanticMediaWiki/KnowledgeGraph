@@ -1,0 +1,18 @@
+{
+	"@metadata": {
+		"authors": [
+			"شاه زمان پټان"
+		]
+	},
+	"knowledgegraph-toolbar-help": "لارښود",
+	"knowledgegraph-menu-open-article": "ليکنه پرانېستل",
+	"knowledgegraph-dialog-continue": "پرله‌پورې",
+	"knowledgegraph-dialog-back": "پرشاکېدل",
+	"knowledgegraph-dialog-done": "ترسره شو",
+	"knowledgegraph-dialog-cancel": "ناگارل",
+	"knowledgegraph-dialog-delete": "ړنگول",
+	"knowledgegraph-dialog-edit-depth": "ژوروالی",
+	"knowledgegraph-dialog-edit-limit": "بريد",
+	"knowledgegraph-dialog-edit-offset": "سرچپه",
+	"knowledgegraph-dialog-tabs-by-article": "د ليکنې له مخې"
+}
