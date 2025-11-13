@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"McDutchie"
+			"McDutchie",
+			"Siebrand"
 		]
 	},
 	"knowledge-graph-desc": "Visualiseert de kennisgrafiek in Semantic Mediawiki met VisNetwork.js",
@@ -46,5 +47,5 @@
 	"knowledgegraph-toolbar-toggle-config": "configuratie omschakelen",
 	"knowledgegraph-toolbar-export-graph": "grafiek exporteren",
 	"knowledgegraph-credits": "Naamsvermeldingen:",
-	"knowledgegraph-credits-list": "<ul><li>KM-A (<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">website</a>)</li></ul>"
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li> <a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }

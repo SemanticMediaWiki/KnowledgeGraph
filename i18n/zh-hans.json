@@ -47,5 +47,5 @@
 	"knowledgegraph-toolbar-toggle-config": "切换配置",
 	"knowledgegraph-toolbar-export-graph": "导出图谱",
 	"knowledgegraph-credits": "参与名单：",
-	"knowledgegraph-credits-list": "<ul><li>KM-A（<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">网站</a>）</li></ul>"
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }
