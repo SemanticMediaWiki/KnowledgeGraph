@@ -1,6 +1,8 @@
 {
 	"@metadata": {
-		"authors": []
+		"authors": [
+			"Ameisenigel"
+		]
 	},
 	"knowledge-graph-name": "KnowledgeGraph",
 	"knowledge-graph-desc": "Stellt den Wissensgraph in Semantic MediaWiki mittels VisNetwork.js dar.",
@@ -40,7 +42,7 @@
 	"knowledgegraph-dialog-results-importing-nodes": "importiert Knoten:",
 	"knowledgegraph-copied-to-clipboard": "In die Zwischenablage kopiert!",
 	"knowledgegraph-toolbar-reset-network": "zurücksetzen",
-	"knowledgegraph-toolbar-reset-network-confirm": "Sind Sie sicher, dass Sie das Netzwerk neu initialisieren wollen?",
+	"knowledgegraph-toolbar-reset-network-confirm": "Bist du sicher, dass du das Netzwerk neu initialisieren willst?",
 	"knowledgegraph-toolbar-add-node": "Knoten hinzufügen",
 	"knowledgegraph-toolbar-toggle-config": "Konfiguration umschalten",
 	"knowledgegraph-toolbar-export-graph": "exportiere Wikitext",
