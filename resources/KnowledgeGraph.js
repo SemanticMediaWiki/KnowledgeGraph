@@ -1542,14 +1542,40 @@ ${propertyOptions}|show-property-type=true
 };
 
 $(document).ready(async function () {
+
+	// Caches loaded modules to avoid repeated dynamic imports
+	const moduleCache = new Map();
+
 	var semanticGraphs = JSON.parse(mw.config.get('knowledgegraphs'));
 
 	async function getModule(str) {
-		var module = await import(`data:text/javascript;base64,${btoa(str)}`);
-		if ('default' in module) {
-			return module.default;
+		// Empty or non-string input should be ignored early
+		if (typeof str !== "string" || str.trim() === "") {
+			return null;
 		}
-		return null;
+
+		// Return from cache if already loaded
+		if (moduleCache.has(str)) {
+			return moduleCache.get(str);
+		}
+
+		try {
+			// Convert JS string to Base64 ES module and load it
+			const module = await import(`data:text/javascript;base64,${btoa(str)}`);
+
+			// Use "default" export if available
+			const result = module.default ?? null;
+
+			// Store only successful results in cache
+			moduleCache.set(str, result);
+
+			return result;
+
+		} catch (error) {
+			// Log errors to help debugging faulty JS blocks in wiki pages
+			console.error("KnowledgeGraph: Failed to load module:", error);
+			return null;
+		}
 	}
 
 	$('.KnowledgeGraph').each(async function (index) {
