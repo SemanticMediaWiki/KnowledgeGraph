@@ -1588,7 +1588,21 @@ $(document).ready(async function () {
 	}
 
 	$('.KnowledgeGraph').each(async function (index) {
-		var graphData = semanticGraphs[index];
+		// Retrieve semantic graph config by index
+		const graphData = semanticGraphs[index];
+
+		// Abort early if no config exists for this element
+		if (!graphData) {
+			console.warn("KnowledgeGraph: Missing graphData for index", index);
+			return;
+		}
+
+		// Use existing DOM element
+		var container = this;
+		if (!container) {
+			console.warn("KnowledgeGraph: Missing DOM container for index", index);
+			return;
+		}
 
 		var graph = new KnowledgeGraph();
 
