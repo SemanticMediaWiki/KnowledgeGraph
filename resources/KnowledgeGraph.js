@@ -1604,116 +1604,121 @@ $(document).ready(async function () {
 			return;
 		}
 
-		var graph = new KnowledgeGraph();
+		try {
+			var graph = new KnowledgeGraph();
 
-		// graphOptions may be a JS module string or an object; handle both cleanly
-		if (typeof graphData.graphOptions === "string") {
-			const result = await getModule(graphData.graphOptions);
-			if (result) {
-				graphData.graphOptions = result;
-			}
-		} else if (!isPlainObject(graphData.graphOptions)) {
-			graphData.graphOptions = {};
-		}
-
-		// propertyOptions contains a map of property → JS module string or object
-		if (isPlainObject(graphData.propertyOptions)) {
-			for (const key in graphData.propertyOptions) {
-				const value = graphData.propertyOptions[key];
-
-				if (typeof value === "string") {
-					const result = await getModule(value);
-					if (result) {
-						graphData.propertyOptions[key] = result;
-					}
-				} else if (!isPlainObject(value)) {
-					graphData.propertyOptions[key] = {};
+			// graphOptions may be a JS module string or an object; handle both cleanly
+			if (typeof graphData.graphOptions === "string") {
+				const result = await getModule(graphData.graphOptions);
+				if (result) {
+					graphData.graphOptions = result;
 				}
+			} else if (!isPlainObject(graphData.graphOptions)) {
+				graphData.graphOptions = {};
 			}
-		} else {
-			graphData.propertyOptions = {};
-		}
 
-		graphData.graphOptions = $.extend(
-			KnowledgeGraphOptions.getDefaultOptions(),
-			graphData.graphOptions
-		);
+			// propertyOptions contains a map of property → JS module string or object
+			if (isPlainObject(graphData.propertyOptions)) {
+				for (const key in graphData.propertyOptions) {
+					const value = graphData.propertyOptions[key];
 
-		var config = $.extend(
-			true,
-			{
-				data: {},
-				propertyOptions: {},
-				properties: [],
-				depth: '',
-				width: '',
-				height: '',
-				'show-toolbar': false,
-				'show-property-type': false,
-				context: 'parserfunction',
-			},
-			graphData
-		);
-
-		if (config.width !== '') {
-			config.graphOptions.width = config.width;
-		}
-		if (config.height !== '') {
-			config.graphOptions.height = config.height;
-		}
-
-		var container = this;
-		var containerToolbar = null;
-		var containerOptions = null;
-
-		if (config['show-toolbar']) {
-			config.graphOptions.configure.enabled = true;
-			if (config.graphOptions.configure.container) {
-				containerOptions = config.graphOptions.configure.container;
-				containerToolbar = document.createElement('div');
-				containerToolbar.insertBefore(container);
+					if (typeof value === "string") {
+						const result = await getModule(value);
+						if (result) {
+							graphData.propertyOptions[key] = result;
+						}
+					} else if (!isPlainObject(value)) {
+						graphData.propertyOptions[key] = {};
+					}
+				}
 			} else {
-				var $container = $(this).clone();
-
-				$table = $(
-					`<table class="KnowledgeGraphTable" style="height:` +
-					config.height +
-					`;width:` +
-					config.width +
-					`">
-	<tr>
-		<td colspan="2" class="KnowledgeGraph-toolbar"></td>
-	</tr>
-	<tr>
-		<td class="KnowledgeGraph-network" style="width:50%;vertical-align:top"></td>
-		<td class="KnowledgeGraph-options" style="width:50%"><div style="width:auto;height:` +
-					config.height +
-					`;overflow:scroll"></div></td>
-	</tr>
-</table>`
-				);
-
-				$table.find('.KnowledgeGraph-network').append($container);
-				config.graphOptions.configure.container = $table
-					.find('.KnowledgeGraph-options > div')
-					.get(0);
-
-				$(this).replaceWith($table);
-
-				container = $container.get(0);
-				containerToolbar = $table.find('.KnowledgeGraph-toolbar').get(0);
-				containerOptions = $table.find('.KnowledgeGraph-options').get(0);
+				graphData.propertyOptions = {};
 			}
-		} else {
-			config.graphOptions.configure.enabled = false;
-			// *** attention!! this generates absolute values
-			// when used in conjunction with Chameleon !!
-			// $(container).width(config.width);
-			// $(container).height(config.height);
-			container.style.width = config.width;
-			container.style.height = config.height;
-		}
 
-		graph.initialize(container, containerToolbar, containerOptions, config);
+			graphData.graphOptions = $.extend(
+				KnowledgeGraphOptions.getDefaultOptions(),
+				graphData.graphOptions
+			);
+
+			var config = $.extend(
+				true,
+				{
+					data: {},
+					propertyOptions: {},
+					properties: [],
+					depth: '',
+					width: '',
+					height: '',
+					'show-toolbar': false,
+					'show-property-type': false,
+					context: 'parserfunction',
+				},
+				graphData
+			);
+
+			if (config.width !== '') {
+				config.graphOptions.width = config.width;
+			}
+			if (config.height !== '') {
+				config.graphOptions.height = config.height;
+			}
+
+			var container = this;
+			var containerToolbar = null;
+			var containerOptions = null;
+
+			if (config['show-toolbar']) {
+				config.graphOptions.configure.enabled = true;
+				if (config.graphOptions.configure.container) {
+					containerOptions = config.graphOptions.configure.container;
+					containerToolbar = document.createElement('div');
+					containerToolbar.insertBefore(container);
+				} else {
+					var $container = $(this).clone();
+
+					$table = $(
+						`<table class="KnowledgeGraphTable" style="height:` +
+						config.height +
+						`;width:` +
+						config.width +
+						`">
+		<tr>
+			<td colspan="2" class="KnowledgeGraph-toolbar"></td>
+		</tr>
+		<tr>
+			<td class="KnowledgeGraph-network" style="width:50%;vertical-align:top"></td>
+			<td class="KnowledgeGraph-options" style="width:50%"><div style="width:auto;height:` +
+						config.height +
+						`;overflow:scroll"></div></td>
+		</tr>
+	</table>`
+					);
+
+					$table.find('.KnowledgeGraph-network').append($container);
+					config.graphOptions.configure.container = $table
+						.find('.KnowledgeGraph-options > div')
+						.get(0);
+
+					$(this).replaceWith($table);
+
+					container = $container.get(0);
+					containerToolbar = $table.find('.KnowledgeGraph-toolbar').get(0);
+					containerOptions = $table.find('.KnowledgeGraph-options').get(0);
+				}
+			} else {
+				config.graphOptions.configure.enabled = false;
+				// *** attention!! this generates absolute values
+				// when used in conjunction with Chameleon !!
+				// $(container).width(config.width);
+				// $(container).height(config.height);
+				container.style.width = config.width;
+				container.style.height = config.height;
+			}
+
+			graph.initialize(container, containerToolbar, containerOptions, config);
+		} catch (error) {
+			console.error("KnowledgeGraph: Failed to initialize graph at index", index, error);
+			return;
+		}
 	});
 });
