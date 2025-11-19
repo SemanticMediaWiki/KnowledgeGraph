@@ -74,12 +74,25 @@ KnowledgeGraphDialog = (function () {
 			var fieldsetLayout = new OO.ui.FieldsetLayout();
 			var items = [];
 
-			self.titleInputWidget = new mw.widgets.TitleInputWidget({
-				autocomplete: true,
-				// suggestions: true,
-				// addQueryInput: true,
-				// $overlay: true,
-				// allowSuggestionsWhenEmpty: true,
+			self.namespaceDropdown = new OO.ui.DropdownInputWidget({
+				options: [
+					{ data: 0, label: mw.msg('knowledgegraph-dialog-main-namespace') },
+					...Object.entries(mw.config.get('wgExtraNamespaces')).map(([id, label]) => ({
+						data: parseInt(id, 10),
+						label: label
+					}))
+				]
+			});
+
+			items.push(
+				new OO.ui.FieldLayout(self.namespaceDropdown, {
+					label: mw.msg('knowledgegraph-dialog-select-namespace'),
+					align: 'top'
+				})
+			);
+
+			self.titleInputWidget = new OO.ui.ComboBoxInputWidget({
+				menu: { items: [] }
 			});
 
 			items.push(
@@ -88,7 +101,6 @@ KnowledgeGraphDialog = (function () {
 					align: 'top',
 				})
 			);
-
 			self.depthInputWidget = new OO.ui.NumberInputWidget({
 				value: Config.depth,
 			});
@@ -101,9 +113,43 @@ KnowledgeGraphDialog = (function () {
 			);
 
 			fieldsetLayout.addItems(items);
-
 			this.$element.append(fieldsetLayout.$element);
+
+			self.titleInputWidget.$input.on('input', function () {
+				var val = $(this).val();
+				if (!val) return;
+
+				var searchVal = val.replace(/ /g, "_");
+				var ns = parseInt(self.namespaceDropdown.getValue() || 0, 10);
+
+				new mw.Api().get({
+					action: 'query',
+					format: 'json',
+					list: 'allpages',
+					apnamespace: ns,
+					apprefix: searchVal,
+					aplimit: 50
+				}).done(function (data) {
+					var items = [];
+					if (data.query && data.query.allpages) {
+						var valLower = val.toLowerCase();
+						items = data.query.allpages
+							.map(item => {
+								var shortTitle = item.title.replace(/^.*:/, '');
+								return { data: item.title, label: shortTitle };
+							})
+							.filter(item => item.label.toLowerCase().includes(valLower))
+							.map(item => new OO.ui.MenuOptionWidget(item));
+					}
+
+					var menu = self.titleInputWidget.getMenu();
+					menu.clearItems();
+					menu.addItems(items);
+					menu.toggle(items.length > 0);
+				});
+			});
 		}
+
 		OO.inheritClass(TabPanelOneLayout, OO.ui.TabPanelLayout);
 		TabPanelOneLayout.prototype.setupTabItem = function () {
 			this.tabItem.setLabel(mw.msg('knowledgegraph-dialog-tabs-by-article'));
@@ -310,7 +356,7 @@ KnowledgeGraphDialog = (function () {
 		// When working with a stack layout, you can use:
 		//   return this.panels.getCurrentItem().$element.outerHeight( true );
 		//return this.stackLayout.getCurrentItem().$element.outerHeight(true);
-		return 280;
+		return 340;
 	};
 
 	MyDialog.prototype.getSetupProcess = function (data) {

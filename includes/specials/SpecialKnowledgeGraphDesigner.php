@@ -68,7 +68,8 @@ class SpecialKnowledgeGraphDesigner extends SpecialPage {
 			'knowledgegraphs' => json_encode( \KnowledgeGraph::$graphs ),
 			'KnowledgeGraphShowImages' => $GLOBALS['wgKnowledgeGraphShowImages'],
 			'KnowledgeGraphDisableCredits' => $GLOBALS['wgKnowledgeGraphDisableCredits'],
-			'wgKnowledgeGraphColorPalette' => $colors
+			'wgKnowledgeGraphColorPalette' => $colors,
+			'wgExtraNamespaces' => $GLOBALS['wgExtraNamespaces']
 		] );
 
 		$out->addHTML(

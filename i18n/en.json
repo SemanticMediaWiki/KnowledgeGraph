@@ -26,6 +26,8 @@
 	"knowledgegraph-dialog-cancel": "Cancel",
 	"knowledgegraph-dialog-delete": "Delete",
 	"knowledgegraph-dialog-select-article": "Select an article with semantic properties",
+	"knowledgegraph-dialog-select-namespace": "Select a namespace",
+	"knowledgegraph-dialog-main-namespace": "(Main)",
 	"knowledgegraph-dialog-edit-depth": "Depth",
 	"knowledgegraph-dialog-edit-limit": "Limit",
 	"knowledgegraph-dialog-edit-offset": "Offset",
