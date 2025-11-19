@@ -1578,25 +1578,46 @@ $(document).ready(async function () {
 		}
 	}
 
+	// Returns true only for plain objects (not arrays, not strings, not functions)
+	function isPlainObject(value) {
+		return (
+			value !== null &&
+			typeof value === "object" &&
+			value.constructor === Object
+		);
+	}
+
 	$('.KnowledgeGraph').each(async function (index) {
 		var graphData = semanticGraphs[index];
 
 		var graph = new KnowledgeGraph();
 
-		if (graphData.graphOptions && Object.keys(graphData.graphOptions).length) {
-			var result = await getModule(graphData.graphOptions);
+		// graphOptions may be a JS module string or an object; handle both cleanly
+		if (typeof graphData.graphOptions === "string") {
+			const result = await getModule(graphData.graphOptions);
 			if (result) {
 				graphData.graphOptions = result;
 			}
+		} else if (!isPlainObject(graphData.graphOptions)) {
+			graphData.graphOptions = {};
 		}
 
-		if (graphData.propertyOptions && Object.keys(graphData.propertyOptions).length) {
-			for (var i in graphData.propertyOptions) {
-				var result = await getModule(graphData.propertyOptions[i]);
-				if (result) {
-					graphData.propertyOptions[i] = result;
+		// propertyOptions contains a map of property → JS module string or object
+		if (isPlainObject(graphData.propertyOptions)) {
+			for (const key in graphData.propertyOptions) {
+				const value = graphData.propertyOptions[key];
+
+				if (typeof value === "string") {
+					const result = await getModule(value);
+					if (result) {
+						graphData.propertyOptions[key] = result;
+					}
+				} else if (!isPlainObject(value)) {
+					graphData.propertyOptions[key] = {};
 				}
 			}
+		} else {
+			graphData.propertyOptions = {};
 		}
 
 		graphData.graphOptions = $.extend(
