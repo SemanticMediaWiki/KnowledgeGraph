@@ -13,7 +13,7 @@
 	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer",
 	"knowledgegraph-toolbar-info": "Info",
 	"knowledgegraph-toolbar-help": "Hilfe",
-	"knowledgegraph-graph-options-message": "Klicken Sie auf die Schaltfläche unten und kopieren Sie den Inhalt der Tasten \"nodes\" und \"edges\" in einen Artikel <a target=\"_blank\" href=\"$1\">wie diesen</a>. Dann setzen Sie ihn als Wert der Parameter \"graph-options\" oder \"property-options?[Property label] der Parser-Funktion des KnowledgeGraphs.",
+	"knowledgegraph-graph-options-message": "{{#FORMAL:Klicke|Klicken Sie}} auf die Schaltfläche unten und {{#FORMAL:kopiere|kopieren Sie}} den Inhalt der Tasten \"nodes\" und \"edges\" in einen Artikel <a target=\"_blank\" href=\"$1\">wie diesen</a>. Dann {{#FORMAL:setze|setzen Sie}} ihn als Wert der Parameter \"graph-options\" oder \"property-options?[Property label] der Parser-Funktion des KnowledgeGraphs.",
 	"knowledgegraph-menu-open-article": "Seite öffnen",
 	"knowledgegraph-menu-delete-node": "Knoten entfernen",
 	"knowledgegraph-delete-node-confirm": "Diesen Knoten sicher entfernen?",
@@ -22,7 +22,9 @@
 	"knowledgegraph-dialog-done": "Fertig",
 	"knowledgegraph-dialog-cancel": "Abbrechen",
 	"knowledgegraph-dialog-delete": "Löschen",
-	"knowledgegraph-dialog-select-article": "Wählen Sie einen Artikel mit semantischen Attributen",
+	"knowledgegraph-dialog-select-article": "{{#FORMAL:Wähle|Wählen Sie}} einen Artikel mit semantischen Attributen",
+	"knowledgegraph-dialog-select-namespace": "{{#FORMAL:Wähle|Wählen Sie}} einen Namensraum",
+	"knowledgegraph-dialog-main-namespace": "(Main)",
 	"knowledgegraph-dialog-edit-depth": "Tiefe",
 	"knowledgegraph-dialog-edit-limit": "Limit",
 	"knowledgegraph-dialog-edit-offset": "Versatz",
@@ -42,10 +44,10 @@
 	"knowledgegraph-dialog-results-importing-nodes": "importiert Knoten:",
 	"knowledgegraph-copied-to-clipboard": "In die Zwischenablage kopiert!",
 	"knowledgegraph-toolbar-reset-network": "zurücksetzen",
-	"knowledgegraph-toolbar-reset-network-confirm": "Bist du sicher, dass du das Netzwerk neu initialisieren willst?",
+	"knowledgegraph-toolbar-reset-network-confirm": "{{#FORMAL:Bist du|Sind Sie}} sicher, dass {{#FORMAL:du|Sie}} das Netzwerk neu initialisieren {{#FORMAL:willst|wollen}}?",
 	"knowledgegraph-toolbar-add-node": "Knoten hinzufügen",
 	"knowledgegraph-toolbar-toggle-config": "Konfiguration umschalten",
 	"knowledgegraph-toolbar-export-graph": "exportiere Wikitext",
 	"knowledgegraph-credits": "Info:",
-	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it\">gesinn.it</a></ul>"
 }

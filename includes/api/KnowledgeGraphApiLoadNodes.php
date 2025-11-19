@@ -8,7 +8,6 @@
  */
 
 use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
-use MediaWiki\MediaWikiServices;
 
 class KnowledgeGraphApiLoadNodes extends ApiBase {
 
@@ -91,7 +90,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 		"_INST",
 		"_PPGR",
 		"_SUBP",
-		"_SUBC"
+		"_SUBC",
 	];
 
 	/**
@@ -101,91 +100,27 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 		$result = $this->getResult();
 		$params = $this->extractRequestParams();
 		$context = $this->getContext();
-		$output = $context->getOutput();
 
 		\KnowledgeGraph::initSMW();
 		self::$SMWStore = \SMW\StoreFactory::getStore();
 		self::$SMWDataValueFactory = SMW\DataValueFactory::getInstance();
 
-		$services = MediaWikiServices::getInstance();
-		$urlUtils = $services->getUrlUtils();
-		$httpRequestFactory = $services->getHttpRequestFactory();
-
-		$scriptPath = $services->getMainConfig()->get( 'ScriptPath' );
-		$server = $services->getMainConfig()->get( 'Server' );
-		$apiUrl = $server . $scriptPath . '/api.php';
-
-		$queryParams = [
-			'action' => 'query',
-			'list' => 'allpages',
-			'apnamespace' => 102,
-			'aplimit' => 'max',
-			'format' => 'json'
-		];
-
-		$query = http_build_query( $queryParams );
-		$response = $httpRequestFactory->get( "$apiUrl?$query", [], __METHOD__ );
-		$data = json_decode( $response, true );
-
-		$propertyTitles = array_column( $data['query']['allpages'], 'title' );
-		$propertyNames = array_map( static function ( $title ) {
-			return substr( $title, strrpos( $title, ':' ) + 1 );
-		}, $propertyTitles );
-
-		$params['properties'] = ( !empty( $params['properties'] ) ?
-			json_decode( $params['properties'], true ) : [] );
-
 		$titles = explode( '|', $params['titles'] );
 		foreach ( $titles as $titleText ) {
 			$title_ = TitleClass::newFromText( $titleText );
-
-			foreach ( $propertyNames as $propertyName ) {
-				$propertyDI = \SMW\DIProperty::newFromUserLabel( $propertyName );
-				$results = \KnowledgeGraph::getSubjectsByProperty( $propertyDI, $limit, 0, $titleText );
-				if ( count( $results ) > 0 ) {
-					$params['properties'][] = $propertyName;
-				}
+			if ( !$title_ || !$title_->isKnown() ) {
+				continue;
 			}
 
-			$subject = new \SMW\DIWikiPage( $title_->getDbKey(), $title_->getNamespace() );
-			$semanticData = self::$SMWStore->getSemanticData( $subject );
+			$listOfProps = \KnowledgeGraph::getAllPropertiesForNode( $titleText );
 
-			foreach ( $semanticData->getProperties() as $property ) {
-				$key = $property->getKey();
-
-				$typeID = $property->findPropertyTypeID();
-
-				if ( in_array( $key, self::$exclude ) ) {
-					continue;
-				}
-
-				$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
-				if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
-					continue;
-				}
-
-				$key = str_replace( '_', ' ', $property->getKey() );
-
-				$params['properties'][] = $key;
-
-			}
-
-			$params['properties'] = array_unique( $params['properties'] );
-
-			$params['properties'] = array_unique(
-				array_merge(
-					$params['properties'],
-					array_map(
-						fn ( $prop ) => '-' . $prop,
-						$params['properties']
-					)
-				)
-			);
-
-			if ( $title_ && $title_->isKnown() ) {
-				if ( !isset( self::$data[$title_->getFullText()] ) ) {
-					\KnowledgeGraph::setSemanticDataFromApi( $title_, $params['properties'], 0, $params['depth'] );
-				}
+			if ( !isset( self::$data[$title_->getFullText()] ) ) {
+				\KnowledgeGraph::setSemanticDataFromApi(
+					$title_,
+					$listOfProps,
+					0,
+					$params['depth']
+				);
 			}
 		}
 

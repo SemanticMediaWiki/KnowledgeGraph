@@ -27,11 +27,9 @@ class KnowledgeGraphTest extends TestCase {
 		$outMock = $this->createMock( OutputPage::class );
 		$skinMock = $this->createMock( Skin::class );
 
-		$outMock->expects( $this->once() )
-				->method( 'addModules' )
-				->with( 'ext.KnowledgeGraph' );
+		$result = KnowledgeGraph::onBeforePageDisplay( $outMock, $skinMock );
 
-		KnowledgeGraph::onBeforePageDisplay( $outMock, $skinMock );
+		$this->assertTrue( $result );
 	}
 
 	/**

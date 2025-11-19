@@ -36,7 +36,6 @@
 		"KnowledgeGraphDesigner": "SpecialKnowledgeGraphDesigner"
 	},
 	"Hooks":{
-		"LoadExtensionSchemaUpdates": "KnowledgeGraph::onLoadExtensionSchemaUpdates",
 		"BeforePageDisplay":"KnowledgeGraph::onBeforePageDisplay",
 		"ParserFirstCallInit": "KnowledgeGraph::onParserFirstCallInit",
 		"OutputPageParserOutput": "KnowledgeGraph::onOutputPageParserOutput",
@@ -91,6 +90,8 @@
 				"knowledgegraph-dialog-cancel",
 				"knowledgegraph-dialog-delete",
 				"knowledgegraph-dialog-select-article",
+				"knowledgegraph-dialog-select-namespace",
+				"knowledgegraph-dialog-main-namespace",
 				"knowledgegraph-dialog-edit-depth",
 				"knowledgegraph-dialog-edit-limit",
 				"knowledgegraph-dialog-edit-offset",

@@ -134,8 +134,50 @@ class KnowledgeGraph {
 	 * @return void
 	 */
 	public static function onBeforePageDisplay( $out, $skin ) {
-		$out->addModules( 'ext.KnowledgeGraph' );
+		// Ensure that the KnowledgeGraphOptions page exists
+		self::ensureKnowledgeGraphOptionsPageExists();
 		return true;
+	}
+
+	/**
+	 * Ensure that the KnowledgeGraphOptions page exists in the MediaWiki namespace.
+	 * Creates it lazily if missing.
+	 *
+	 * @return void
+	 */
+	private static function ensureKnowledgeGraphOptionsPageExists() {
+		$title = Title::makeTitleSafe( NS_MEDIAWIKI, 'KnowledgeGraphOptions' );
+		if ( !$title ) {
+			return;
+		}
+
+		$wikiPage = WikiPage::factory( $title );
+		if ( $wikiPage->exists() ) {
+			return;
+		}
+
+		// Create page content
+		$filePath = __DIR__ . '/../data/KnowledgeGraphOptions.js';
+		if ( !file_exists( $filePath ) ) {
+			wfDebugLog( 'KnowledgeGraph', 'Missing KnowledgeGraphOptions.js template file.' );
+			return;
+		}
+
+		$text = file_get_contents( $filePath );
+		$content = ContentHandler::makeContent(
+			$text,
+			$title,
+			CONTENT_MODEL_JAVASCRIPT
+		);
+
+		$user = User::newSystemUser( 'MediaWiki default', [ 'steal' => true ] );
+
+		$pageUpdater = $wikiPage->newPageUpdater( $user );
+		$pageUpdater->setContent( SlotRecord::MAIN, $content );
+		$pageUpdater->saveRevision(
+			CommentStoreComment::newUnsavedComment( 'Initialize KnowledgeGraphOptions' ),
+			EDIT_SUPPRESS_RC
+		);
 	}
 
 	/**
@@ -143,29 +185,6 @@ class KnowledgeGraph {
 	 */
 	public static function onParserFirstCallInit( Parser $parser ) {
 		$parser->setFunctionHook( 'knowledgegraph', [ self::class, 'parserFunctionKnowledgeGraph' ] );
-	}
-
-	/**
-	 * @param DatabaseUpdater|null $updater
-	 */
-	public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater = null ) {
-		$text = file_get_contents( __DIR__ . '/../data/KnowledgeGraphOptions.js' );
-		$user = RequestContext::getMain()->getUser();
-		$title = TitleClass::makeTitleSafe( NS_MEDIAWIKI, 'KnowledgeGraphOptions' );
-
-		$wikiPage = self::getWikiPage( $title );
-		$pageUpdater = $wikiPage->newPageUpdater( $user );
-
-		// @see includes/Defines.php
-		$modelId = CONTENT_MODEL_JAVASCRIPT;
-		$slotContent = ContentHandler::makeContent( $text, $title, $modelId );
-		$slotName = SlotRecord::MAIN;
-		$pageUpdater->setContent( $slotName, $slotContent );
-
-		$summary = "KnowledgeGraph";
-		$flags = EDIT_INTERNAL;
-		$comment = CommentStoreComment::newUnsavedComment( $summary );
-		$pageUpdater->saveRevision( $comment, $flags );
 	}
 
 	/**
@@ -277,6 +296,7 @@ nodes=TestPage
 		$params['graphOptions'] = $graphOptions;
 		$params['propertyOptions'] = $propertyOptions;
 		self::$graphs[] = $params;
+		self::$data = [];
 
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
 
@@ -290,8 +310,9 @@ nodes=TestPage
 			'wgKnowledgeGraphColorPalette' => $colors
 		] );
 
+		$index = count( self::$graphs ) - 1;
 		return [
-			'<div class="KnowledgeGraph" id="knowledgegraph-wrapper-' . key( self::$graphs ) . '">'
+			'<div class="KnowledgeGraph" id="knowledgegraph-wrapper-' . $index . '">'
 				. wfMessage( 'knowledge-graph-wrapper-loading' )->text() . '</div>',
 			'noparse' => true,
 			'isHTML' => true
@@ -359,6 +380,75 @@ nodes=TestPage
 	}
 
 	/**
+	 * Get all properties for a given node.
+	 * @param string $nodeTitleText
+	 * @return array
+	 */
+	public static function getAllPropertiesForNode( string $nodeTitleText ): array {
+		$ret = [];
+
+		$title = Title::newFromText( $nodeTitleText );
+		if ( !$title || !$title->isKnown() ) {
+			wfDebugLog( 'KnowledgeGraph', "Invalid or unknown node: '$nodeTitleText'" );
+			return [];
+		}
+
+		$apiParams = [
+			'action' => 'smwbrowse',
+			'format' => 'json',
+			'browse' => 'subject',
+			'params' => json_encode( [
+				'subject' => $nodeTitleText,
+				'ns' => $title->getNamespace(),
+			] ),
+		];
+
+		$request = new \FauxRequest( $apiParams, false );
+		$api = new \ApiMain( $request );
+		$api->execute();
+		$data = $api->getResult()->getResultData();
+
+		if ( empty( $data[ 'query' ][ 'data' ] ) ) {
+			wfDebugLog( 'KnowledgeGraph', "No properties returned from smwbrowse for '$nodeTitleText'" );
+			return [];
+		}
+
+		foreach ( $data['query']['data'] as $propertyEntry ) {
+			$propKey = $propertyEntry['property'] ?? null;
+			$direction = $propertyEntry['direction'] ?? 'direct';
+
+			if ( !$propKey ) {
+				continue;
+			}
+
+			if (
+				( isset( self::$exclude ) && in_array( $propKey, self::$exclude ) ) ||
+				str_starts_with( $propKey, '_' ) ||
+				str_starts_with( $propKey, '___' ) ||
+				ctype_upper( str_replace( '_', '', $propKey ) )
+			) {
+				continue;
+			}
+
+			$propKey = str_replace( '_', ' ', $propKey );
+
+			if ( $direction === 'inverse' ) {
+				$propKey = '-' . $propKey;
+			}
+
+			$ret[] = $propKey;
+		}
+
+		wfDebugLog( 'KnowledgeGraph', sprintf(
+			"getAllPropertiesForNode (smwbrowse): node=%s, properties=%d",
+			$nodeTitleText,
+			count( $ret )
+		) );
+
+		return array_unique( $ret );
+	}
+
+	/**
 	 * @param Title|MediaWiki\Title\Title $title $title
 	 * @return string|null
 	 */
@@ -403,6 +493,9 @@ nodes=TestPage
 			$out->addJsConfigVars( [
 				'knowledgegraphs' => json_encode( $data )
 			] );
+
+			// add the required JavaScript module if graphs are present
+			$out->addModules( 'ext.KnowledgeGraph' );
 		}
 	}
 
@@ -534,7 +627,16 @@ nodes=TestPage
 			return;
 		}
 
-		if ( $depth > $maxDepth ) {
+		// If maxDepth is 0, only create the root node without loading SMW data
+		if ( $maxDepth === 0 ) {
+			self::$data[$titleText] = [
+				'properties' => [],
+				'categories' => [],
+			];
+			return;
+		}
+
+		if ( $depth >= $maxDepth ) {
 			return;
 		}
 
@@ -640,8 +742,19 @@ nodes=TestPage
 
 			foreach ( $entry['dataitem'] ?? [] as $item ) {
 				if ( $item['type'] === 9 ) {
-					$linkedTitle = explode( '#', $item['item'] )[0];
-					$linkedTitle = $linkedTitle ? str_replace( '_', ' ', $linkedTitle ) : null;
+					$parts = explode( '#', $item['item'] );
+					$dbkey = $parts[0] ?? '';
+					$nsId = isset( $parts[1] ) && is_numeric( $parts[1] ) ? (int)$parts[1] : 0;
+
+					$namespaceInfo = MediaWiki\MediaWikiServices::getInstance()->getNamespaceInfo();
+					$nsName = $namespaceInfo->getCanonicalName( $nsId );
+
+					$linkedTitle = $dbkey;
+					if ( $nsName !== '' && $nsName !== false ) {
+						$linkedTitle = $nsName . ':' . $dbkey;
+					}
+
+					$linkedTitle = str_replace( '_', ' ', $linkedTitle );
 					if ( !$linkedTitle ) {
 						continue;
 					}
