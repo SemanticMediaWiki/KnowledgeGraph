@@ -151,7 +151,7 @@ class KnowledgeGraph {
 			return;
 		}
 
-		$wikiPage = WikiPage::factory( $title );
+		$wikiPage = self::getWikiPage( $title );
 		if ( $wikiPage->exists() ) {
 			return;
 		}

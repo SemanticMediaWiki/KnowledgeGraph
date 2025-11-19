@@ -11,8 +11,8 @@ endif
 EXTENSION=KnowledgeGraph
 
 # docker images
-MW_VERSION?=1.39
-PHP_VERSION?=8.1
+MW_VERSION?=1.43
+PHP_VERSION?=8.3
 DB_TYPE?=mysql
 DB_IMAGE?="mariadb:10"
 
