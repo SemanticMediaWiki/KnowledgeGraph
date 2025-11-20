@@ -22,6 +22,8 @@
 	"knowledgegraph-dialog-cancel": "Cancellar",
 	"knowledgegraph-dialog-delete": "Deler",
 	"knowledgegraph-dialog-select-article": "Selige un articulo con proprietates semantic",
+	"knowledgegraph-dialog-select-namespace": "Selige un spatio de nomines",
+	"knowledgegraph-dialog-main-namespace": "(Principal)",
 	"knowledgegraph-dialog-edit-depth": "Profunditate",
 	"knowledgegraph-dialog-edit-limit": "Limite",
 	"knowledgegraph-dialog-edit-offset": "Displaciamento",

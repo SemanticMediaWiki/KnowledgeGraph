@@ -22,6 +22,8 @@
 	"knowledgegraph-dialog-cancel": "Откажи",
 	"knowledgegraph-dialog-delete": "Избриши",
 	"knowledgegraph-dialog-select-article": "Изберете статии со семантички својства",
+	"knowledgegraph-dialog-select-namespace": "Изберете именски простор",
+	"knowledgegraph-dialog-main-namespace": "(Главен)",
 	"knowledgegraph-dialog-edit-depth": "Продорност",
 	"knowledgegraph-dialog-edit-limit": "Граница",
 	"knowledgegraph-dialog-edit-offset": "Отстапување",
@@ -46,5 +48,5 @@
 	"knowledgegraph-toolbar-toggle-config": "префрли постав.",
 	"knowledgegraph-toolbar-export-graph": "извези графикон",
 	"knowledgegraph-credits": "Заслуги:",
-	"knowledgegraph-credits-list": "<ul><li>KM-A (<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">мреж. место</a>)</li></ul>"
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }
