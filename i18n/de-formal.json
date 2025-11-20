@@ -1,0 +1,11 @@
+{
+	"@metadata": {
+		"authors": [
+			"Ameisenigel"
+		]
+	},
+	"knowledgegraph-graph-options-message": "Klicken Sie auf die Schaltfläche unten und kopieren Sie den Inhalt der Tasten \"nodes\" und \"edges\" in einen Artikel <a target=\"_blank\" href=\"$1\">wie diesen</a>. Dann setzen Sie ihn als Wert der Parameter \"graph-options\" oder \"property-options?[Property label] der Parser-Funktion des KnowledgeGraphs.",
+	"knowledgegraph-dialog-select-article": "Wählen Sie einen Artikel mit semantischen Attributen",
+	"knowledgegraph-dialog-select-namespace": "Wählen Sie einen Namensraum",
+	"knowledgegraph-toolbar-reset-network-confirm": "Sind Sie sicher, dass Sie das Netzwerk neu initialisieren wollen?"
+}
