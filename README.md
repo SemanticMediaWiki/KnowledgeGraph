@@ -7,11 +7,9 @@ Includes a KnowledgeGraph Designer through which interactively create/export gra
 
 ## Requirements
 
-Requirements for KnowledgeGraph 1.x:
-
-- PHP 7.4 or later
+- PHP 8.1 or later
 - MediaWiki 1.39 or later
-- SemanticMediaWiki 4.x or later
+- SemanticMediaWiki 5.1.0 or later
 
 ## Usage
 
@@ -31,11 +29,13 @@ nodes=Page A, Page B
 }}
 ```
 
-## Updating `vis-network` Library
+## For Developers
+
+### Updating `vis-network` Library
 
 This extension uses the [`vis-network`](https://www.npmjs.com/package/vis-network) JavaScript library for rendering network diagrams. The version is managed via `npm` and bundled into the extension using a post-install script.
 
-### How It Works
+#### How It Works
 
 After running `npm install`, the following happens automatically:
 
@@ -48,7 +48,7 @@ After running `npm install`, the following happens automatically:
    A custom script (`inject-nomin.js`) prepends the line `/*@nomin*/` to `vis-network.min.js`.  
    This comment prevents MediaWiki's ResourceLoader from re-minifying the file.
 
-### To Update `vis-network`
+#### To Update `vis-network`
 
 1. Open `package.json` and change the version under `"vis-network"`  
    (e.g., `"vis-network": "latest"` or a specific version like `"9.1.9"`).
