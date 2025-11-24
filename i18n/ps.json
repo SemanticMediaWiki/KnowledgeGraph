@@ -11,6 +11,8 @@
 	"knowledgegraph-dialog-done": "ترسره شو",
 	"knowledgegraph-dialog-cancel": "ناگارل",
 	"knowledgegraph-dialog-delete": "ړنگول",
+	"knowledgegraph-dialog-select-namespace": "يو نوم‌تشيال غوره‌کول",
+	"knowledgegraph-dialog-main-namespace": "(آرنی)",
 	"knowledgegraph-dialog-edit-depth": "ژوروالی",
 	"knowledgegraph-dialog-edit-limit": "بريد",
 	"knowledgegraph-dialog-edit-offset": "سرچپه",
