@@ -22,6 +22,8 @@
 	"knowledgegraph-dialog-cancel": "取消",
 	"knowledgegraph-dialog-delete": "刪除",
 	"knowledgegraph-dialog-select-article": "選擇具有語意屬性的條目",
+	"knowledgegraph-dialog-select-namespace": "選擇命名空間",
+	"knowledgegraph-dialog-main-namespace": "（主要）",
 	"knowledgegraph-dialog-edit-depth": "層度",
 	"knowledgegraph-dialog-edit-limit": "限制",
 	"knowledgegraph-dialog-edit-offset": "偏移",
@@ -46,5 +48,5 @@
 	"knowledgegraph-toolbar-toggle-config": "切換組態",
 	"knowledgegraph-toolbar-export-graph": "匯出圖譜",
 	"knowledgegraph-credits": "參與名單：",
-	"knowledgegraph-credits-list": "<ul><li>KM-A （<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">網站</a>）</li></ul>"
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }

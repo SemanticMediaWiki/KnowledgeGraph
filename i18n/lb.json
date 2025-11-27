@@ -15,6 +15,8 @@
 	"knowledgegraph-dialog-done": "Fäerdeg",
 	"knowledgegraph-dialog-cancel": "Ofbriechen",
 	"knowledgegraph-dialog-delete": "Läschen",
+	"knowledgegraph-dialog-select-namespace": "Wielt en Nummraum",
+	"knowledgegraph-dialog-main-namespace": "(Haapt)",
 	"knowledgegraph-dialog-edit-depth": "Déift",
 	"knowledgegraph-dialog-edit-limit": "Limitt",
 	"knowledgegraph-dialog-tabs-by-article": "No Artikel",
