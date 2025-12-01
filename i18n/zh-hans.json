@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"GuoPC"
+			"GuoPC",
+			"沈澄心"
 		]
 	},
 	"knowledge-graph-name": "KnowledgeGraph",
@@ -23,6 +24,8 @@
 	"knowledgegraph-dialog-cancel": "取消",
 	"knowledgegraph-dialog-delete": "删除",
 	"knowledgegraph-dialog-select-article": "选择具有语义属性的条目",
+	"knowledgegraph-dialog-select-namespace": "选择命名空间",
+	"knowledgegraph-dialog-main-namespace": "（主）",
 	"knowledgegraph-dialog-edit-depth": "层度",
 	"knowledgegraph-dialog-edit-limit": "限制",
 	"knowledgegraph-dialog-edit-offset": "偏移",
