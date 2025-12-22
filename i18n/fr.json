@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Derugon"
+			"Derugon",
+			"JLTRY"
 		]
 	},
 	"knowledge-graph-desc": "Visualise le graphe de connaissances dans SemanticMediawiki avec VisNetwork.js",
@@ -22,6 +23,8 @@
 	"knowledgegraph-dialog-cancel": "Annuler",
 	"knowledgegraph-dialog-delete": "Supprimer",
 	"knowledgegraph-dialog-select-article": "Sélectionnez un article avec des propriétés sémantiques",
+	"knowledgegraph-dialog-select-namespace": "Sélectionnez un espace de noms",
+	"knowledgegraph-dialog-main-namespace": "(Principal)",
 	"knowledgegraph-dialog-edit-depth": "Profondeur",
 	"knowledgegraph-dialog-edit-limit": "Limite",
 	"knowledgegraph-dialog-edit-offset": "Décalage",
@@ -46,5 +49,5 @@
 	"knowledgegraph-toolbar-toggle-config": "activer/désactiver la configuration",
 	"knowledgegraph-toolbar-export-graph": "exporter le graphe",
 	"knowledgegraph-credits": "Crédits :",
-	"knowledgegraph-credits-list": "<ul><li>KM-A (<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">site web</a>)</li></ul>"
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li>li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }
