@@ -23,6 +23,8 @@
 	"knowledgegraph-dialog-cancel": "Annuleren",
 	"knowledgegraph-dialog-delete": "Verwijderen",
 	"knowledgegraph-dialog-select-article": "Selecteer een artikel met semantische eigenschappen",
+	"knowledgegraph-dialog-select-namespace": "Selecteer een naamruimte",
+	"knowledgegraph-dialog-main-namespace": "(Hoofdnaamruimte)",
 	"knowledgegraph-dialog-edit-depth": "Diepte",
 	"knowledgegraph-dialog-edit-limit": "Limiet",
 	"knowledgegraph-dialog-edit-offset": "Offset",
