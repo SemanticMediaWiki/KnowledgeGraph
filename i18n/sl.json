@@ -23,6 +23,8 @@
 	"knowledgegraph-dialog-cancel": "Prekliči",
 	"knowledgegraph-dialog-delete": "Izbriši",
 	"knowledgegraph-dialog-select-article": "Izberite članek s semantičnimi lastnostmi",
+	"knowledgegraph-dialog-select-namespace": "Izberite imenski prostor",
+	"knowledgegraph-dialog-main-namespace": "(Osnovno)",
 	"knowledgegraph-dialog-edit-depth": "Globina",
 	"knowledgegraph-dialog-edit-limit": "Omejitev",
 	"knowledgegraph-dialog-edit-offset": "Odmik",
@@ -47,5 +49,5 @@
 	"knowledgegraph-toolbar-toggle-config": "preklopi konfiguracijo",
 	"knowledgegraph-toolbar-export-graph": "izvozi graf",
 	"knowledgegraph-credits": "Zasluge:",
-	"knowledgegraph-credits-list": "<ul><li>KM-A (<a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">spletno mesto</a>)</li></ul>"
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }
