@@ -899,8 +899,24 @@ ${propertyOptions}|show-property-type=true
 	}
 
 	function attachContextMenuListener() {
+		// Attach a listener for the "oncontext" event of the vis.Network instance
 		self.Network.on('oncontext', function (params) {
-			params.event.preventDefault();
+			// Attempt to get the original DOM event from vis.Network's params
+			// vis.js sometimes passes either 'event' or 'domEvent', depending on the version or context
+			const domEvent = params.event || params.domEvent || null;
+
+			// If no DOM event is available, or it doesn't have a preventDefault method, exit early
+			// This prevents runtime errors when vis.Network calls the handler without a proper event
+			if (!domEvent || typeof domEvent.preventDefault !== 'function') {
+				return; // No usable context event → nothing to do
+			}
+
+			// Prevent the default context menu from appearing
+			domEvent.preventDefault();
+
+			// Stop the event from propagating further up the DOM tree
+			// Optional chaining used in case stopPropagation is undefined
+			domEvent.stopPropagation?.();
 
 			// pointer coordinates
 			const pointer = { x: params.pointer.DOM.x, y: params.pointer.DOM.y };
