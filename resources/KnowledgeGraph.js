@@ -1062,7 +1062,10 @@ ${propertyOptions}|show-property-type=true
 									const rawLabel = valueItem;
 									const labelWithoutHash = rawLabel.split('#')[0];
 									displayLabel = labelWithoutHash.replaceAll('_', ' ');
-									displayLabel = nsName ? `${nsName}:${displayLabel}` : displayLabel;
+
+									if (nsName && nsName !== 'Main') {
+										displayLabel = `${nsName}:${displayLabel}`;
+									}
 								} else {
 									const rawLabel = valueItem;
 									const labelWithoutHash = rawLabel.split('#')[0];
@@ -1089,7 +1092,7 @@ ${propertyOptions}|show-property-type=true
 									const shortLabel = normalizedLabel.includes(':') ? normalizedLabel.split(':')[1].trim() : normalizedLabel;
 									const normalizedDisplay = displayLabel.replace(/\s+/g, ' ').trim();
 									const count = displayLabel.split(':').length - 1;
-									return normalizedDisplay.includes(shortLabel) && count === 1 && n.typeID === typeID;
+									return normalizedDisplay.includes(shortLabel) && n.typeID === typeID;
 								});
 
 								const nodeId = existingNode ? existingNode.id : KnowledgeGraphFunctions.makeNodeId(displayLabel, typeID);
