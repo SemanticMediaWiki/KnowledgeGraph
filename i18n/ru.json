@@ -1,0 +1,26 @@
+{
+	"@metadata": {
+		"authors": [
+			"Yurina Tatiana"
+		]
+	},
+	"knowledgegraph-toolbar-help": "справка",
+	"knowledgegraph-menu-open-article": "открыть статью",
+	"knowledgegraph-dialog-continue": "Продолжить",
+	"knowledgegraph-dialog-back": "Назад",
+	"knowledgegraph-dialog-done": "Готово",
+	"knowledgegraph-dialog-cancel": "Отмена",
+	"knowledgegraph-dialog-delete": "Удалить",
+	"knowledgegraph-dialog-select-namespace": "Выберите пространство имён",
+	"knowledgegraph-dialog-main-namespace": "(Основное)",
+	"knowledgegraph-dialog-edit-depth": "Глубина",
+	"knowledgegraph-dialog-edit-limit": "Лимит",
+	"knowledgegraph-dialog-edit-offset": "Смещение",
+	"knowledgegraph-dialog-select-categories": "Выберите одну или более категорий",
+	"knowledgegraph-dialog-select-properties": "Выберите одно или более свойств",
+	"knowledgegraph-dialog-select-nodes": "Выберите одну или более страниц",
+	"knowledgegraph-dialog-results-no-properties": "Нет свойств",
+	"knowledgegraph-dialog-results-no-articles": "Нет статей",
+	"knowledgegraph-copied-to-clipboard": "скопировано в буфер обмена!",
+	"knowledgegraph-toolbar-reset-network": "сбросить"
+}
