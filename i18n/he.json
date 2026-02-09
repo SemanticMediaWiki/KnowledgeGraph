@@ -1,0 +1,19 @@
+{
+	"@metadata": {
+		"authors": [
+			"Neriah"
+		]
+	},
+	"knowledge-graph-wrapper-loading": "הגרף נטען...",
+	"specialpages-group-knowledgegraph": "KnowledgeGraph",
+	"knowledgegraph-toolbar-help": "עזרה",
+	"knowledgegraph-dialog-continue": "המשך",
+	"knowledgegraph-dialog-back": "חזרה",
+	"knowledgegraph-dialog-done": "סיום",
+	"knowledgegraph-dialog-cancel": "ביטול",
+	"knowledgegraph-dialog-delete": "מחיקה",
+	"knowledgegraph-dialog-main-namespace": "(ראשי)",
+	"knowledgegraph-dialog-edit-limit": "מגבלה",
+	"knowledgegraph-dialog-tabs-by-article": "לפי ערך",
+	"knowledgegraph-dialog-results-no-articles": "אין ערכים"
+}
