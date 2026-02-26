@@ -1,11 +1,12 @@
 {
 	"@metadata": {
 		"authors": [
+			"Amire80",
 			"Neriah"
 		]
 	},
 	"knowledge-graph-wrapper-loading": "הגרף נטען...",
-	"specialpages-group-knowledgegraph": "KnowledgeGraph",
+	"specialpages-group-knowledgegraph": "גרף ידע",
 	"knowledgegraph-toolbar-help": "עזרה",
 	"knowledgegraph-dialog-continue": "המשך",
 	"knowledgegraph-dialog-back": "חזרה",
