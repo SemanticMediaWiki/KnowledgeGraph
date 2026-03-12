@@ -2,7 +2,8 @@
 	"@metadata": {
 		"authors": [
 			"Amire80",
-			"Neriah"
+			"Neriah",
+			"YaronSh"
 		]
 	},
 	"knowledge-graph-wrapper-loading": "הגרף נטען...",
@@ -14,7 +15,19 @@
 	"knowledgegraph-dialog-cancel": "ביטול",
 	"knowledgegraph-dialog-delete": "מחיקה",
 	"knowledgegraph-dialog-main-namespace": "(ראשי)",
+	"knowledgegraph-dialog-edit-depth": "עומק",
 	"knowledgegraph-dialog-edit-limit": "מגבלה",
+	"knowledgegraph-dialog-edit-offset": "היסט",
 	"knowledgegraph-dialog-tabs-by-article": "לפי ערך",
-	"knowledgegraph-dialog-results-no-articles": "אין ערכים"
+	"knowledgegraph-dialog-select-categories": "נא לבחור קטגוריה אחת או יותר",
+	"knowledgegraph-dialog-select-properties": "נא לבחור מאפיין אחד או יותר",
+	"knowledgegraph-dialog-select-nodes": "נא לבחור דף אחד או יותר",
+	"knowledgegraph-dialog-tabs-by-properties": "לפי מאפיינים",
+	"knowledgegraph-dialog-tabs-by-categories": "לפי קטגוריות",
+	"knowledgegraph-dialog-results-no-properties": "אין מאפיינים",
+	"knowledgegraph-dialog-results-no-articles": "אין ערכים",
+	"knowledgegraph-toolbar-reset-network": "איפוס",
+	"knowledgegraph-toolbar-reset-network-confirm": "לאתחל את הרשת מחדש?",
+	"knowledgegraph-toolbar-export-graph": "ייצוא תרשים",
+	"knowledgegraph-credits": "תודות:"
 }
