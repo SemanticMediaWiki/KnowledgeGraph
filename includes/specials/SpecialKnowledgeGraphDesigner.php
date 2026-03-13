@@ -1,6 +1,6 @@
 <?php
 
-use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
+use MediaWiki\Title\Title;
 
 /**
  * @ingroup SpecialPage
@@ -45,7 +45,7 @@ class SpecialKnowledgeGraphDesigner extends SpecialPage {
 		$params = \KnowledgeGraph::applyDefaultParams( $defaultParameters, $params );
 
 		\KnowledgeGraph::initSMW();
-		$title_ = TitleClass::makeTitleSafe( NS_MEDIAWIKI, 'KnowledgeGraphOptions' );
+		$title_ = Title::makeTitleSafe( NS_MEDIAWIKI, 'KnowledgeGraphOptions' );
 
 		$graphOptions = [];
 		if ( $title_ && $title_->isKnown() ) {
