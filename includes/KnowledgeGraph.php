@@ -7,7 +7,7 @@
  * @author thomas-topway-it for KM-A
  */
 
-// use MediaWiki\Extension\KnowledgeGraph\Aliases\Category as CategoryClass;
+// use Mediawiki\Title\Category;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Revision\SlotRecord;
 use MediaWiki\Title\Title;
@@ -602,7 +602,7 @@ nodes=TestPage
 		return $ret;
 
 		// *** this does not work with numerical offset
-		// $cat = CategoryClass::newFromName( str_replace( ' ', '_', $category ) );
+		// $cat = Category::newFromName( str_replace( ' ', '_', $category ) );
 		// $iterator_ = $cat->getMembers( $limit, $offset );
 		// $ret = [];
 		// while ( $iterator_->valid() ) {
