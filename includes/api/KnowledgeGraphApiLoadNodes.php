@@ -7,7 +7,7 @@
  * @author thomas-topway-it for KM-A
  */
 
-use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
+use MediaWiki\Title\Title;
 
 class KnowledgeGraphApiLoadNodes extends ApiBase {
 
@@ -107,7 +107,7 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 
 		$titles = explode( '|', $params['titles'] );
 		foreach ( $titles as $titleText ) {
-			$title_ = TitleClass::newFromText( $titleText );
+			$title_ = Title::newFromText( $titleText );
 			if ( !$title_ || !$title_->isKnown() ) {
 				continue;
 			}
