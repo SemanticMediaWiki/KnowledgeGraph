@@ -11,6 +11,7 @@
 use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Revision\SlotRecord;
+use MediaWiki\Title\Title;
 use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
 
 class KnowledgeGraph {
