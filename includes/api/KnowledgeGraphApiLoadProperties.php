@@ -7,7 +7,7 @@
  * @author thomas-topway-it for KM-A
  */
 
-use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
+use MediaWiki\Title\Title;
 
 class KnowledgeGraphApiLoadProperties extends ApiBase {
 
@@ -45,7 +45,7 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 
 		$params['nodes'] = explode( '|', $params['nodes'] );
 		foreach ( $params['nodes'] as $titleText ) {
-			$title_ = TitleClass::newFromText( $titleText );
+			$title_ = Title::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
 				if ( !isset( self::$data[$title_->getFullText()] ) ) {
 					\KnowledgeGraph::setSemanticDataFromApi(
