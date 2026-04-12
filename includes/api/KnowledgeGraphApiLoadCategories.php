@@ -7,8 +7,8 @@
  * @author thomas-topway-it for KM-A
  */
 
-use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\Title\Title;
 
 class KnowledgeGraphApiLoadCategories extends ApiBase {
 
@@ -139,7 +139,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 
 		$titles = [];
 		foreach ( $categories as $categoryText ) {
-			$category_ = TitleClass::makeTitleSafe( NS_CATEGORY, $categoryText );
+			$category_ = Title::makeTitleSafe( NS_CATEGORY, $categoryText );
 			// && $category_->isKnown()
 			if ( $category_ ) {
 				$titles_ = \KnowledgeGraph::articlesInCategories(
