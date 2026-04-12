@@ -449,7 +449,7 @@ nodes=TestPage
 	}
 
 	/**
-	 * @param Title|MediaWiki\Title\Title $title $title
+	 * @param Title $title $title
 	 * @return string|null
 	 */
 	public static function getWikipageContent( $title ) {
@@ -466,7 +466,7 @@ nodes=TestPage
 	}
 
 	/**
-	 * @param Title|MediaWiki\Title\Title $title
+	 * @param Title $title
 	 * @return WikiPage|null
 	 */
 	public static function getWikiPage( $title ) {
@@ -614,7 +614,7 @@ nodes=TestPage
 
 	/**
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/refs/heads/1.0.3/includes/PageProperties.php
-	 * @param Title|MediaWiki\Title\Title $title
+	 * @param Title $title
 	 * @param array $onlyProperties
 	 * @param int $depth
 	 * @param int $maxDepth
