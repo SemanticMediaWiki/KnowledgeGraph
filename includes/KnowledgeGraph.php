@@ -581,18 +581,34 @@ nodes=TestPage
 	 * @return array
 	 */
 	public static function articlesInCategories( $category, $limit, $offset ) {
-		 $options = [
+		$options = [
 			'LIMIT' => $limit,
 			'OFFSET' => $offset
-		 ];
-		 $dbr = wfGetDB( DB_REPLICA );
-		 $res = $dbr->select( 'categorylinks',
-			[ 'pageid' => 'cl_from' ],
-			[ 'cl_to' => str_replace( ' ', '_', $category ) ],
-			__METHOD__,
-			$options
-		 );
-		 $ret = [];
+		];
+		$dbr = wfGetDB( DB_REPLICA );
+
+		if ( version_compare( MW_VERSION, '1.45', '>=' ) ) {
+			$categoryKey = str_replace( ' ', '_', $category );
+			$res = $dbr->select(
+				[ 'categorylinks', 'linktarget' ],
+				[ 'pageid' => 'cl_from' ],
+				[
+					'cl_target_id = lt_id',
+					'lt_title' => $categoryKey,
+					'lt_namespace' => NS_CATEGORY,
+				],
+				__METHOD__,
+				$options
+			);
+		} else {
+			 $res = $dbr->select( 'categorylinks',
+				[ 'pageid' => 'cl_from' ],
+				[ 'cl_to' => str_replace( ' ', '_', $category ) ],
+				__METHOD__,
+				$options
+			 );
+		}
+		$ret = [];
 		foreach ( $res as $row ) {
 			$title_ = Title::newFromID( $row->pageid );
 			if ( $title_ ) {
