@@ -593,12 +593,14 @@ nodes=TestPage
 				[ 'categorylinks', 'linktarget' ],
 				[ 'pageid' => 'cl_from' ],
 				[
-					'cl_target_id = lt_id',
 					'lt_title' => $categoryKey,
 					'lt_namespace' => NS_CATEGORY,
 				],
 				__METHOD__,
-				$options
+				$options,
+				[
+					'linktarget' => [ 'JOIN', 'cl_target_id = lt_id' ],
+				]
 			);
 		} else {
 			 $res = $dbr->select( 'categorylinks',
