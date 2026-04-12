@@ -7,10 +7,10 @@
  * @author thomas-topway-it for KM-A
  */
 
-// use MediaWiki\Extension\KnowledgeGraph\Aliases\Category as CategoryClass;
-use MediaWiki\Extension\KnowledgeGraph\Aliases\Title as TitleClass;
+// use MediaWiki\Category\Category;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Revision\SlotRecord;
+use MediaWiki\Title\Title;
 use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
 
 class KnowledgeGraph {
@@ -255,7 +255,7 @@ nodes=TestPage
 		// property-related options
 		foreach ( $values as $val ) {
 			if ( preg_match( '/^property-options(\?(.+))?=(.+)/', $val, $match ) ) {
-				$title_ = TitleClass::makeTitleSafe( \SMW_NS_PROPERTY, $match[2] );
+				$title_ = Title::makeTitleSafe( \SMW_NS_PROPERTY, $match[2] );
 				if ( $title_ ) {
 					$propertyOptions[$title_->getText()] = $match[3];
 				}
@@ -263,7 +263,7 @@ nodes=TestPage
 		}
 
 		foreach ( $params['nodes'] as $titleText ) {
-			$title_ = TitleClass::newFromText( $titleText );
+			$title_ = Title::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
 				if ( !isset( self::$data[$title_->getFullText()] ) ) {
 					self::setSemanticDataFromApi( $title_, $params['properties'], 0, $params['depth'] );
@@ -274,7 +274,7 @@ nodes=TestPage
 		$graphOptions = [];
 		if ( !empty( $params['graph-options'] ) ) {
 			// , NS_KNOWLEDGEGRAPH
-			$title_ = TitleClass::newFromText( $params['graph-options'], NS_MEDIAWIKI );
+			$title_ = Title::newFromText( $params['graph-options'], NS_MEDIAWIKI );
 
 			if ( $title_ && $title_->isKnown() ) {
 				// $graphOptions = json_decode( self::getWikipageContent( $title_ ), true );
@@ -283,7 +283,7 @@ nodes=TestPage
 		}
 
 		foreach ( $propertyOptions as $property => $titleText ) {
-			$title_ = TitleClass::newFromText( $titleText, NS_MEDIAWIKI );
+			$title_ = Title::newFromText( $titleText, NS_MEDIAWIKI );
 			if ( $title_ && $title_->isKnown() ) {
 				// $propertyOptions[$property] = json_decode( self::getWikipageContent( $title_ ), true );
 				$propertyOptions[$property] = self::getWikipageContent( $title_ );
@@ -449,7 +449,7 @@ nodes=TestPage
 	}
 
 	/**
-	 * @param Title|MediaWiki\Title\Title $title $title
+	 * @param Title $title $title
 	 * @return string|null
 	 */
 	public static function getWikipageContent( $title ) {
@@ -466,7 +466,7 @@ nodes=TestPage
 	}
 
 	/**
-	 * @param Title|MediaWiki\Title\Title $title
+	 * @param Title $title
 	 * @return WikiPage|null
 	 */
 	public static function getWikiPage( $title ) {
@@ -594,7 +594,7 @@ nodes=TestPage
 		 );
 		 $ret = [];
 		foreach ( $res as $row ) {
-			$title_ = TitleClass::newFromID( $row->pageid );
+			$title_ = Title::newFromID( $row->pageid );
 			if ( $title_ ) {
 				$ret[] = $title_;
 			}
@@ -602,7 +602,7 @@ nodes=TestPage
 		return $ret;
 
 		// *** this does not work with numerical offset
-		// $cat = CategoryClass::newFromName( str_replace( ' ', '_', $category ) );
+		// $cat = Category::newFromName( str_replace( ' ', '_', $category ) );
 		// $iterator_ = $cat->getMembers( $limit, $offset );
 		// $ret = [];
 		// while ( $iterator_->valid() ) {
@@ -614,7 +614,7 @@ nodes=TestPage
 
 	/**
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/refs/heads/1.0.3/includes/PageProperties.php
-	 * @param Title|MediaWiki\Title\Title $title
+	 * @param Title $title
 	 * @param array $onlyProperties
 	 * @param int $depth
 	 * @param int $maxDepth
