@@ -7,7 +7,7 @@
 	"namemsg": "knowledge-graph-name",
 	"type":"semantic",
 	"requires":{
-		"MediaWiki": ">= 1.39"
+		"MediaWiki": ">= 1.43"
 	},
 	"MessagesDirs": {
 		"KnowledgeGraph":[
