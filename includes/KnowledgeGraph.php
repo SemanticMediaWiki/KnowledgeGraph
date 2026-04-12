@@ -593,6 +593,7 @@ nodes=TestPage
 				[ 'pageid' => 'cl_from' ],
 				[
 					'lt_title' => str_replace( ' ', '_', $category ),
+					'lt_namespace' => NS_CATEGORY,
 				],
 				__METHOD__,
 				$options,
