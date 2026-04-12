@@ -588,13 +588,11 @@ nodes=TestPage
 		$dbr = wfGetDB( DB_REPLICA );
 
 		if ( version_compare( MW_VERSION, '1.45', '>=' ) ) {
-			$categoryKey = str_replace( ' ', '_', $category );
 			$res = $dbr->select(
 				[ 'categorylinks', 'linktarget' ],
 				[ 'pageid' => 'cl_from' ],
 				[
-					'lt_title' => $categoryKey,
-					'lt_namespace' => NS_CATEGORY,
+					'lt_title' => str_replace( ' ', '_', $category ),
 				],
 				__METHOD__,
 				$options,
