@@ -7,7 +7,7 @@
  * @author thomas-topway-it for KM-A
  */
 
-use MediaWiki\Category\Category;
+// use MediaWiki\Category\Category;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Title\Title;
 use MediaWiki\Revision\SlotRecord;
