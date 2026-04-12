@@ -9,8 +9,8 @@
 
 // use MediaWiki\Category\Category;
 use MediaWiki\MediaWikiServices;
-use MediaWiki\Title\Title;
 use MediaWiki\Revision\SlotRecord;
+use MediaWiki\Title\Title;
 use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
 
 class KnowledgeGraph {
