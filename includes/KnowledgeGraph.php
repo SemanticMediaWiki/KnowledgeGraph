@@ -399,7 +399,7 @@ nodes=TestPage
 
 	/**
 	 * Converts strings like columns.searchPanes.show o nested objects.
-	 */	
+	 */
 	public static function plainToNestedObj( string $key, mixed $value ): array {
 		$arr = explode( '.', $key );
 		$ret = [];
