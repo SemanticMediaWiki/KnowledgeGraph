@@ -336,7 +336,6 @@ nodes=TestPage
 			$propertyOptions[$key] = $propAttributes[$key];
 		}
 
-		self::$data = [];
 		$nodes = self::extractTitleWithCommas( $params['nodes'] );
 
 		foreach ( $nodes as $title_ ) {
@@ -376,6 +375,7 @@ nodes=TestPage
 		$params['propertyOptions'] = $propertyOptions;
 		self::$graphs[] = $params;
 
+		self::$data = [];
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
 
 		$paletteName = $params['palette'] ?? 'default';
