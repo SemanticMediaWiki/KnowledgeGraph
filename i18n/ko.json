@@ -4,6 +4,7 @@
 			"Tensama0415"
 		]
 	},
+	"knowledge-graph-name": "지식그래프",
 	"knowledge-graph-desc": "VisNetwork.js를 사용하여 시맨틱 미디어위키의 지식 그래프를 시각화합니다",
 	"knowledge-graph-wrapper-loading": "그래프 로딩중...",
 	"apihelp-knowledgegraph-load-nodes-summary": "주어진 문서의 시맨틱 속성을 검색합니다",
@@ -21,7 +22,7 @@
 	"knowledgegraph-dialog-done": "완료",
 	"knowledgegraph-dialog-cancel": "취소",
 	"knowledgegraph-dialog-delete": "삭제",
-	"knowledgegraph-dialog-select-article": "semantic 속성을 가진 문서 선택",
+	"knowledgegraph-dialog-select-article": "시맨틱 속성을 가진 문서 선택",
 	"knowledgegraph-dialog-select-namespace": "이름공간 선택",
 	"knowledgegraph-dialog-main-namespace": "(일반)",
 	"knowledgegraph-dialog-edit-depth": "깊이",
