@@ -1,10 +1,12 @@
 {
 	"@metadata": {
 		"authors": [
+			"HakanIST",
 			"Hedda",
 			"SaldırganSincap"
 		]
 	},
+	"knowledge-graph-name": "Bilgi Grafiği",
 	"knowledge-graph-desc": "SemanticMediawiki'deki bilgi grafiğini, VisNetwork.js ile görselleştirir",
 	"knowledge-graph-wrapper-loading": "grafik yükleniyor...",
 	"apihelp-knowledgegraph-load-nodes-summary": "girilen maddelerin anlamsal özelliklerini getirir",
@@ -23,6 +25,8 @@
 	"knowledgegraph-dialog-cancel": "İptal",
 	"knowledgegraph-dialog-delete": "Sil",
 	"knowledgegraph-dialog-select-article": "Anlamsal özelliklere sahip bir madde seç",
+	"knowledgegraph-dialog-select-namespace": "Bir ad alanı seçin",
+	"knowledgegraph-dialog-main-namespace": "(Ana)",
 	"knowledgegraph-dialog-edit-depth": "Derinlik",
 	"knowledgegraph-dialog-edit-limit": "Sınır",
 	"knowledgegraph-dialog-edit-offset": "Ofset",

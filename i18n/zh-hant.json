@@ -1,9 +1,11 @@
 {
 	"@metadata": {
 		"authors": [
-			"Kly"
+			"Kly",
+			"LowensteinYang"
 		]
 	},
+	"knowledge-graph-name": "知識圖譜",
 	"knowledge-graph-desc": "使用 VisNetwork.js 將 SemanticMediawiki 中的知識圖譜視覺化",
 	"knowledge-graph-wrapper-loading": "圖譜載入中…",
 	"apihelp-knowledgegraph-load-nodes-summary": "檢索指定條目的語意屬性",
