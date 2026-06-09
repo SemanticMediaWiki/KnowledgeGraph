@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "vis-network": "9.1.9"
+    "vis-network": "9.1.13"
   },
   "scripts": {
     "postinstall": "copy-files-from-to && node resources/utility/inject-nomin.js"
@@ -19,7 +19,7 @@
     "whenFileExists": "overwrite"
   },
   "devDependencies": {
-    "copy-files-from-to": "^3.12.1",
+    "copy-files-from-to": "^4.0.1",
     "insert-line": "^1.1.0"
   }
 }
