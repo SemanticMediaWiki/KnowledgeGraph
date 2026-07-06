@@ -16,5 +16,10 @@
 	"knowledgegraph-dialog-edit-depth": "ژوروالی",
 	"knowledgegraph-dialog-edit-limit": "بريد",
 	"knowledgegraph-dialog-edit-offset": "سرچپه",
-	"knowledgegraph-dialog-tabs-by-article": "د ليکنې له مخې"
+	"knowledgegraph-dialog-tabs-by-article": "د ليکنې له مخې",
+	"knowledgegraph-dialog-tabs-by-properties": "د ځانتياوو له مخې",
+	"knowledgegraph-dialog-tabs-by-categories": "د وېشنيزو له مخې",
+	"knowledgegraph-dialog-results-no-properties": "هېڅ ځانتياوې نشته",
+	"knowledgegraph-dialog-results-no-articles": "هېڅ ليکنې نشته",
+	"knowledgegraph-dialog-results-has-properties": "ځانتياوې لري:"
 }
