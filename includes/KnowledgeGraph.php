@@ -354,19 +354,10 @@ nodes=TestPage
 			}
 		}
 
-		$results = [];
 		if ( is_string( $propertyText ) ) {
 			$results = self::$SMWStore->getPropertySubjects( $DIProperty, null, $requestOptions );
 		} else {
-			if ( $propertyText->isInverse() ) {
-				$props = $propertyText->getKey();
-				$props = str_replace( '-', '', $props );
-				$propertyText = \SMW\DIProperty::newFromUserLabel( $props );
-				$results = self::$SMWStore->getPropertySubjects( $propertyText, $targetDIValue, $requestOptions );
-				$propertyText->setInverse( true );
-			} else {
-				$results = self::$SMWStore->getPropertySubjects( $DIProperty, $targetDIValue, $requestOptions );
-			}
+			$results = self::$SMWStore->getPropertySubjects( $DIProperty, $targetDIValue, $requestOptions );
 		}
 
 		$ret = [];

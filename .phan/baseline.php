@@ -10,10 +10,10 @@
 return [
     // # Issue statistics:
     // PhanTypeMismatchReturnProbablyReal : 5 occurrences
-    // PhanUndeclaredMethod : 3 occurrences
     // PhanUndeclaredStaticProperty : 3 occurrences
     // PhanTypeMismatchArgument : 2 occurrences
     // PhanTypeMismatchArgumentProbablyReal : 2 occurrences
+    // PhanUndeclaredMethod : 2 occurrences
     // SecurityCheck-XSS : 2 occurrences
     // MediaWikiNoIssetIfDefined : 1 occurrence
     // PhanTypeArraySuspiciousNullable : 1 occurrence
@@ -28,7 +28,7 @@ return [
             'PhanTypeMismatchArgument' => ['\\KnowledgeGraph::getSubjectsByProperty'],
             'PhanTypeMismatchReturnProbablyReal' => ['\\KnowledgeGraph::onBeforePageDisplay', '\\KnowledgeGraph::setSemanticDataFromApi'],
             'PhanTypeMissingReturn' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
-            'PhanUndeclaredMethod' => ['\\KnowledgeGraph::getSubjectsByProperty', '\\KnowledgeGraph::setSemanticDataFromApi'],
+            'PhanUndeclaredMethod' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
             'PhanUndeclaredStaticMethod' => ['\\KnowledgeGraph::getWikiPage'],
             'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraph'],
             'SecurityCheck-XSS' => ['\\KnowledgeGraph::parserFunctionKnowledgeGraph']

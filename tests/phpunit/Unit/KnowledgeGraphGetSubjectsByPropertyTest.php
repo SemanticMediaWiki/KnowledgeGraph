@@ -49,26 +49,32 @@ class KnowledgeGraphGetSubjectsByPropertyTest extends TestCase {
 	}
 
 	/**
-	 * KnowledgeGraph::getSubjectsByProperty() has a dedicated branch for
-	 * $propertyText->isInverse() that calls $propertyText->setInverse( true )
-	 * on a plain SMW DIProperty/Property object. That method does not exist
-	 * on \SMW\DataItems\Property (nor did it ever exist on the pre-7.0
-	 * \SMW\DIProperty alias) — the only place this class supports inverse
-	 * properties is the constructor / newFromUserLabel( $label, $inverse ).
-	 *
-	 * This branch is unreachable through any current caller (real callers
-	 * always pass $inverse = false), so this test documents that invoking
-	 * it is a fatal error rather than silently asserting broken behaviour
-	 * as correct.
+	 * getSubjectsByProperty() previously had a dedicated branch for
+	 * $propertyText->isInverse() that called $propertyText->setInverse( true ),
+	 * a method that never existed on DIProperty/DataItems\Property in any SMW
+	 * version. That branch was unreachable through any current caller (real
+	 * callers always pass a non-inverse property) and was removed. An inverse
+	 * property object is now handled the same way as any other non-string
+	 * property object: queried directly against the store.
 	 */
-	public function testInversePropertyObjectTriggersUndefinedMethodError() {
+	public function testInversePropertyObjectQueriesStoreDirectly() {
 		$inverseProperty = \SMW\DIProperty::newFromUserLabel( 'TestProperty', true );
-
 		$this->assertTrue( $inverseProperty->isInverse() );
 
-		$this->expectException( \Error::class );
-		$this->expectExceptionMessageMatches( '/setInverse/' );
+		$this->storeMock->expects( $this->once() )
+			->method( 'getPropertySubjects' )
+			->with(
+				$this->callback( static function ( $arg ) use ( $inverseProperty ) {
+					return $arg instanceof \SMW\DIProperty
+						&& $arg->getKey() === $inverseProperty->getKey();
+				} ),
+				$this->anything(),
+				$this->anything()
+			)
+			->willReturn( [] );
 
-		KnowledgeGraph::getSubjectsByProperty( $inverseProperty, 100, 0, null );
+		$result = KnowledgeGraph::getSubjectsByProperty( $inverseProperty, 100, 0, null );
+
+		$this->assertSame( [], $result );
 	}
 }
