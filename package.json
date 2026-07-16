@@ -3,7 +3,12 @@
     "vis-network": "9.1.13"
   },
   "scripts": {
-    "postinstall": "copy-files-from-to && node resources/utility/inject-nomin.js"
+    "postinstall": "copy-files-from-to && node resources/utility/inject-nomin.js",
+    "lint": "eslint --ext .js resources tests/node-qunit",
+    "test": "npm run lint && npm run node-qunit",
+    "test-coverage": "npm run node-qunit-coverage",
+    "node-qunit": "qunit --require ./tests/node-qunit/setup.js 'tests/node-qunit/**/*.test.js'",
+    "node-qunit-coverage": "nyc --reporter=text --reporter=html --reporter=clover --report-dir=coverage/js --all npm run node-qunit"
   },
   "copyFiles": [
     {
@@ -18,8 +23,23 @@
   "copyFilesSettings": {
     "whenFileExists": "overwrite"
   },
+  "nyc": {
+    "include": [
+      "resources/**/*.js"
+    ],
+    "exclude": [
+      "**/*.min.js",
+      "resources/visNetwork/**",
+      "resources/utility/**",
+      "**/node_modules/**"
+    ]
+  },
   "devDependencies": {
     "copy-files-from-to": "^4.0.1",
-    "insert-line": "^1.1.0"
+    "eslint": "^8.57.1",
+    "eslint-config-wikimedia": "^0.32.4",
+    "insert-line": "^1.1.0",
+    "nyc": "^18.0.0",
+    "qunit": "^2.22.0"
   }
 }

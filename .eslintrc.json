@@ -1,0 +1,31 @@
+{
+	"root": true,
+	"extends": [
+		"wikimedia/client",
+		"wikimedia/mediawiki"
+	],
+	"globals": {
+		"mw": "readonly",
+		"mediaWiki": "readonly",
+		"KnowledgeGraphFunctions": "writable"
+	},
+	"env": {
+		"browser": true
+	},
+	"overrides": [
+		{
+			"files": [
+				"tests/node-qunit/**/*.js"
+			],
+			"extends": [
+				"wikimedia/mediawiki/qunit"
+			],
+			"env": {
+				"node": true
+			},
+			"rules": {
+				"mediawiki/valid-package-file-require": "off"
+			}
+		}
+	]
+}

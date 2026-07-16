@@ -52,8 +52,10 @@ jobs:
       PHP_VERSION: ${{ matrix.php_version }}
       DB_TYPE: ${{ matrix.database_type }}
       DB_IMAGE: ${{ matrix.database_image }}
+      # Run JS tests only for the coverage entry: keeps the JS toolchain off the
+      # other matrix legs, matching how PHP coverage is scoped to one leg too.
+      NODE_JS: ${{ matrix.coverage && '1' || '' }}
 
-      
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,6 +78,6 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: SemanticMediaWiki/KnowledgeGraph
-          files: build/coverage/php/coverage.xml
+          files: build/coverage/php/coverage.xml,build/coverage/js/clover.xml
           disable_search: true
         if: matrix.coverage == true
