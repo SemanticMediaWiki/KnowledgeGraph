@@ -717,7 +717,7 @@ nodes=TestPage
 				if ( $propertyTitle ) {
 					$diProperty = \SMW\DIProperty::newFromUserLabel( $propKey );
 					if ( $diProperty ) {
-						$typeID = $diProperty->findPropertyTypeID();
+						$typeID = $diProperty->findPropertyValueType();
 						$canonicalLabel = $diProperty->getCanonicalLabel();
 						$preferredLabel = $diProperty->getPreferredLabel();
 						$typeLabel = $dataTypeRegistry->findTypeLabel( $typeID );

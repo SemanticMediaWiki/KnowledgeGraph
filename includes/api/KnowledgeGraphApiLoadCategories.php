@@ -168,7 +168,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 					foreach ( $semanticData->getProperties() as $property ) {
 						$key = $property->getKey();
 
-						$typeID = $property->findPropertyTypeID();
+						$typeID = $property->findPropertyValueType();
 
 						if ( in_array( $key, self::$exclude ) ) {
 							continue;

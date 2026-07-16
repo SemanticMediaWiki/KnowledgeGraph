@@ -8,48 +8,47 @@
  * (can be combined with --load-baseline)
  */
 return [
-    // # Issue statistics:
-    // PhanTypeMismatchReturnProbablyReal : 5 occurrences
-    // PhanUndeclaredStaticProperty : 3 occurrences
-    // PhanTypeMismatchArgument : 2 occurrences
-    // PhanTypeMismatchArgumentProbablyReal : 2 occurrences
-    // PhanUndeclaredMethod : 2 occurrences
-    // SecurityCheck-XSS : 2 occurrences
-    // MediaWikiNoIssetIfDefined : 1 occurrence
-    // PhanTypeArraySuspiciousNullable : 1 occurrence
-    // PhanTypeMissingReturn : 1 occurrence
-    // PhanUndeclaredStaticMethod : 1 occurrence
-    // PhanUndeclaredTypeProperty : 1 occurrence
-    // PhanUndeclaredVariable : 1 occurrence
+	// # Issue statistics:
+	// PhanTypeMismatchReturnProbablyReal : 5 occurrences
+	// PhanUndeclaredStaticProperty : 3 occurrences
+	// PhanTypeMismatchArgument : 2 occurrences
+	// PhanTypeMismatchArgumentProbablyReal : 2 occurrences
+	// SecurityCheck-XSS : 2 occurrences
+	// MediaWikiNoIssetIfDefined : 1 occurrence
+	// PhanTypeArraySuspiciousNullable : 1 occurrence
+	// PhanTypeMissingReturn : 1 occurrence
+	// PhanUndeclaredMethod : 1 occurrence
+	// PhanUndeclaredStaticMethod : 1 occurrence
+	// PhanUndeclaredTypeProperty : 1 occurrence
+	// PhanUndeclaredVariable : 1 occurrence
 
-    'file_suppressions' => [
-        'includes/KnowledgeGraph.php' => [
-            'MediaWikiNoIssetIfDefined' => ['\\KnowledgeGraph::getAllPropertiesForNode'],
-            'PhanTypeMismatchArgument' => ['\\KnowledgeGraph::getSubjectsByProperty'],
-            'PhanTypeMismatchReturnProbablyReal' => ['\\KnowledgeGraph::onBeforePageDisplay', '\\KnowledgeGraph::setSemanticDataFromApi'],
-            'PhanTypeMissingReturn' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
-            'PhanUndeclaredMethod' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
-            'PhanUndeclaredStaticMethod' => ['\\KnowledgeGraph::getWikiPage'],
-            'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraph'],
-            'SecurityCheck-XSS' => ['\\KnowledgeGraph::parserFunctionKnowledgeGraph']
-        ],
-        'includes/api/KnowledgeGraphApiLoadCategories.php' => [
-            'PhanTypeArraySuspiciousNullable' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-            'PhanTypeMismatchArgumentProbablyReal' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-            'PhanUndeclaredMethod' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-            'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-            'PhanUndeclaredVariable' => ['\\KnowledgeGraphApiLoadCategories::execute']
-        ],
-        'includes/api/KnowledgeGraphApiLoadNodes.php' => [
-            'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadNodes::execute']
-        ],
-        'includes/api/KnowledgeGraphApiLoadProperties.php' => [
-            'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadProperties::execute']
-        ],
-        'includes/specials/SpecialKnowledgeGraphDesigner.php' => [
-            'SecurityCheck-XSS' => ['\\SpecialKnowledgeGraphDesigner::execute']
-        ],
-    ],
-    // 'directory_suppressions' => ['src/directory_name' => ['PhanIssueName1', 'PhanIssueName2']] can be manually added if needed.
-    // (directory_suppressions will currently be ignored by subsequent calls to --save-baseline, but may be preserved in future Phan releases)
+	'file_suppressions' => [
+		'includes/KnowledgeGraph.php' => [
+			'MediaWikiNoIssetIfDefined' => ['\\KnowledgeGraph::getAllPropertiesForNode'],
+			'PhanTypeMismatchArgument' => ['\\KnowledgeGraph::getSubjectsByProperty'],
+			'PhanTypeMismatchReturnProbablyReal' => ['\\KnowledgeGraph::onBeforePageDisplay', '\\KnowledgeGraph::setSemanticDataFromApi'],
+			'PhanTypeMissingReturn' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
+			'PhanUndeclaredStaticMethod' => ['\\KnowledgeGraph::getWikiPage'],
+			'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraph'],
+			'SecurityCheck-XSS' => ['\\KnowledgeGraph::parserFunctionKnowledgeGraph']
+		],
+		'includes/api/KnowledgeGraphApiLoadCategories.php' => [
+			'PhanTypeArraySuspiciousNullable' => ['\\KnowledgeGraphApiLoadCategories::execute'],
+			'PhanTypeMismatchArgumentProbablyReal' => ['\\KnowledgeGraphApiLoadCategories::execute'],
+			'PhanUndeclaredMethod' => ['\\KnowledgeGraphApiLoadCategories::execute'],
+			'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadCategories::execute'],
+			'PhanUndeclaredVariable' => ['\\KnowledgeGraphApiLoadCategories::execute']
+		],
+		'includes/api/KnowledgeGraphApiLoadNodes.php' => [
+			'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadNodes::execute']
+		],
+		'includes/api/KnowledgeGraphApiLoadProperties.php' => [
+			'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadProperties::execute']
+		],
+		'includes/specials/SpecialKnowledgeGraphDesigner.php' => [
+			'SecurityCheck-XSS' => ['\\SpecialKnowledgeGraphDesigner::execute']
+		],
+	],
+	// 'directory_suppressions' => ['src/directory_name' => ['PhanIssueName1', 'PhanIssueName2']] can be manually added if needed.
+	// (directory_suppressions will currently be ignored by subsequent calls to --save-baseline, but may be preserved in future Phan releases)
 ];
