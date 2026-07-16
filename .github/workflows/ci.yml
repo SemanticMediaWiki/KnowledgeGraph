@@ -11,39 +11,44 @@ jobs:
 
   test:
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     continue-on-error: ${{ matrix.experimental }}
 
     strategy:
       matrix:
         include:
           - mediawiki_version: '1.43'
+            smw_version: 6.0.1
             php_version: 8.1
             database_type: mysql
-            database_image: "mariadb:10"
+            database_image: "mariadb:11.2"
             coverage: false
             experimental: false
           - mediawiki_version: '1.43'
+            smw_version: 7.0.0
             php_version: 8.1
             database_type: mysql
-            database_image: "mariadb:10"
-            coverage: true
-            experimental: false
-          - mediawiki_version: '1.44'
-            php_version: 8.2
-            database_type: mysql
-            database_image: "mariadb:11.8"
+            database_image: "mariadb:11.2"
             coverage: false
             experimental: false
+          - mediawiki_version: '1.44'
+            smw_version: 7.0.0
+            php_version: 8.2
+            database_type: mysql
+            database_image: "mariadb:11.2"
+            coverage: true
+            experimental: false
           - mediawiki_version: '1.45'
+            smw_version: 7.0.0
             php_version: 8.3
             database_type: mysql
-            database_image: "mariadb:11.8"
+            database_image: "mariadb:11.2"
             coverage: false
             experimental: false
 
     env:
       MW_VERSION: ${{ matrix.mediawiki_version }}
+      SMW_VERSION: ${{ matrix.smw_version }}
       PHP_VERSION: ${{ matrix.php_version }}
       DB_TYPE: ${{ matrix.database_type }}
       DB_IMAGE: ${{ matrix.database_image }}
