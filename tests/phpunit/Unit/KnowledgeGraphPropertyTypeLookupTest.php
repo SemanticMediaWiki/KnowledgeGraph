@@ -12,7 +12,8 @@ use PHPUnit\Framework\TestCase;
  * only findPropertyValueType() remains. This test exercises that lookup
  * directly against a real DIProperty instance so a future re-introduction
  * of the removed method would be caught here instead of fataling in
- * production.
+ * production. CI also runs against SMW 6.0.1, where findPropertyTypeID()
+ * still exists, so the removal check is gated on SMW_VERSION.
  *
  * @covers KnowledgeGraph::setSemanticDataFromApi
  * @covers KnowledgeGraphApiLoadCategories::execute
@@ -43,7 +44,11 @@ class KnowledgeGraphPropertyTypeLookupTest extends TestCase {
 		$this->assertNotSame( '', $typeId );
 	}
 
-	public function testFindPropertyTypeIDNoLongerExistsOnDIProperty() {
+	public function testFindPropertyTypeIDNoLongerExistsOnDIPropertySince700() {
+		if ( version_compare( SMW_VERSION, '7.0.0', '<' ) ) {
+			$this->markTestSkipped( 'DIProperty::findPropertyTypeID() is only removed as of SMW 7.0 (SMW #6852).' );
+		}
+
 		$property = \SMW\DIProperty::newFromUserLabel( 'TestProperty' );
 
 		$this->assertFalse(
