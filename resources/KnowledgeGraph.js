@@ -33,6 +33,7 @@ KnowledgeGraph = function () {
 	self.nodePropertiesCache = {};
 	self.id = null;
 	self.colors = mw.config.get('wgKnowledgeGraphColorPalette');
+	self.LastDepth = null;
 
 	function addLegendEntry(id, label, color) {
 		if (!self.LegendDiv) return;
@@ -166,6 +167,8 @@ KnowledgeGraph = function () {
 	}
 
 	function loadNodes(obj) {
+		self.LastDepth = obj.depth;
+	
 		if (obj.title !== null && obj.properties === null) {
 			var payload = {
 				action: 'knowledgegraph-load-nodes',
@@ -781,7 +784,7 @@ KnowledgeGraph = function () {
 					const text = `{{#knowledgegraph:
 nodes=${nodes.join(', ')}
 |properties=${properties.join(', ')}
-|depth=0
+|depth=${self.LastDepth !== null ? self.LastDepth : self.Config.depth}
 |graph-options=
 ${propertyOptions}|show-property-type=true
 |width=400px
@@ -1648,6 +1651,14 @@ $(document).ready(async function () {
 						}
 					} else if (!isPlainObject(value)) {
 						graphData.propertyOptions[key] = {};
+
+					// merge with default nodes options
+					} else {
+						graphData.propertyOptions[key] = $.extend(
+							true, // recursive
+							KnowledgeGraphOptions.getDefaultOptions().nodes,
+							graphData.propertyOptions[key]
+						);
 					}
 				}
 			} else {

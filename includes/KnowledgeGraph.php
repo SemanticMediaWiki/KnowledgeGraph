@@ -5,6 +5,7 @@
  *
  * @license GPL-2.0-or-later
  * @author thomas-topway-it for KM-A
+ * @author gesinn.it
  */
 
 // use MediaWiki\Category\Category;
@@ -206,6 +207,51 @@ class KnowledgeGraph {
 	}
 
 	/**
+	 * @see https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/48
+	 * @param array $nodes
+	 * @return array
+	 */
+	private static function extractTitleWithCommas( $nodes ) {
+		$validTitles = [];
+		$i = 0;
+		$totalNodes = count( $nodes );
+
+		while ( $i < $totalNodes ) {
+			$titleText = $nodes[$i];
+			$title_ = Title::newFromText( $titleText );
+
+			// If this title doesn't exist and there are more elements, try joining with next values
+			if ( ( !$title_ || !$title_->isKnown() ) && ( $i + 1 ) < $totalNodes ) {
+				$combinedText = $titleText;
+				$j = $i + 1;
+
+				// Try joining with subsequent values until we find an existing title
+				while ( $j < $totalNodes ) {
+					$combinedText .= ', ' . $nodes[$j];
+					$testTitle = Title::newFromText( $combinedText );
+
+					if ( $testTitle && $testTitle->isKnown() ) {
+						$title_ = $testTitle;
+
+						// Skip the consumed elements
+						$i = $j;
+						break;
+					}
+					$j++;
+				}
+			}
+
+			if ( $title_ && $title_->isKnown() ) {
+				$validTitles[] = $title_;
+			}
+
+			$i++;
+		}
+
+		return $validTitles;
+	}
+
+	/**
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/c997fbd2583ccc088dc232288f883716ca2f5777/includes/PageProperties.php
 	 * @param Parser $parser
 	 * @param mixed ...$argv
@@ -252,18 +298,47 @@ nodes=TestPage
 		$params['show-toolbar'] = false;
 
 		$propertyOptions = [];
+		$propAttributes = [];
 		// property-related options
 		foreach ( $values as $val ) {
 			if ( preg_match( '/^property-options(\?(.+))?=(.+)/', $val, $match ) ) {
+				// allow to to express attributes in this form
+				// |property-options?Prop_a#color.background=#ccc
+				// |property-options?Prop_a#color.border=#0000FF
+				$isAttribute = false;
+				$attr = '';
+				if ( strpos( $match[2], '#' ) !== false ) {
+					[ $match[2], $attr ] = explode( '#', $match[2], 2 );
+					$isAttribute = true;
+				}
+
 				$title_ = Title::makeTitleSafe( \SMW_NS_PROPERTY, $match[2] );
-				if ( $title_ ) {
-					$propertyOptions[$title_->getText()] = $match[3];
+				if ( !$title_ ) {
+					continue;
+				}
+
+				if ( $isAttribute ) {
+					$propAttributes[ $title_->getText() ][ $attr ] = $match[3];
+				} else {
+					$propertyOptions[ $title_->getText() ] = $match[3];
 				}
 			}
 		}
 
-		foreach ( $params['nodes'] as $titleText ) {
-			$title_ = Title::newFromText( $titleText );
+		foreach ( $propAttributes as $key => $value ) {
+			foreach ( $value as $k => $v ) {
+				$propAttributes[$key] = array_merge_recursive(
+					self::plainToNestedObj( $k, $v ),
+					$propAttributes[$key]
+				);
+				unset( $propAttributes[$key][$k] );
+			}
+			$propertyOptions[$key] = $propAttributes[$key];
+		}
+
+		$nodes = self::extractTitleWithCommas( $params['nodes'] );
+
+		foreach ( $nodes as $title_ ) {
 			if ( $title_ && $title_->isKnown() ) {
 				if ( !isset( self::$data[$title_->getFullText()] ) ) {
 					self::setSemanticDataFromApi( $title_, $params['properties'], 0, $params['depth'] );
@@ -282,8 +357,11 @@ nodes=TestPage
 			}
 		}
 
-		foreach ( $propertyOptions as $property => $titleText ) {
-			$title_ = Title::newFromText( $titleText, NS_MEDIAWIKI );
+		foreach ( $propertyOptions as $property => $value ) {
+			if ( is_array( $value ) ) {
+				continue;
+			}
+			$title_ = Title::newFromText( $value, NS_MEDIAWIKI );
 			if ( $title_ && $title_->isKnown() ) {
 				// $propertyOptions[$property] = json_decode( self::getWikipageContent( $title_ ), true );
 				$propertyOptions[$property] = self::getWikipageContent( $title_ );
@@ -296,8 +374,8 @@ nodes=TestPage
 		$params['graphOptions'] = $graphOptions;
 		$params['propertyOptions'] = $propertyOptions;
 		self::$graphs[] = $params;
-		self::$data = [];
 
+		self::$data = [];
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
 
 		$paletteName = $params['palette'] ?? 'default';
@@ -317,6 +395,28 @@ nodes=TestPage
 			'noparse' => true,
 			'isHTML' => true
 		];
+	}
+
+	/**
+	 * Converts strings like columns.searchPanes.show o nested objects.
+	 */
+	public static function plainToNestedObj( string $key, mixed $value ): array {
+		$arr = explode( '.', $key );
+		$ret = [];
+
+		// link to first level
+		$t = &$ret;
+		foreach ( $arr as $key => $k ) {
+			if ( !array_key_exists( $k, $t ) ) {
+				$t[$k] = [];
+			}
+			// link to deepest level
+			$t = &$t[$k];
+			if ( $key === count( $arr ) - 1 ) {
+				$t = $value;
+			}
+		}
+		return $ret;
 	}
 
 	/**
@@ -587,6 +687,7 @@ nodes=TestPage
 		];
 		$dbr = wfGetDB( DB_REPLICA );
 
+		// @credits paladox
 		if ( version_compare( MW_VERSION, '1.45', '>=' ) ) {
 			$res = $dbr->select(
 				[ 'categorylinks', 'linktarget' ],
