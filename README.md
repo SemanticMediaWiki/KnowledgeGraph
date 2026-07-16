@@ -1,4 +1,6 @@
 # KnowledgeGraph
+[![CI](https://github.com/SemanticMediaWiki/KnowledgeGraph/actions/workflows/ci.yml/badge.svg)](https://github.com/SemanticMediaWiki/KnowledgeGraph/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/SemanticMediaWiki/KnowledgeGraph/graph/badge.svg)](https://codecov.io/gh/SemanticMediaWiki/KnowledgeGraph)
 
 This extension provides the `#knowledgegraph` parser function to visualize the [knowledge graph](https://en.wikipedia.org/wiki/Knowledge_graph) in Semantic MediaWiki with [vis-network.js](https://github.com/visjs/vis-network)
 
