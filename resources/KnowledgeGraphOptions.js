@@ -1,7 +1,7 @@
 /**
  * KnowledgeGraph
  *
- * @licence GPL-2.0-or-later
+ * @license GPL-2.0-or-later
  * @author thomas-topway-it for KM-A
  */
 
@@ -18,7 +18,7 @@ KnowledgeGraphOptions = {
 				enabled: true,
 				filter: 'nodes,edges',
 				// container: undefined,
-				showButton: true,
+				showButton: true
 			},
 			edges: {
 				arrows: {
@@ -28,7 +28,7 @@ KnowledgeGraphOptions = {
 						// imageWidth: undefined,
 						scaleFactor: 1,
 						// src: undefined,
-						type: 'arrow',
+						type: 'arrow'
 					},
 					middle: {
 						enabled: false,
@@ -36,7 +36,7 @@ KnowledgeGraphOptions = {
 						imageWidth: 32,
 						scaleFactor: 1,
 						src: 'https://visjs.org/images/visjs_logo.png',
-						type: 'image',
+						type: 'image'
 					},
 					from: {
 						enabled: false,
@@ -44,12 +44,12 @@ KnowledgeGraphOptions = {
 						// imageWidth: undefined,
 						scaleFactor: 1,
 						// src: undefined,
-						type: 'arrow',
-					},
+						type: 'arrow'
+					}
 				},
 				endPointOffset: {
 					from: 0,
-					to: 0,
+					to: 0
 				},
 				arrowStrikethrough: true,
 				chosen: true,
@@ -58,7 +58,7 @@ KnowledgeGraphOptions = {
 					highlight: '#848484',
 					hover: '#848484',
 					inherit: 'from',
-					opacity: 1.0,
+					opacity: 1.0
 				},
 				dashes: false,
 				font: {
@@ -76,29 +76,29 @@ KnowledgeGraphOptions = {
 						size: 14, // px
 						face: 'arial',
 						vadjust: 0,
-						mod: 'bold',
+						mod: 'bold'
 					},
 					ital: {
 						color: '#343434',
 						size: 14, // px
 						face: 'arial',
 						vadjust: 0,
-						mod: 'italic',
+						mod: 'italic'
 					},
 					boldital: {
 						color: '#343434',
 						size: 14, // px
 						face: 'arial',
 						vadjust: 0,
-						mod: 'bold italic',
+						mod: 'bold italic'
 					},
 					mono: {
 						color: '#343434',
 						size: 15, // px
 						face: 'courier new',
 						vadjust: 2,
-						mod: '',
-					},
+						mod: ''
+					}
 				},
 				hidden: false,
 				hoverWidth: 1.5,
@@ -114,40 +114,40 @@ KnowledgeGraphOptions = {
 						min: 14,
 						max: 30,
 						maxVisible: 30,
-						drawThreshold: 5,
+						drawThreshold: 5
 					},
-					customScalingFunction: function (min, max, total, value) {
-						if (max === min) {
+					customScalingFunction: function ( min, max, total, value ) {
+						if ( max === min ) {
 							return 0.5;
 						} else {
-							var scale = 1 / (max - min);
-							return Math.max(0, (value - min) * scale);
+							const scale = 1 / ( max - min );
+							return Math.max( 0, ( value - min ) * scale );
 						}
-					},
+					}
 				},
 				selectionWidth: 1,
 				selfReferenceSize: 20,
 				selfReference: {
 					size: 20,
 					angle: Math.PI / 4,
-					renderBehindTheNode: true,
+					renderBehindTheNode: true
 				},
 				shadow: {
 					enabled: false,
 					color: 'rgba(0,0,0,0.5)',
 					size: 10,
 					x: 5,
-					y: 5,
+					y: 5
 				},
 				smooth: {
 					enabled: true,
 					type: 'dynamic',
-					roundness: 0.5,
+					roundness: 0.5
 				},
 				title: undefined,
 				value: undefined,
 				width: 1,
-				widthConstraint: false,
+				widthConstraint: false
 			},
 
 			nodes: {
@@ -160,17 +160,17 @@ KnowledgeGraphOptions = {
 					background: '#97C2FC',
 					highlight: {
 						border: '#2B7CE9',
-						background: '#D2E5FF',
+						background: '#D2E5FF'
 					},
 					hover: {
 						border: '#2B7CE9',
-						background: '#D2E5FF',
-					},
+						background: '#D2E5FF'
+					}
 				},
 				opacity: 1,
 				fixed: {
 					x: false,
-					y: false,
+					y: false
 				},
 				font: {
 					color: '#343434',
@@ -187,29 +187,29 @@ KnowledgeGraphOptions = {
 						size: 14, // px
 						face: 'arial',
 						vadjust: 0,
-						mod: 'bold',
+						mod: 'bold'
 					},
 					ital: {
 						color: '#343434',
 						size: 14, // px
 						face: 'arial',
 						vadjust: 0,
-						mod: 'italic',
+						mod: 'italic'
 					},
 					boldital: {
 						color: '#343434',
 						size: 14, // px
 						face: 'arial',
 						vadjust: 0,
-						mod: 'bold italic',
+						mod: 'bold italic'
 					},
 					mono: {
 						color: '#343434',
 						size: 15, // px
 						face: 'courier new',
 						vadjust: 2,
-						mod: '',
-					},
+						mod: ''
+					}
 				},
 				group: undefined,
 				heightConstraint: false,
@@ -218,15 +218,15 @@ KnowledgeGraphOptions = {
 					face: 'FontAwesome',
 					// code: undefined,
 					// weight: undefined,
-					size: 50, //50,
-					color: '#2B7CE9',
+					size: 50, // 50,
+					color: '#2B7CE9'
 				},
 				// image: undefined,
 				imagePadding: {
 					left: 0,
 					top: 0,
 					bottom: 0,
-					right: 0,
+					right: 0
 				},
 				label: undefined,
 				labelHighlightBold: true,
@@ -241,23 +241,23 @@ KnowledgeGraphOptions = {
 						min: 14,
 						max: 30,
 						maxVisible: 30,
-						drawThreshold: 5,
+						drawThreshold: 5
 					},
-					customScalingFunction: function (min, max, total, value) {
-						if (max === min) {
+					customScalingFunction: function ( min, max, total, value ) {
+						if ( max === min ) {
 							return 0.5;
 						} else {
-							var scale = 1 / (max - min);
-							return Math.max(0, (value - min) * scale);
+							const scale = 1 / ( max - min );
+							return Math.max( 0, ( value - min ) * scale );
 						}
-					},
+					}
 				},
 				shadow: {
 					enabled: false,
 					color: 'rgba(0,0,0,0.5)',
 					size: 10,
 					x: 5,
-					y: 5,
+					y: 5
 				},
 				shape: 'ellipse',
 				shapeProperties: {
@@ -266,20 +266,20 @@ KnowledgeGraphOptions = {
 					interpolation: false, // only for image and circularImage shapes
 					useImageSize: false, // only for image and circularImage shapes
 					useBorderWithImage: false, // only for image shape
-					coordinateOrigin: 'center', // only for image and circularImage shapes
+					coordinateOrigin: 'center' // only for image and circularImage shapes
 				},
 				size: 25,
 				title: undefined,
 				value: undefined,
-				widthConstraint: false,
+				widthConstraint: false
 				// x: undefined,
 				// y: undefined,
 			},
 			groups: {
 				useDefaultGroups: true,
 				myGroupId: {
-					/*node options*/
-				},
+					/* node options */
+				}
 			},
 			layout: {
 				randomSeed: undefined,
@@ -295,8 +295,8 @@ KnowledgeGraphOptions = {
 					parentCentralization: true,
 					direction: 'UD', // UD, DU, LR, RL
 					sortMethod: 'hubsize', // hubsize, directed
-					shakeTowards: 'leaves', // roots, leaves
-				},
+					shakeTowards: 'leaves' // roots, leaves
+				}
 			},
 			interaction: {
 				dragNodes: true,
@@ -310,7 +310,7 @@ KnowledgeGraphOptions = {
 					enabled: false,
 					speed: { x: 10, y: 10, zoom: 0.02 },
 					bindToWindow: true,
-					autoFocus: true,
+					autoFocus: true
 				},
 				multiselect: false,
 				navigationButtons: false,
@@ -318,7 +318,7 @@ KnowledgeGraphOptions = {
 				selectConnectedEdges: true,
 				tooltipDelay: 300,
 				zoomSpeed: 1,
-				zoomView: true,
+				zoomView: true
 			},
 			manipulation: {
 				enabled: false,
@@ -331,7 +331,7 @@ KnowledgeGraphOptions = {
 				deleteEdge: true,
 				controlNodeStyle: {
 					// all node options are valid.
-				},
+				}
 			},
 			physics: {
 				enabled: true,
@@ -342,7 +342,7 @@ KnowledgeGraphOptions = {
 					springLength: 95,
 					springConstant: 0.04,
 					damping: 0.09,
-					avoidOverlap: 0,
+					avoidOverlap: 0
 				},
 				forceAtlas2Based: {
 					theta: 0.5,
@@ -351,14 +351,14 @@ KnowledgeGraphOptions = {
 					springConstant: 0.08,
 					springLength: 100,
 					damping: 0.4,
-					avoidOverlap: 0,
+					avoidOverlap: 0
 				},
 				repulsion: {
 					centralGravity: 0.2,
 					springLength: 200,
 					springConstant: 0.05,
 					nodeDistance: 100,
-					damping: 0.09,
+					damping: 0.09
 				},
 				hierarchicalRepulsion: {
 					centralGravity: 0.0,
@@ -366,7 +366,7 @@ KnowledgeGraphOptions = {
 					springConstant: 0.01,
 					nodeDistance: 120,
 					damping: 0.09,
-					avoidOverlap: 0,
+					avoidOverlap: 0
 				},
 				maxVelocity: 50,
 				minVelocity: 0.1,
@@ -376,13 +376,12 @@ KnowledgeGraphOptions = {
 					iterations: 1000,
 					updateInterval: 100,
 					onlyDynamicEdges: false,
-					fit: true,
+					fit: true
 				},
 				timestep: 0.5,
 				adaptiveTimestep: true,
-				wind: { x: 0, y: 0 },
-			},
+				wind: { x: 0, y: 0 }
+			}
 		};
-	},
+	}
 };
-
