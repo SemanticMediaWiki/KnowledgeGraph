@@ -7,7 +7,16 @@
 	"globals": {
 		"mw": "readonly",
 		"mediaWiki": "readonly",
-		"KnowledgeGraphFunctions": "writable"
+		"$": "readonly",
+		"jQuery": "readonly",
+		"KnowledgeGraph": "writable",
+		"KnowledgeGraphFunctions": "writable",
+		"KnowledgeGraphOptions": "writable",
+		"KnowledgeGraphDialog": "writable",
+		"KnowledgeGraphNonModalDialog": "writable",
+		"KnowledgeGraphToolbar": "writable",
+		"KnowledgeGraphActionToolbar": "writable",
+		"KnowledgeGraphNonContextMenu": "writable"
 	},
 	"env": {
 		"browser": true
