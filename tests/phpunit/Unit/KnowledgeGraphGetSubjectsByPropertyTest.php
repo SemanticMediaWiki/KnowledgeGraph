@@ -77,4 +77,36 @@ class KnowledgeGraphGetSubjectsByPropertyTest extends TestCase {
 
 		$this->assertSame( [], $result );
 	}
+
+	/**
+	 * getSubjectsByProperty() takes a \SMW\DIProperty (never a bare string) as
+	 * its first argument; the only real caller, KnowledgeGraphApiLoadCategories,
+	 * always passes a DIProperty together with a string $targetValue (a page
+	 * title). A previously dead `is_string( $propertyText )` branch would have
+	 * silently discarded $targetValue for a string property; now that the
+	 * branch is gone, $targetValue must always be resolved and forwarded to
+	 * the store as the second argument to getPropertySubjects().
+	 */
+	public function testPropertyObjectWithTargetValueResolvesTitleAndQueriesStore() {
+		$property = \SMW\DIProperty::newFromUserLabel( 'TestProperty' );
+
+		$this->storeMock->expects( $this->once() )
+			->method( 'getPropertySubjects' )
+			->with(
+				$this->callback( static function ( $arg ) use ( $property ) {
+					return $arg instanceof \SMW\DIProperty
+						&& $arg->getKey() === $property->getKey();
+				} ),
+				$this->callback( static function ( $arg ) {
+					return $arg instanceof \SMW\DIWikiPage
+						&& $arg->getDBkey() === 'Target_Page';
+				} ),
+				$this->anything()
+			)
+			->willReturn( [] );
+
+		$result = KnowledgeGraph::getSubjectsByProperty( $property, 100, 0, 'Target Page' );
+
+		$this->assertSame( [], $result );
+	}
 }

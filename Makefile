@@ -31,8 +31,13 @@ COMPOSER_EXT?=true
 include build/Makefile
 
 .PHONY: composer-phan
-composer-phan: .init
+composer-phan: .init ## Run Phan static analysis
 	$(compose-exec-wiki) bash -c "cd $(EXTENSION_FOLDER) && composer phan $(COMPOSER_PARAMS)"
+
+.PHONY: composer-phan-update-baseline
+composer-phan-update-baseline: .init ## Re-generate baseline and fix indentation for PHPCS
+	$(compose-exec-wiki) bash -c "cd $(EXTENSION_FOLDER) && composer phan -- --save-baseline=.phan/baseline.php"
+	unexpand --first-only -t 4 .phan/baseline.php > /tmp/baseline.php && mv /tmp/baseline.php .phan/baseline.php
 
 # Extend ci-coverage to also run phan (aligned with SemanticResultFormats / PageForms)
 ci-coverage: composer-phan

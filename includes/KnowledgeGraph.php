@@ -320,18 +320,18 @@ nodes=TestPage
 	}
 
 	/**
-	 * @param string $propertyText
+	 * @param \SMW\DIProperty $property
 	 * @param int $limit
 	 * @param int $offset
 	 * @param string|null $targetValue
 	 * @return array
 	 */
-	public static function getSubjectsByProperty( $propertyText, $limit = 100, $offset = 0, $targetValue = null ) {
+	public static function getSubjectsByProperty( $property, $limit = 100, $offset = 0, $targetValue = null ) {
 		$requestOptions = [
 			'limit'    => $limit,
 			'offset'   => $offset,
 			// 'property' => $this->getRequest()->getVal( 'property' ),
-			'property' => $propertyText,
+			'property' => $property,
 			'value'    => null,
 			// 'nearbySearchForType' => $applicationFactory->getSettings()->get( 'smwgSearchByPropertyFuzzy' )
 		];
@@ -354,11 +354,7 @@ nodes=TestPage
 			}
 		}
 
-		if ( is_string( $propertyText ) ) {
-			$results = self::$SMWStore->getPropertySubjects( $DIProperty, null, $requestOptions );
-		} else {
-			$results = self::$SMWStore->getPropertySubjects( $DIProperty, $targetDIValue, $requestOptions );
-		}
+		$results = self::$SMWStore->getPropertySubjects( $DIProperty, $targetDIValue, $requestOptions );
 
 		$ret = [];
 		foreach ( $results as $result ) {

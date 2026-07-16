@@ -8,9 +8,11 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 
 ### Fixed
 - `KnowledgeGraph.php`, `KnowledgeGraphApiLoadCategories.php`: migrated `\SMW\DIProperty::findPropertyTypeID()` (removed in SMW 7.0.0) to `findPropertyValueType()`; the old call fataled under SMW 7.0.0 and was previously untested
+- `KnowledgeGraph::getSubjectsByProperty()`: narrowed the `$propertyText` parameter to `\SMW\DIProperty` (the only type any real caller ever passes) and removed the dead `is_string( $propertyText )` branch, which silently discarded `$targetValue` for a code path no caller exercises ([#62](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/62))
 
 ### Added
 - `.phan/config.php` and `.phan/baseline.php`: activated Phan static analysis (declared as a dev dependency via `mediawiki/mediawiki-phan-config` but never configured or run); runs on the coverage matrix leg via a new `composer-phan` Makefile target chained onto `ci-coverage`
+- `composer-phan-update-baseline` Makefile target to regenerate `.phan/baseline.php` with tab indentation (Phan hardcodes 4-space indentation, which fails PHPCS)
 - First QUnit tests, with JS coverage wired into CI
 
 ### Changed
