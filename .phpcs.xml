@@ -5,7 +5,7 @@
 		<exclude name="Generic.Files.OneObjectStructurePerFile.MultipleFound" />
 	</rule>
 	<file>.</file>
-    <exclude-pattern>/(vendor|conf)/</exclude-pattern>
+    <exclude-pattern>/(vendor|conf|\.phan)/</exclude-pattern>
 	<exclude-pattern type="relative">extensions/*</exclude-pattern>
 	<arg name="extensions" value="php"/>
 	<arg name="encoding" value="UTF-8"/>
