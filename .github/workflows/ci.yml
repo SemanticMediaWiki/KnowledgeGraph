@@ -63,7 +63,7 @@ jobs:
         if: matrix.coverage == false
 
       - name: Run tests with coverage
-        run: make ci-coverage
+        run: mkdir -p build/coverage && make ci-coverage
         if: matrix.coverage == true
 
       - name: Upload code coverage
@@ -71,6 +71,6 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: SemanticMediaWiki/KnowledgeGraph
-          files: coverage/php/coverage.xml
+          files: build/coverage/php/coverage.xml
           disable_search: true
         if: matrix.coverage == true
