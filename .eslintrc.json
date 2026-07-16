@@ -1,7 +1,8 @@
 {
 	"root": true,
 	"extends": [
-		"wikimedia/client",
+		"wikimedia/client/common",
+		"wikimedia/language/es2020",
 		"wikimedia/mediawiki"
 	],
 	"globals": {
@@ -9,6 +10,7 @@
 		"mediaWiki": "readonly",
 		"$": "readonly",
 		"jQuery": "readonly",
+		"vis": "readonly",
 		"KnowledgeGraph": "writable",
 		"KnowledgeGraphFunctions": "writable",
 		"KnowledgeGraphOptions": "writable",

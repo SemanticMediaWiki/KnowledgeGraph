@@ -1,3 +1,3 @@
-const insertLine = require('insert-line')
+const insertLine = require( 'insert-line' );
 
-insertLine('resources/visNetwork/vis-network.min.js').prependSync("/*@nomin*/")
+insertLine( 'resources/visNetwork/vis-network.min.js' ).prependSync( '/*@nomin*/' );
