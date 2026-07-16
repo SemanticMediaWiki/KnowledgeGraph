@@ -9,28 +9,26 @@
  */
 return [
     // # Issue statistics:
-    // PhanUndeclaredClassMethod : 20+ occurrences
-    // PhanUndeclaredTypeProperty : 7 occurrences
     // PhanTypeMismatchReturnProbablyReal : 5 occurrences
+    // PhanUndeclaredMethod : 3 occurrences
     // PhanUndeclaredStaticProperty : 3 occurrences
+    // PhanTypeMismatchArgument : 2 occurrences
+    // PhanTypeMismatchArgumentProbablyReal : 2 occurrences
     // SecurityCheck-XSS : 2 occurrences
     // MediaWikiNoIssetIfDefined : 1 occurrence
     // PhanTypeArraySuspiciousNullable : 1 occurrence
-    // PhanTypeMismatchArgumentProbablyReal : 1 occurrence
     // PhanTypeMissingReturn : 1 occurrence
-    // PhanUndeclaredClassProperty : 1 occurrence
-    // PhanUndeclaredConstant : 1 occurrence
     // PhanUndeclaredStaticMethod : 1 occurrence
+    // PhanUndeclaredTypeProperty : 1 occurrence
     // PhanUndeclaredVariable : 1 occurrence
 
     'file_suppressions' => [
         'includes/KnowledgeGraph.php' => [
             'MediaWikiNoIssetIfDefined' => ['\\KnowledgeGraph::getAllPropertiesForNode'],
+            'PhanTypeMismatchArgument' => ['\\KnowledgeGraph::getSubjectsByProperty'],
             'PhanTypeMismatchReturnProbablyReal' => ['\\KnowledgeGraph::onBeforePageDisplay', '\\KnowledgeGraph::setSemanticDataFromApi'],
             'PhanTypeMissingReturn' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
-            'PhanUndeclaredClassMethod' => ['\\KnowledgeGraph::getSubjectsByProperty', '\\KnowledgeGraph::initSMW', '\\KnowledgeGraph::setSemanticDataFromApi'],
-            'PhanUndeclaredClassProperty' => ['\\KnowledgeGraph::getSubjectsByProperty'],
-            'PhanUndeclaredConstant' => ['\\KnowledgeGraph::parserFunctionKnowledgeGraph'],
+            'PhanUndeclaredMethod' => ['\\KnowledgeGraph::getSubjectsByProperty', '\\KnowledgeGraph::setSemanticDataFromApi'],
             'PhanUndeclaredStaticMethod' => ['\\KnowledgeGraph::getWikiPage'],
             'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraph'],
             'SecurityCheck-XSS' => ['\\KnowledgeGraph::parserFunctionKnowledgeGraph']
@@ -38,15 +36,12 @@ return [
         'includes/api/KnowledgeGraphApiLoadCategories.php' => [
             'PhanTypeArraySuspiciousNullable' => ['\\KnowledgeGraphApiLoadCategories::execute'],
             'PhanTypeMismatchArgumentProbablyReal' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-            'PhanUndeclaredClassMethod' => ['\\KnowledgeGraphApiLoadCategories::execute'],
+            'PhanUndeclaredMethod' => ['\\KnowledgeGraphApiLoadCategories::execute'],
             'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-            'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraphApiLoadCategories'],
             'PhanUndeclaredVariable' => ['\\KnowledgeGraphApiLoadCategories::execute']
         ],
         'includes/api/KnowledgeGraphApiLoadNodes.php' => [
-            'PhanUndeclaredClassMethod' => ['\\KnowledgeGraphApiLoadNodes::execute'],
-            'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadNodes::execute'],
-            'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraphApiLoadNodes']
+            'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadNodes::execute']
         ],
         'includes/api/KnowledgeGraphApiLoadProperties.php' => [
             'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadProperties::execute']
