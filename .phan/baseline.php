@@ -9,13 +9,12 @@
  */
 return [
 	// # Issue statistics:
-	// PhanTypeMismatchReturnProbablyReal : 5 occurrences
 	// PhanUndeclaredStaticProperty : 3 occurrences
-	// PhanTypeMismatchArgument : 2 occurrences
-	// PhanTypeMismatchArgumentProbablyReal : 2 occurrences
 	// MediaWikiNoIssetIfDefined : 1 occurrence
 	// PhanTypeArraySuspiciousNullable : 1 occurrence
-	// PhanTypeMissingReturn : 1 occurrence
+	// PhanTypeMismatchArgument : 1 occurrence
+	// PhanTypeMismatchArgumentProbablyReal : 1 occurrence
+	// PhanTypeMismatchReturnProbablyReal : 1 occurrence
 	// PhanUndeclaredMethod : 1 occurrence
 	// PhanUndeclaredStaticMethod : 1 occurrence
 	// PhanUndeclaredTypeProperty : 1 occurrence
@@ -25,8 +24,7 @@ return [
 		'includes/KnowledgeGraph.php' => [
 			'MediaWikiNoIssetIfDefined' => ['\\KnowledgeGraph::getAllPropertiesForNode'],
 			'PhanTypeMismatchArgument' => ['\\KnowledgeGraph::getSubjectsByProperty'],
-			'PhanTypeMismatchReturnProbablyReal' => ['\\KnowledgeGraph::onBeforePageDisplay', '\\KnowledgeGraph::setSemanticDataFromApi'],
-			'PhanTypeMissingReturn' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
+			'PhanTypeMismatchReturnProbablyReal' => ['\\KnowledgeGraph::onBeforePageDisplay'],
 			'PhanUndeclaredStaticMethod' => ['\\KnowledgeGraph::getWikiPage'],
 			'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraph']
 		],

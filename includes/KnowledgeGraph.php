@@ -620,12 +620,15 @@ nodes=TestPage
 	}
 
 	/**
+	 * Populates self::$data[$title->getFullText()] as a side effect; callers
+	 * read the result from that static property rather than a return value.
+	 *
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/refs/heads/1.0.3/includes/PageProperties.php
 	 * @param Title $title
 	 * @param array $onlyProperties
 	 * @param int $depth
 	 * @param int $maxDepth
-	 * @return array
+	 * @return void
 	 */
 	public static function setSemanticDataFromApi( Title $title, $onlyProperties, $depth, $maxDepth ) {
 		$titleText = $title->getFullText();
