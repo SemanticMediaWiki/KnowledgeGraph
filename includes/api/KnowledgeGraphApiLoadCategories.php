@@ -191,7 +191,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 						array_merge(
 							$params['properties'],
 							array_map(
-								fn ( $prop ) => '-' . $prop,
+								static fn ( $prop ) => '-' . $prop,
 								$params['properties']
 							)
 						)
