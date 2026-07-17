@@ -312,6 +312,8 @@ nodes=TestPage
 
 		$index = count( self::$graphs ) - 1;
 		return [
+			// @phan-suppress-next-line SecurityCheck-XSS false positive: $index is an internal
+			// int counter and the message key is a hardcoded literal with plain-text i18n values
 			'<div class="KnowledgeGraph" id="knowledgegraph-wrapper-' . $index . '">'
 				. wfMessage( 'knowledge-graph-wrapper-loading' )->text() . '</div>',
 			'noparse' => true,

@@ -72,6 +72,8 @@ class SpecialKnowledgeGraphDesigner extends SpecialPage {
 			'wgExtraNamespaces' => $GLOBALS['wgExtraNamespaces']
 		] );
 
+		// @phan-suppress-next-line SecurityCheck-XSS false positive: key( ... ) is an internal
+		// int index and the message key is a hardcoded literal with plain-text i18n values
 		$out->addHTML(
 			'<div class="KnowledgeGraph" id="knowledgegraph-wrapper-' . key( \KnowledgeGraph::$graphs ) . '">'
 				. wfMessage( 'knowledge-graph-wrapper-loading' )->text() . '</div>'

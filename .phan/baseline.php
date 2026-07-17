@@ -13,7 +13,6 @@ return [
 	// PhanUndeclaredStaticProperty : 3 occurrences
 	// PhanTypeMismatchArgument : 2 occurrences
 	// PhanTypeMismatchArgumentProbablyReal : 2 occurrences
-	// SecurityCheck-XSS : 2 occurrences
 	// MediaWikiNoIssetIfDefined : 1 occurrence
 	// PhanTypeArraySuspiciousNullable : 1 occurrence
 	// PhanTypeMissingReturn : 1 occurrence
@@ -29,8 +28,7 @@ return [
 			'PhanTypeMismatchReturnProbablyReal' => ['\\KnowledgeGraph::onBeforePageDisplay', '\\KnowledgeGraph::setSemanticDataFromApi'],
 			'PhanTypeMissingReturn' => ['\\KnowledgeGraph::setSemanticDataFromApi'],
 			'PhanUndeclaredStaticMethod' => ['\\KnowledgeGraph::getWikiPage'],
-			'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraph'],
-			'SecurityCheck-XSS' => ['\\KnowledgeGraph::parserFunctionKnowledgeGraph']
+			'PhanUndeclaredTypeProperty' => ['\\KnowledgeGraph']
 		],
 		'includes/api/KnowledgeGraphApiLoadCategories.php' => [
 			'PhanTypeArraySuspiciousNullable' => ['\\KnowledgeGraphApiLoadCategories::execute'],
@@ -44,9 +42,6 @@ return [
 		],
 		'includes/api/KnowledgeGraphApiLoadProperties.php' => [
 			'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadProperties::execute']
-		],
-		'includes/specials/SpecialKnowledgeGraphDesigner.php' => [
-			'SecurityCheck-XSS' => ['\\SpecialKnowledgeGraphDesigner::execute']
 		],
 	],
 	// 'directory_suppressions' => ['src/directory_name' => ['PhanIssueName1', 'PhanIssueName2']] can be manually added if needed.
