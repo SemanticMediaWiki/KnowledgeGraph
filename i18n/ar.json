@@ -11,14 +11,21 @@
 	"knowledgegraph-dialog-done": "نفذ",
 	"knowledgegraph-dialog-cancel": "إلغاء",
 	"knowledgegraph-dialog-delete": "إزالة",
+	"knowledgegraph-dialog-main-namespace": "(رئيس)",
+	"knowledgegraph-dialog-edit-depth": "العمق",
 	"knowledgegraph-dialog-edit-limit": "الحد",
+	"knowledgegraph-dialog-edit-offset": "إزاحة",
 	"knowledgegraph-dialog-tabs-by-article": "حسب المقالة",
+	"knowledgegraph-dialog-select-categories": "اختر تصنيف واحد أو أكثر",
 	"knowledgegraph-dialog-select-properties": "حدد خاصية واحدة أو أكثر",
 	"knowledgegraph-dialog-select-nodes": "حدد صفحة واحدة أو أكثر",
+	"knowledgegraph-dialog-include-inverse": "إدراج خصائص معاكسة",
 	"knowledgegraph-dialog-tabs-by-properties": "حسب الخواص",
 	"knowledgegraph-dialog-tabs-by-categories": "حسب التصنيفات",
 	"knowledgegraph-dialog-results-no-properties": "لا يوجد خصائص",
 	"knowledgegraph-dialog-results-no-articles": "لا توجد مقالات",
+	"knowledgegraph-dialog-results-existing-node": "العقدة الحالية",
 	"knowledgegraph-dialog-results-no-new-nodes": "لا توجد عقد جديدة لإضافتها.",
-	"knowledgegraph-dialog-results-has-properties": "له خصائص:"
+	"knowledgegraph-dialog-results-has-properties": "له خصائص:",
+	"knowledgegraph-credits": "الائتمانات:"
 }
