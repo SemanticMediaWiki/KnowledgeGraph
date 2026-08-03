@@ -5,6 +5,7 @@
 		]
 	},
 	"knowledge-graph-name": "پوهې‌گراف",
+	"knowledge-graph-desc": "VisNetwork.js سره په مانا پوهنيزه مېډياويکي کې د پوهې گراپ ښيي",
 	"knowledge-graph-wrapper-loading": "گراف بارېږي...",
 	"apihelp-knowledgegraph-load-nodes-summary": "د ورکړل شويو ليکنو ماناپوهنيزه ځانتياوو بېرته ترلاسنه",
 	"specialpages-group-knowledgegraph": "پوهې‌گراف",
