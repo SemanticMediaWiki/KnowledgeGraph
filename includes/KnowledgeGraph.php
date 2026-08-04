@@ -575,7 +575,7 @@ nodes=TestPage
 			'LIMIT' => $limit,
 			'OFFSET' => $offset
 		];
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = MediaWikiServices::getInstance()->getConnectionProvider()->getReplicaDatabase();
 
 		if ( version_compare( MW_VERSION, '1.45', '>=' ) ) {
 			$res = $dbr->select(

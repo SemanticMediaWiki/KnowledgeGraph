@@ -12,6 +12,9 @@ use MediaWiki\Http\HttpRequestFactory;
  */
 class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 
+	/** @var \SMW\Store */
+	private $realStore;
+
 	protected function setUp(): void {
 		parent::setUp();
 		\SMW\StoreFactory::clear();
@@ -43,6 +46,7 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 	 * during page save and is not part of the code under test here.
 	 */
 	private function injectStoreMock(): \PHPUnit\Framework\MockObject\MockObject {
+		$this->realStore = \SMW\StoreFactory::getStore();
 		$storeMock = $this->getMockForAbstractClass( \SMW\Store::class );
 
 		$reflection = new ReflectionClass( \SMW\StoreFactory::class );
@@ -68,9 +72,19 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 		$this->setService( 'HttpRequestFactory', $httpRequestFactory );
 	}
 
+	/**
+	 * Builds an empty SemanticData container via a throwaway real store instance rather than
+	 * `new \SMW\DataModel\SemanticData(...)`: that class only exists under that namespace/path
+	 * since SMW 7.x — SMW 6.0.1 (also in the CI matrix) has it at `SMW\SemanticData` instead.
+	 * Store::getSemanticData() returns whichever concrete class is correct for the installed
+	 * SMW version.
+	 *
+	 * @param \PHPUnit\Framework\MockObject\MockObject $storeMock
+	 */
 	private function stubEmptySemanticDataAndPropertySubjects( $storeMock ): void {
+		$realStore = $this->realStore;
 		$storeMock->method( 'getSemanticData' )->willReturnCallback(
-			static fn ( $subject ) => new \SMW\DataModel\SemanticData( $subject )
+			static fn ( $subject ) => $realStore->getSemanticData( $subject )
 		);
 		$storeMock->method( 'getPropertySubjects' )->willReturn( [] );
 	}

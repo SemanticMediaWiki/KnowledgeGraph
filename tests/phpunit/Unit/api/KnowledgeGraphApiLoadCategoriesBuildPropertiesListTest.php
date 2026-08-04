@@ -43,6 +43,20 @@ class KnowledgeGraphApiLoadCategoriesBuildPropertiesListTest extends MediaWikiIn
 	}
 
 	/**
+	 * Builds an empty SemanticData container for $title via a real store lookup rather than
+	 * `new \SMW\DataModel\SemanticData(...)`: that class only exists under that namespace/path
+	 * since SMW 7.x — SMW 6.0.1 (also in the CI matrix) has it at `SMW\SemanticData` instead.
+	 * Must be called before injectStoreMock() replaces the real store.
+	 *
+	 * @param Title $title
+	 * @return \SMW\SemanticData|\SMW\DataModel\SemanticData
+	 */
+	private function newEmptySemanticData( Title $title ) {
+		$subject = new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() );
+		return \SMW\StoreFactory::getStore()->getSemanticData( $subject );
+	}
+
+	/**
 	 * @param mixed[] $args [ $propertyNames, $title_, $titleText, $properties, $limit ]
 	 * @return array
 	 */
@@ -65,12 +79,11 @@ class KnowledgeGraphApiLoadCategoriesBuildPropertiesListTest extends MediaWikiIn
 	}
 
 	public function testPredefinedExcludedPropertyIsFiltered() {
+		$title = Title::makeTitle( NS_MAIN, 'KGTestExcludeMember' );
+		$semanticData = $this->newEmptySemanticData( $title );
+
 		$storeMock = $this->injectStoreMock();
 
-		$title = Title::makeTitle( NS_MAIN, 'KGTestExcludeMember' );
-		$semanticData = new \SMW\DataModel\SemanticData(
-			new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() )
-		);
 		// "_ASK" is one of the predefined properties in self::$exclude.
 		$semanticData->addPropertyObjectValue(
 			new \SMW\DIProperty( '_ASK' ),
@@ -86,12 +99,11 @@ class KnowledgeGraphApiLoadCategoriesBuildPropertiesListTest extends MediaWikiIn
 	}
 
 	public function testUserDefinedVisiblePropertyIsKeptWithInverseGenerated() {
+		$title = Title::makeTitle( NS_MAIN, 'KGTestVisibleMember' );
+		$semanticData = $this->newEmptySemanticData( $title );
+
 		$storeMock = $this->injectStoreMock();
 
-		$title = Title::makeTitle( NS_MAIN, 'KGTestVisibleMember' );
-		$semanticData = new \SMW\DataModel\SemanticData(
-			new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() )
-		);
 		$semanticData->addPropertyObjectValue(
 			\SMW\DIProperty::newFromUserLabel( 'KGTestVisibleProp' ),
 			new \SMW\DIWikiPage( 'KGTestVisibleTarget', NS_MAIN )
@@ -106,12 +118,10 @@ class KnowledgeGraphApiLoadCategoriesBuildPropertiesListTest extends MediaWikiIn
 	}
 
 	public function testNonAnnotablePropertyIsFiltered() {
-		$storeMock = $this->injectStoreMock();
-
 		$title = Title::makeTitle( NS_MAIN, 'KGTestNonAnnotableMember' );
-		$semanticData = new \SMW\DataModel\SemanticData(
-			new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() )
-		);
+		$semanticData = $this->newEmptySemanticData( $title );
+
+		$storeMock = $this->injectStoreMock();
 
 		$nonAnnotable = $this->getMockBuilder( \SMW\DIProperty::class )
 			->setConstructorArgs( [ 'KGTestNonAnnotableProp' ] )
@@ -132,12 +142,11 @@ class KnowledgeGraphApiLoadCategoriesBuildPropertiesListTest extends MediaWikiIn
 	}
 
 	public function testPreExistingPropertiesListIsPreservedAndDeduplicated() {
+		$title = Title::makeTitle( NS_MAIN, 'KGTestPreexistingMember' );
+		$semanticData = $this->newEmptySemanticData( $title );
+
 		$storeMock = $this->injectStoreMock();
 
-		$title = Title::makeTitle( NS_MAIN, 'KGTestPreexistingMember' );
-		$semanticData = new \SMW\DataModel\SemanticData(
-			new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() )
-		);
 		$semanticData->addPropertyObjectValue(
 			\SMW\DIProperty::newFromUserLabel( 'KGTestDupProp' ),
 			new \SMW\DIWikiPage( 'KGTestDupTarget', NS_MAIN )
@@ -172,12 +181,10 @@ class KnowledgeGraphApiLoadCategoriesBuildPropertiesListTest extends MediaWikiIn
 		[ 'title' => $subjectTitle ] = $this->insertPage( 'KGTestSubjectTarget' );
 		\DeferredUpdates::doUpdates();
 
-		$storeMock = $this->injectStoreMock();
-
 		$title = Title::makeTitle( NS_MAIN, 'KGTestSubjectMember' );
-		$semanticData = new \SMW\DataModel\SemanticData(
-			new \SMW\DIWikiPage( $title->getDbKey(), $title->getNamespace() )
-		);
+		$semanticData = $this->newEmptySemanticData( $title );
+
+		$storeMock = $this->injectStoreMock();
 
 		$storeMock->method( 'getSemanticData' )->willReturn( $semanticData );
 		$storeMock->method( 'getPropertySubjects' )->willReturn( [
