@@ -26,14 +26,14 @@ jobs:
             coverage: false
             experimental: false
           - mediawiki_version: '1.43'
-            smw_version: 7.0.0
+            smw_version: 7.2.0
             php_version: 8.2
             database_type: mysql
             database_image: "mariadb:11.2"
             coverage: true
             experimental: false
           - mediawiki_version: '1.46'
-            smw_version: 7.0.0
+            smw_version: 7.2.0
             php_version: 8.5
             database_type: mysql
             database_image: "mariadb:12.3"

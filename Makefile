@@ -17,7 +17,7 @@ DB_TYPE?=mysql
 DB_IMAGE?="mariadb:11.2"
 
 # extensions
-SMW_VERSION?=7.0.0
+SMW_VERSION?=7.2.0
 
 # composer
 # Enables "composer update" inside of extension

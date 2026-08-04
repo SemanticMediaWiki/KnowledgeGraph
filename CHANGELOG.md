@@ -20,7 +20,8 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 - First QUnit tests, with JS coverage wired into CI
 
 ### Changed
-- CI matrix now tracks MediaWiki LTS (1.43) and the latest non-LTS release (1.46) instead of intermediate 1.44/1.45 legs; coverage and Phan moved onto the 1.43/SMW 7.0.0 leg; PHP floor raised to 8.2
+- CI matrix now tracks MediaWiki LTS (1.43) and the latest non-LTS release (1.46) instead of intermediate 1.44/1.45 legs; coverage and Phan moved onto the 1.43/SMW leg; PHP floor raised to 8.2
+- CI matrix and local `Makefile` default bumped from SMW 7.0.0 to 7.2.0 (latest release); coverage baseline re-measured, unchanged at 15.53% lines / 15.79% methods
 - `mediawiki/mediawiki-phan-config` bumped from 0.14.0 to 0.20.0
 - Transitive npm dependencies bumped to close 6 Dependabot alerts (3 high, 3 moderate): `form-data` 4.0.5 → 4.0.6 (via `axios`), `lodash` 4.17.21 → 4.18.1 (via `copy-files-from-to`), `picomatch` 2.3.1 → 2.3.2 (via `fast-glob`), `uuid` 9.0.1 → 11.1.1 and `vis-data` 7.1.9 → 7.1.10 (via `vis-network`)
 - Fixed ESLint violations and scoping bugs across `KnowledgeGraph.js`, `KnowledgeGraphNonModalDialog.js`, `KnowledgeGraphContextMenu.js`, `KnowledgeGraphOptions.js`, `KnowledgeGraphActionToolbar.js`, `KnowledgeGraphToolbar.js`, `KnowledgeGraphFunctions.js`, `KnowledgeGraphDialog.js`
