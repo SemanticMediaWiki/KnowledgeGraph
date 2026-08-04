@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 - `KnowledgeGraph::parserFunctionKnowledgeGraph()`, `SpecialKnowledgeGraphDesigner::execute()`: confirmed the two `SecurityCheck-XSS` Phan findings on `wfMessage( 'knowledge-graph-wrapper-loading' )->text()` are false positives (hardcoded message key, plain-text i18n values, concatenated only with internal int indexes) and replaced the blanket `.phan/baseline.php` suppressions with inline `@phan-suppress-next-line` justifications ([#63](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/63))
 
 ### Added
+- `codecov.yml`: set `coverage.status.project.default.target` to 70%, matching the PHP coverage baseline measured in [#66](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/66) (15.53% lines / 15.79% methods)
 - `.phan/config.php` and `.phan/baseline.php`: activated Phan static analysis (declared as a dev dependency via `mediawiki/mediawiki-phan-config` but never configured or run); runs on the coverage matrix leg via a new `composer-phan` Makefile target chained onto `ci-coverage`
 - `composer-phan-update-baseline` Makefile target to regenerate `.phan/baseline.php` with tab indentation (Phan hardcodes 4-space indentation, which fails PHPCS)
 - First QUnit tests, with JS coverage wired into CI

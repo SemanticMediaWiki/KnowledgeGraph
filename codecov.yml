@@ -1,2 +1,8 @@
 fixes:
   - "/var/www/html/extensions/KnowledgeGraph/::"
+
+coverage:
+  status:
+    project:
+      default:
+        target: 70%
