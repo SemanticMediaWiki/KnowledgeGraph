@@ -194,7 +194,13 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	 * @param int $limit
 	 * @return array
 	 */
-	private function buildPropertiesList( array $propertyNames, Title $title_, string $titleText, array $properties, int $limit ): array {
+	private function buildPropertiesList(
+		array $propertyNames,
+		Title $title_,
+		string $titleText,
+		array $properties,
+		int $limit
+	): array {
 		foreach ( $propertyNames as $propertyName ) {
 			$propertyDI = \SMW\DIProperty::newFromUserLabel( $propertyName );
 			$results = \KnowledgeGraph::getSubjectsByProperty( $propertyDI, $limit, 0, $titleText );
