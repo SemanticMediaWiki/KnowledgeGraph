@@ -13,12 +13,10 @@ return [
 	// MediaWikiNoIssetIfDefined : 1 occurrence
 	// PhanTypeArraySuspiciousNullable : 1 occurrence
 	// PhanTypeMismatchArgument : 1 occurrence
-	// PhanTypeMismatchArgumentProbablyReal : 1 occurrence
 	// PhanTypeMismatchReturnProbablyReal : 1 occurrence
 	// PhanUndeclaredMethod : 1 occurrence
 	// PhanUndeclaredStaticMethod : 1 occurrence
 	// PhanUndeclaredTypeProperty : 1 occurrence
-	// PhanUndeclaredVariable : 1 occurrence
 
 	'file_suppressions' => [
 		'includes/KnowledgeGraph.php' => [
@@ -30,10 +28,8 @@ return [
 		],
 		'includes/api/KnowledgeGraphApiLoadCategories.php' => [
 			'PhanTypeArraySuspiciousNullable' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-			'PhanTypeMismatchArgumentProbablyReal' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-			'PhanUndeclaredMethod' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-			'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadCategories::execute'],
-			'PhanUndeclaredVariable' => ['\\KnowledgeGraphApiLoadCategories::execute']
+			'PhanUndeclaredMethod' => ['\\KnowledgeGraphApiLoadCategories::buildPropertiesList'],
+			'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadCategories::execute']
 		],
 		'includes/api/KnowledgeGraphApiLoadNodes.php' => [
 			'PhanUndeclaredStaticProperty' => ['\\KnowledgeGraphApiLoadNodes::execute']
