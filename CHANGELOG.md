@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 ## [Unreleased]
 
 ### Fixed
+- `KnowledgeGraphApiLoadCategories::execute()`: fixed a fatal `Undefined variable $limit` error raised whenever the internal `allpages` properties lookup returned at least one property; the property-filtering logic (exclude-list, `isUserAnnotable()`/`isVisible()` checks, inverse-property generation) was extracted into a new `buildPropertiesList()` method, closing the scoping bug and making the logic directly unit-testable ([#67](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/67))
 - `KnowledgeGraph::setSemanticDataFromApi()`: corrected the PHPDoc return type from `array` to `void`; the method has always populated the public static `self::$data` property as a side effect and never returns a value, and all five call sites already read the result from that property rather than from the return value ([#64](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/64))
 - `KnowledgeGraph.php`, `KnowledgeGraphApiLoadCategories.php`: migrated `\SMW\DIProperty::findPropertyTypeID()` (removed in SMW 7.0.0) to `findPropertyValueType()`; the old call fataled under SMW 7.0.0 and was previously untested
 - `KnowledgeGraph::getSubjectsByProperty()`: narrowed the `$propertyText` parameter to `\SMW\DIProperty` (the only type any real caller ever passes) and removed the dead `is_string( $propertyText )` branch, which silently discarded `$targetValue` for a code path no caller exercises ([#62](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/62))

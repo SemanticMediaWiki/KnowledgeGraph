@@ -154,47 +154,12 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 					$titleText = $title_->getDbKey();
 					$titleText = str_replace( '_', ' ', $titleText );
 
-					foreach ( $propertyNames as $propertyName ) {
-						$propertyDI = \SMW\DIProperty::newFromUserLabel( $propertyName );
-						$results = \KnowledgeGraph::getSubjectsByProperty( $propertyDI, $limit, 0, $titleText );
-						if ( count( $results ) > 0 ) {
-							$params['properties'][] = $propertyName;
-						}
-					}
-
-					$subject = new \SMW\DIWikiPage( $title_->getDbKey(), $title_->getNamespace() );
-					$semanticData = self::$SMWStore->getSemanticData( $subject );
-
-					foreach ( $semanticData->getProperties() as $property ) {
-						$key = $property->getKey();
-
-						$typeID = $property->findPropertyValueType();
-
-						if ( in_array( $key, self::$exclude ) ) {
-							continue;
-						}
-
-						$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
-						if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
-							continue;
-						}
-
-						$key = str_replace( '_', ' ', $property->getKey() );
-
-						$params['properties'][] = $key;
-
-					}
-
-					$params['properties'] = array_unique( $params['properties'] );
-
-					$params['properties'] = array_unique(
-						array_merge(
-							$params['properties'],
-							array_map(
-								static fn ( $prop ) => '-' . $prop,
-								$params['properties']
-							)
-						)
+					$params['properties'] = $this->buildPropertiesList(
+						$propertyNames,
+						$title_,
+						$titleText,
+						$params['properties'],
+						$params['limit']
 					);
 
 					if ( $title_ && $title_->isKnown() ) {
@@ -213,6 +178,62 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 
 		$res = json_encode( \KnowledgeGraph::$data );
 		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
+	}
+
+	/**
+	 * Builds the list of properties to load for a category member: properties
+	 * for which the member is a target value (via $propertyNames), plus the
+	 * member's own semantic properties, filtered by self::$exclude and
+	 * isUserAnnotable()/isVisible(), merged with their inverse ("-property")
+	 * counterparts.
+	 *
+	 * @param string[] $propertyNames
+	 * @param Title $title_
+	 * @param string $titleText
+	 * @param array $properties
+	 * @param int $limit
+	 * @return array
+	 */
+	private function buildPropertiesList( array $propertyNames, Title $title_, string $titleText, array $properties, int $limit ): array {
+		foreach ( $propertyNames as $propertyName ) {
+			$propertyDI = \SMW\DIProperty::newFromUserLabel( $propertyName );
+			$results = \KnowledgeGraph::getSubjectsByProperty( $propertyDI, $limit, 0, $titleText );
+			if ( count( $results ) > 0 ) {
+				$properties[] = $propertyName;
+			}
+		}
+
+		$subject = new \SMW\DIWikiPage( $title_->getDbKey(), $title_->getNamespace() );
+		$semanticData = self::$SMWStore->getSemanticData( $subject );
+
+		foreach ( $semanticData->getProperties() as $property ) {
+			$key = $property->getKey();
+
+			if ( in_array( $key, self::$exclude ) ) {
+				continue;
+			}
+
+			$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
+			if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
+				continue;
+			}
+
+			$key = str_replace( '_', ' ', $property->getKey() );
+
+			$properties[] = $key;
+		}
+
+		$properties = array_unique( $properties );
+
+		return array_unique(
+			array_merge(
+				$properties,
+				array_map(
+					static fn ( $prop ) => '-' . $prop,
+					$properties
+				)
+			)
+		);
 	}
 
 	/**
