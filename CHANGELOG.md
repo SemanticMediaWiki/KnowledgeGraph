@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 - First QUnit tests, with JS coverage wired into CI
 
 ### Changed
+- `.github/workflows/ci.yml`: bumped `actions/checkout` from v4 to v7, resolving the "Node.js 20 is deprecated" warning (v4 is forced onto Node 24 by the runner, v7 targets it natively); no behavioral change for this workflow (only relevant v5 breaking change concerns `pull_request_target` checkout defaults, which this workflow doesn't use)
 - Removed the `$exclude` static property duplicated verbatim on `KnowledgeGraphApiLoadNodes` and `KnowledgeGraphApiLoadCategories`; only `KnowledgeGraph::$exclude` was ever read, the two copies were dead weight
 - CI matrix now tracks MediaWiki LTS (1.43) and the latest non-LTS release (1.46) instead of intermediate 1.44/1.45 legs; coverage and Phan moved onto the 1.43/SMW leg; PHP floor raised to 8.2
 - CI matrix and local `Makefile` default bumped from SMW 7.0.0 to 7.2.0 (latest release); coverage baseline re-measured, unchanged at 15.53% lines / 15.79% methods
