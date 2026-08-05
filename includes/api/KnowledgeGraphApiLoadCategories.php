@@ -41,60 +41,6 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	}
 
 	/**
-	 * @see extensions/SemanticMediaWiki/import/groups/predefined.properties.json
-	 * @var string[]
-	 */
-	public static $exclude = [
-		// content_group
-		"_SOBJ",
-		"_ASK",
-		"_MEDIA",
-		"_MIME",
-		"_ATTCH_LINK",
-		"_FILE_ATTCH",
-		"_CONT_TYPE",
-		"_CONT_AUTHOR",
-		"_CONT_LEN",
-		"_CONT_LANG",
-		"_CONT_TITLE",
-		"_CONT_DATE",
-		"_CONT_KEYW",
-		"_TRANS",
-		"_TRANS_SOURCE",
-		"_TRANS_GROUP",
-		// declarative
-		"_TYPE",
-		"_UNIT",
-		"_IMPO",
-		"_CONV",
-		"_SERV",
-		"_PVAL",
-		"_LIST",
-		"_PREC",
-		"_PDESC",
-		"_PPLB",
-		"_PVAP",
-		"_PVALI",
-		"_PVUC",
-		"_PEID",
-		"_PEFU",
-		// schema
-		"_SCHEMA_TYPE",
-		"_SCHEMA_DEF",
-		"_SCHEMA_DESC",
-		"_SCHEMA_TAG",
-		"_SCHEMA_LINK",
-		"_FORMAT_SCHEMA",
-		"_CONSTRAINT_SCHEMA",
-		"_PROFILE_SCHEMA",
-		// classification_group
-		"_INST",
-		"_PPGR",
-		"_SUBP",
-		"_SUBC"
-	];
-
-	/**
 	 * @inheritDoc
 	 */
 	public function execute() {
@@ -215,7 +161,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 		foreach ( $semanticData->getProperties() as $property ) {
 			$key = $property->getKey();
 
-			if ( in_array( $key, self::$exclude ) ) {
+			if ( in_array( $key, \KnowledgeGraph::$exclude ) ) {
 				continue;
 			}
 

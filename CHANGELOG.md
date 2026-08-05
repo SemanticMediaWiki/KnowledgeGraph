@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 ## [Unreleased]
 
 ### Fixed
+- `KnowledgeGraphApiLoadNodes::execute()`: fixed a fatal `Access to undeclared static property` error raised for every known title processed; the code referenced `self::$data`, which is never declared on `KnowledgeGraphApiLoadNodes`, instead of the intended `\KnowledgeGraph::$data` ([#68](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/68))
 - `KnowledgeGraphApiLoadCategories::execute()`: fixed a fatal `Undefined variable $limit` error raised whenever the internal `allpages` properties lookup returned at least one property; the property-filtering logic (exclude-list, `isUserAnnotable()`/`isVisible()` checks, inverse-property generation) was extracted into a new `buildPropertiesList()` method, closing the scoping bug and making the logic directly unit-testable ([#67](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/67))
 - `KnowledgeGraph::setSemanticDataFromApi()`: corrected the PHPDoc return type from `array` to `void`; the method has always populated the public static `self::$data` property as a side effect and never returns a value, and all five call sites already read the result from that property rather than from the return value ([#64](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/64))
 - `KnowledgeGraph.php`, `KnowledgeGraphApiLoadCategories.php`: migrated `\SMW\DIProperty::findPropertyTypeID()` (removed in SMW 7.0.0) to `findPropertyValueType()`; the old call fataled under SMW 7.0.0 and was previously untested
@@ -21,6 +22,7 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 - First QUnit tests, with JS coverage wired into CI
 
 ### Changed
+- Removed the `$exclude` static property duplicated verbatim on `KnowledgeGraphApiLoadNodes` and `KnowledgeGraphApiLoadCategories`; only `KnowledgeGraph::$exclude` was ever read, the two copies were dead weight
 - CI matrix now tracks MediaWiki LTS (1.43) and the latest non-LTS release (1.46) instead of intermediate 1.44/1.45 legs; coverage and Phan moved onto the 1.43/SMW leg; PHP floor raised to 8.2
 - CI matrix and local `Makefile` default bumped from SMW 7.0.0 to 7.2.0 (latest release); coverage baseline re-measured, unchanged at 15.53% lines / 15.79% methods
 - `mediawiki/mediawiki-phan-config` bumped from 0.14.0 to 0.20.0
