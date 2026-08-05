@@ -57,6 +57,22 @@ class KnowledgeGraph {
 	 */
 	public static $data = [];
 
+	/**
+	 * MediaWiki\Request\FauxRequest exists since MW 1.40; the global \FauxRequest
+	 * alias was removed in MW 1.41. The extension supports MW 1.39+, so both
+	 * class names must be handled.
+	 *
+	 * @param array $params
+	 * @param bool $wasPosted
+	 * @return \WebRequest
+	 */
+	private static function newFauxRequest( array $params, bool $wasPosted ) {
+		if ( class_exists( \MediaWiki\Request\FauxRequest::class ) ) {
+			return new \MediaWiki\Request\FauxRequest( $params, $wasPosted );
+		}
+		return new \FauxRequest( $params, $wasPosted );
+	}
+
 	public static function initSMW() {
 		if ( !defined( 'SMW_VERSION' ) ) {
 			return;
@@ -393,7 +409,7 @@ nodes=TestPage
 			] ),
 		];
 
-		$request = new \FauxRequest( $apiParams, false );
+		$request = self::newFauxRequest( $apiParams, false );
 		$api = new \ApiMain( $request );
 		$api->execute();
 		$data = $api->getResult()->getResultData();
@@ -665,7 +681,7 @@ nodes=TestPage
 			] ),
 		];
 
-		$request = new \FauxRequest( $apiParams, false );
+		$request = self::newFauxRequest( $apiParams, false );
 		$api = new \ApiMain( $request );
 		$api->execute();
 		$result = $api->getResult()->getResultData();
