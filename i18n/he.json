@@ -26,6 +26,8 @@
 	"knowledgegraph-dialog-tabs-by-categories": "לפי קטגוריות",
 	"knowledgegraph-dialog-results-no-properties": "אין מאפיינים",
 	"knowledgegraph-dialog-results-no-articles": "אין ערכים",
+	"knowledgegraph-dialog-results-has-properties": "יש את המאפיינים:",
+	"knowledgegraph-copied-to-clipboard": "הועתק ללוח!",
 	"knowledgegraph-toolbar-reset-network": "איפוס",
 	"knowledgegraph-toolbar-reset-network-confirm": "לאתחל את הרשת מחדש?",
 	"knowledgegraph-toolbar-export-graph": "ייצוא תרשים",
