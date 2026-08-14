@@ -275,7 +275,7 @@ class KnowledgeGraphApiLoadPropertiesExecuteTest extends ApiTestCase {
 
 		\KnowledgeGraph::initSMW();
 
-		$sourceSubject = \SMW\DIWikiPage::newFromTitle( Title::newFromText( 'KGPropsRealSource' ) );
+		$sourceSubject = \SMW\DIWikiPage::newFromTitle( \MediaWiki\Title\Title::newFromText( 'KGPropsRealSource' ) );
 		if ( \SMW\StoreFactory::getStore()->getSemanticData( $sourceSubject )->isEmpty() ) {
 			$this->markTestSkipped(
 				'SMW never wrote semantic data for the fixture page in this environment - ' .
