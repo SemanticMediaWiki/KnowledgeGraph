@@ -730,7 +730,7 @@ nodes=TestPage
 			}
 
 			if ( !isset( $output['properties'][$propKey] ) ) {
-				$propertyTitle = \Title::newFromText( ltrim( $propKey, '-' ) );
+				$propertyTitle = Title::newFromText( ltrim( $propKey, '-' ) );
 
 				if ( $propertyTitle ) {
 					$diProperty = \SMW\DIProperty::newFromUserLabel( $propKey );
@@ -819,7 +819,7 @@ nodes=TestPage
 		}
 
 		foreach ( $pendingRecursiveTitles as $linkedTitle ) {
-			$title_ = \Title::newFromText( $linkedTitle );
+			$title_ = Title::newFromText( $linkedTitle );
 			if ( $title_ && $title_->isKnown() ) {
 				self::setSemanticDataFromApi( $title_, $onlyProperties, $depth + 1, $maxDepth );
 			}
