@@ -31,23 +31,18 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 	public function execute() {
 		$result = $this->getResult();
 		$params = $this->extractRequestParams();
-		$context = $this->getContext();
-		$output = $context->getOutput();
 
 		\KnowledgeGraph::initSMW();
-		$params['properties'] = explode( '|', $params['properties'] );
-		if ( $params['inversePropsIncluded'] ) {
-			foreach ( $params['properties'] as $property ) {
-				$inverseKey = '-' . $property;
-				$params['properties'][] = $inverseKey;
-			}
-		}
+		$params['properties'] = self::expandInverseProperties(
+			explode( '|', $params['properties'] ),
+			(bool)$params['inversePropsIncluded']
+		);
 
 		$params['nodes'] = explode( '|', $params['nodes'] );
 		foreach ( $params['nodes'] as $titleText ) {
 			$title_ = Title::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
-				if ( !isset( self::$data[$title_->getFullText()] ) ) {
+				if ( !isset( \KnowledgeGraph::$data[$title_->getFullText()] ) ) {
 					\KnowledgeGraph::setSemanticDataFromApi(
 						$title_,
 						$params['properties'],
@@ -60,6 +55,25 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 
 		$res = json_encode( \KnowledgeGraph::$data );
 		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
+	}
+
+	/**
+	 * Adds a "-property" inverse entry for each given property when requested.
+	 *
+	 * @param string[] $properties
+	 * @param bool $inversePropsIncluded
+	 * @return string[]
+	 */
+	protected static function expandInverseProperties( array $properties, bool $inversePropsIncluded ): array {
+		if ( !$inversePropsIncluded ) {
+			return $properties;
+		}
+
+		foreach ( $properties as $property ) {
+			$properties[] = '-' . $property;
+		}
+
+		return $properties;
 	}
 
 	/**
