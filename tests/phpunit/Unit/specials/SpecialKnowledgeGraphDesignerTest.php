@@ -14,6 +14,11 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 	 */
 	protected $specialKnowledgeGraphDesigner;
 
+	/**
+	 * @var outputPage OutputPage mock object for testing.
+	 */
+	protected $outputPage;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->specialPage = new SpecialKnowledgeGraphDesigner();
@@ -28,7 +33,6 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 			->getMock();
 
 		$this->specialKnowledgeGraphDesigner = $this->getMockBuilder( 'SpecialKnowledgeGraphDesigner' )
-			->disableOriginalConstructor()
 			->onlyMethods( [ 'getOutput' ] )
 			->getMock();
 	}

@@ -320,11 +320,9 @@ nodes=TestPage
 		$colors = $GLOBALS['wgKnowledgeGraphColorPalettes'][$paletteName]
 				?? $GLOBALS['wgKnowledgeGraphColorPalettes']['default'];
 
-		$out->addJsConfigVars( [
-			'KnowledgeGraphShowImages' => $GLOBALS['wgKnowledgeGraphShowImages'],
-			'KnowledgeGraphDisableCredits' => $GLOBALS['wgKnowledgeGraphDisableCredits'],
-			'wgKnowledgeGraphColorPalette' => $colors
-		] );
+		$out->setJsConfigVar( 'KnowledgeGraphShowImages', $GLOBALS['wgKnowledgeGraphShowImages'] );
+		$out->setJsConfigVar( 'KnowledgeGraphDisableCredits', $GLOBALS['wgKnowledgeGraphDisableCredits'] );
+		$out->setJsConfigVar( 'wgKnowledgeGraphColorPalette', $colors );
 
 		$index = count( self::$graphs ) - 1;
 		return [
