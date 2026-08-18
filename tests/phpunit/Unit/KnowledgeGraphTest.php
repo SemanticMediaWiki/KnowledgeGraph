@@ -44,4 +44,48 @@ class KnowledgeGraphTest extends TestCase {
 
 		KnowledgeGraph::onParserFirstCallInit( $parserMock );
 	}
+
+	/**
+	 * @covers KnowledgeGraph::onOutputPageParserOutput
+	 */
+	public function testOnOutputPageParserOutputDoesNothingWithoutExtensionData() {
+		$outMock = $this->createMock( OutputPage::class );
+		$parserOutputMock = $this->createMock( ParserOutput::class );
+
+		$parserOutputMock->method( 'getExtensionData' )
+						 ->with( 'knowledgegraphs' )
+						 ->willReturn( null );
+
+		$outMock->expects( $this->never() )
+				->method( 'addJsConfigVars' );
+
+		$outMock->expects( $this->never() )
+				->method( 'addModules' );
+
+		KnowledgeGraph::onOutputPageParserOutput( $outMock, $parserOutputMock );
+	}
+
+	/**
+	 * @covers KnowledgeGraph::onOutputPageParserOutput
+	 */
+	public function testOnOutputPageParserOutputAddsJsConfigVarsAndModuleWithExtensionData() {
+		$outMock = $this->createMock( OutputPage::class );
+		$parserOutputMock = $this->createMock( ParserOutput::class );
+
+		$data = [ 'nodes' => [], 'edges' => [] ];
+
+		$parserOutputMock->method( 'getExtensionData' )
+						 ->with( 'knowledgegraphs' )
+						 ->willReturn( $data );
+
+		$outMock->expects( $this->once() )
+				->method( 'addJsConfigVars' )
+				->with( [ 'knowledgegraphs' => json_encode( $data ) ] );
+
+		$outMock->expects( $this->once() )
+				->method( 'addModules' )
+				->with( 'ext.KnowledgeGraph' );
+
+		KnowledgeGraph::onOutputPageParserOutput( $outMock, $parserOutputMock );
+	}
 }
