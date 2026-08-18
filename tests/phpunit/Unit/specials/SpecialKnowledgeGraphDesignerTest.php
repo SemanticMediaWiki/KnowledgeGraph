@@ -138,4 +138,16 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 		$this->assertStringContainsString( '<div class="KnowledgeGraph" id="knowledgegraph-wrapper-0">', $html );
 		$this->assertStringContainsString( wfMessage( 'knowledge-graph-wrapper-loading' )->text(), $html );
 	}
+
+	/**
+	 * @covers SpecialKnowledgeGraphDesigner::getGroupName
+	 */
+	public function testGetGroupName() {
+		$specialPage = new SpecialKnowledgeGraphDesigner();
+
+		$reflectionMethod = new ReflectionMethod( $specialPage, 'getGroupName' );
+		$reflectionMethod->setAccessible( true );
+
+		$this->assertSame( 'knowledgegraph', $reflectionMethod->invoke( $specialPage ) );
+	}
 }
