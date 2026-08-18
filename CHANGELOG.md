@@ -34,6 +34,7 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 - `.phan/config.php` and `.phan/baseline.php`: activated Phan static analysis (declared as a dev dependency via `mediawiki/mediawiki-phan-config` but never configured or run); runs on the coverage matrix leg via a new `composer-phan` Makefile target chained onto `ci-coverage`
 - `composer-phan-update-baseline` Makefile target to regenerate `.phan/baseline.php` with tab indentation (Phan hardcodes 4-space indentation, which fails PHPCS)
 - First QUnit tests, with JS coverage wired into CI
+- `ext.knowledgegraph.options.test.js`: added coverage for the previously-untested `resources/KnowledgeGraphOptions.js` — `getDefaultOptions()` returning independent objects per call, a spot-check of representative default values, and both `edges.scaling.customScalingFunction()`/`nodes.scaling.customScalingFunction()` (equal min/max, mid-range scaling, and clamping below `min`), raising the file to 100% statement/branch/function/line coverage ([#80](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/80))
 
 ### Changed
 - Transitive npm dev dependencies bumped to close 7 Dependabot alerts (3 high, 4 moderate): `js-yaml` 3.15.0 → 3.15.1 and 4.3.0 → 4.3.1 (via `eslint`/`nyc`), `axios` 1.17.0 → 1.19.0 (via `copy-files-from-to`), `brace-expansion` patch bumps
