@@ -15,7 +15,8 @@
 		]
 	},
 	"ExtensionMessagesFiles": {
-		"KnowledgeGraphMagic": "KnowledgeGraph.i18n.magic.php"
+		"KnowledgeGraphMagic": "KnowledgeGraph.i18n.magic.php",
+		"KnowledgeGraphAlias": "KnowledgeGraph.i18n.alias.php"
 	},
 	"AutoloadClasses": {
 		"KnowledgeGraph":"includes/KnowledgeGraph.php",
