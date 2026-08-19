@@ -154,6 +154,22 @@ function getClickHandlers( selectorOrElements ) {
 	return clickHandlersByTarget.get( selectorOrElements );
 }
 
+// Generic on()/trigger() handlers keyed by element identity, so
+// KnowledgeGraphDialog.js's `self.titleInputWidget.$input.on( 'input', fn )`
+// can be exercised via `.trigger( 'input' )` in tests. Kept separate from
+// clickHandlersByTarget (which is keyed by selector/element and backs the
+// jQuery-overload click() method used elsewhere).
+const onHandlersByElement = new Map();
+
+function getOnHandlers( element, event ) {
+	if ( !onHandlersByElement.has( element ) ) {
+		onHandlersByElement.set( element, {} );
+	}
+	const byEvent = onHandlersByElement.get( element );
+	byEvent[ event ] = byEvent[ event ] || [];
+	return byEvent[ event ];
+}
+
 function makeJQueryWrapper( selectorOrElements ) {
 	let elements;
 	if ( Array.isArray( selectorOrElements ) ) {
@@ -202,13 +218,23 @@ function makeJQueryWrapper( selectorOrElements ) {
 		not() {
 			return wrapper;
 		},
-		on() {
+		on( event, handler ) {
+			elements.forEach( ( el ) => getOnHandlers( el, event ).push( handler ) );
 			return wrapper;
 		},
 		off() {
 			return wrapper;
 		},
 		one() {
+			return wrapper;
+		},
+		// Fires handlers registered via .on( event, fn ) on each wrapped element,
+		// invoking them with `this` bound to the element (mirrors jQuery so
+		// `$( this ).val()` inside the handler reads back the same element).
+		trigger( event ) {
+			elements.forEach( ( el ) => {
+				getOnHandlers( el, event ).forEach( ( handler ) => handler.call( el ) );
+			} );
 			return wrapper;
 		},
 		// $( document ).ready( fn ) at the top of KnowledgeGraph.js -- invoke
@@ -228,8 +254,18 @@ function makeJQueryWrapper( selectorOrElements ) {
 			clickHandlers.forEach( ( handler ) => handler( event ) );
 			return wrapper;
 		},
-		val() {
-			return '';
+		// Reads/writes a `.value` property on each wrapped element, so a fake
+		// <input> element's value survives a `.val( x )` / later `.val()` round
+		// trip -- needed by KnowledgeGraphDialog.js's `$( this ).val()` read
+		// inside its title-input `input` handler.
+		val( value ) {
+			if ( value === undefined ) {
+				return elements.length ? elements[ 0 ].value || '' : '';
+			}
+			elements.forEach( ( el ) => {
+				el.value = value;
+			} );
+			return wrapper;
 		},
 		text() {
 			return wrapper;
@@ -309,7 +345,10 @@ function makeWidgetBase( name ) {
 		// Dialog subclasses (KnowledgeGraphDialog.js/KnowledgeGraphNonModalDialog.js)
 		// append content to this.$body inside initialize().
 		this.$body = makeJQueryWrapper( makeFakeElement( 'div' ) );
-		this.items = [];
+		// StackLayout is constructed with `{ items: [...] }` in
+		// KnowledgeGraphDialog.js -- seed this.items from it so
+		// getItems()/getCurrentItem() see the panels passed at construction time.
+		this.items = ( this.config.items || [] ).slice();
 		this.disabled = false;
 		this.listeners = {};
 	}
@@ -342,15 +381,30 @@ function makeWidgetBase( name ) {
 		this.config.value = value;
 		return this;
 	};
+	// A stable per-instance menu (not a fresh object each call) so a test can
+	// call getMenu() once, then observe clearItems()/addItems()/toggle() calls
+	// made later by production code, e.g. KnowledgeGraphDialog.js's title-input
+	// `input` handler populating self.titleInputWidget.getMenu().
 	Widget.prototype.getMenu = function () {
-		return {
-			clearItems() {},
-			addItems() {},
-			toggle() {},
-			getItems() {
-				return [];
-			}
-		};
+		if ( !this.menu ) {
+			this.menu = {
+				items: [],
+				visible: false,
+				clearItems() {
+					this.items = [];
+				},
+				addItems( items ) {
+					this.items.push( ...items );
+				},
+				toggle( show ) {
+					this.visible = show;
+				},
+				getItems() {
+					return this.items;
+				}
+			};
+		}
+		return this.menu;
 	};
 	Widget.prototype.addItems = function ( items ) {
 		this.items.push( ...items );
