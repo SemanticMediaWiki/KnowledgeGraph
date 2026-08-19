@@ -25,7 +25,16 @@ function makeFakeElement( tagName ) {
 		className: '',
 		innerHTML: '',
 		style: {},
-		dataset: {},
+		// Real DOMStringMap coerces every assigned value to a string (e.g.
+		// `el.dataset.active = true` reads back as `'true'`, not the boolean);
+		// mirror that here since KnowledgeGraph.js's dispatchLegendClickEvent
+		// compares `container.dataset.active === 'true'`.
+		dataset: new Proxy( {}, {
+			set( target, key, value ) {
+				target[ key ] = String( value );
+				return true;
+			}
+		} ),
 		children: [],
 		attributes: {},
 		listeners: {},
@@ -59,6 +68,9 @@ function makeFakeElement( tagName ) {
 				if ( node && node.id ) {
 					elementsById[ node.id ] = node;
 				}
+				if ( node ) {
+					node.parentNode = el;
+				}
 			} );
 		},
 		appendChild( node ) {
@@ -66,11 +78,21 @@ function makeFakeElement( tagName ) {
 			if ( node && node.id ) {
 				elementsById[ node.id ] = node;
 			}
+			if ( node ) {
+				node.parentNode = el;
+			}
 			return node;
 		},
+		// Detaches from both the id registry and the parent's children list
+		// (needed so a caller of `querySelector( '#id' )` on the parent stops
+		// finding a removed node, e.g. KnowledgeGraph.js's removeLegendEntry).
 		remove() {
 			if ( el.id && elementsById[ el.id ] === el ) {
 				delete elementsById[ el.id ];
+			}
+			if ( el.parentNode ) {
+				el.parentNode.children = el.parentNode.children.filter( ( child ) => child !== el );
+				el.parentNode = null;
 			}
 		},
 		addEventListener( type, handler ) {
@@ -89,8 +111,17 @@ function makeFakeElement( tagName ) {
 		getAttribute( name ) {
 			return el.attributes[ name ] === undefined ? null : el.attributes[ name ];
 		},
-		querySelector() {
-			return null;
+		// Supports the `#id` selector form only, matched against direct
+		// children -- needed by KnowledgeGraph.js's legend entry lookups
+		// (addLegendEntry/removeLegendEntry/dispatchLegendClickEvent use
+		// `LegendDiv.querySelector( '#' + CSS.escape( id ) )`).
+		querySelector( selector ) {
+			const match = /^#(.+)$/.exec( selector || '' );
+			if ( !match ) {
+				return null;
+			}
+			const id = match[ 1 ].replace( /\\(.)/g, '$1' );
+			return el.children.find( ( child ) => child && child.id === id ) || null;
 		},
 		querySelectorAll() {
 			return [];

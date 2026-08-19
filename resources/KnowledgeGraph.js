@@ -57,7 +57,6 @@ KnowledgeGraph = function () {
 		container.style.color = fontColor;
 		container.style.background = color;
 		container.innerHTML = label;
-		container.innerHTML = id;
 
 		container.dataset.active = true;
 		container.dataset.activeColor = color;
@@ -66,7 +65,7 @@ KnowledgeGraph = function () {
 	}
 
 	function removeLegendEntry( property ) {
-		if ( !self.LegendDiv ) {
+		if ( !this.LegendDiv ) {
 			return;
 		}
 		// use instance-specific ID
@@ -1192,7 +1191,7 @@ ${ propertyOptions }|show-property-type=true
 
 								if ( edgeToDelete ) {
 									self.graphModel.removeEdge( edgeToDelete.id );
-									removeLegendEntry( edgePropKey );
+									removeLegendEntry.call( self, edgePropKey );
 
 									nodesExisting = self.Nodes.get();
 									edgesExisting = self.Edges.get();
@@ -1604,7 +1603,13 @@ ${ propertyOptions }|show-property-type=true
 		parseProperties,
 		fetchSemanticDataForNode,
 		loadNodes,
-		nodePropertiesCache: self.nodePropertiesCache
+		addLegendEntry,
+		removeLegendEntry,
+		dispatchLegendClickEvent,
+		HideNodesRec,
+		recursiveDeleteAllChildren,
+		nodePropertiesCache: self.nodePropertiesCache,
+		self
 	};
 };
 
