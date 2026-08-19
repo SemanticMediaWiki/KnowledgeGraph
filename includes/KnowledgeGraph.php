@@ -912,10 +912,16 @@ nodes=TestPage
 				return null;
 			}
 
-			self::$externalFormatterValues[$propKey] = \SMW\DataValueFactory::getInstance()->newDataValueByItem(
+			$formatterValue = \SMW\DataValueFactory::getInstance()->newDataValueByItem(
 				$formatterUriItem,
 				new \SMW\DIProperty( '_PEFU' )
 			);
+
+			if ( !( $formatterValue instanceof \SMW\DataValues\ExternalFormatterUriValue ) ) {
+				return null;
+			}
+
+			self::$externalFormatterValues[$propKey] = $formatterValue;
 
 			return [ 'kind' => 'external' ];
 		}
