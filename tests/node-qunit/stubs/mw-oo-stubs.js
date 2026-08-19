@@ -623,7 +623,12 @@ function installMwStub() {
 			}
 		},
 		loader: {
-			using() {
+			// Supports both call styles used across resources/*.js:
+			// mw.loader.using( mod ).then( fn ) and mw.loader.using( mod, fn ).
+			using( modules, callback ) {
+				if ( callback ) {
+					callback();
+				}
 				return Promise.resolve();
 			}
 		},

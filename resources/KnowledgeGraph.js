@@ -1418,6 +1418,12 @@ ${ propertyOptions }|show-property-type=true
 		return prop || null;
 	}
 
+	// Exposed so tests can exercise functions that read self.Config (e.g. loadNodes)
+	// without going through the full initialize() DOM/vis-network setup.
+	function setConfig( config ) {
+		self.Config = config;
+	}
+
 	function initialize( container, containerToolbar, containerOptions, config ) {
 		// set instance id from container (or generate)
 		self.id = container && container.id ? container.id : 'knowledgegraph-' + Date.now() + '-' + Math.random().toString( 36 ).slice( 2, 7 );
@@ -1589,11 +1595,15 @@ ${ propertyOptions }|show-property-type=true
 
 	return {
 		initialize,
+		setConfig,
 		checkAndToogleId,
 		wrapLabel,
 		cleanLabel,
 		getPropertyValueForNode,
 		fetchNamespaceNameForNode,
+		parseProperties,
+		fetchSemanticDataForNode,
+		loadNodes,
 		nodePropertiesCache: self.nodePropertiesCache
 	};
 };
