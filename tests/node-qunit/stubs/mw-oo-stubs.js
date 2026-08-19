@@ -725,6 +725,14 @@ function installMwStub() {
 		widgets: {
 			TitlesMultiselectWidget: makeWidgetBase( 'TitlesMultiselectWidget' ),
 			CategoryMultiselectWidget: makeWidgetBase( 'CategoryMultiselectWidget' )
+		},
+		util: {
+			getUrl( pageName, params ) {
+				const query = params ?
+					'?' + Object.keys( params ).map( ( k ) => `${ k }=${ encodeURIComponent( params[ k ] ) }` ).join( '&' ) :
+					'';
+				return `/wiki/${ pageName }${ query }`;
+			}
 		}
 	};
 

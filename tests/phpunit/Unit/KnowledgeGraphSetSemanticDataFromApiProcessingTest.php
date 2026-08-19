@@ -56,6 +56,10 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$relationsSeenProp = $reflection->getProperty( 'relationsSeen' );
 		$relationsSeenProp->setAccessible( true );
 		$relationsSeenProp->setValue( null, [] );
+
+		$externalFormatterValuesProp = $reflection->getProperty( 'externalFormatterValues' );
+		$externalFormatterValuesProp->setAccessible( true );
+		$externalFormatterValuesProp->setValue( null, [] );
 	}
 
 	private function getData( string $titleText ): array {
@@ -328,4 +332,125 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 	 * bypass the real execute()/getResult() round trip this method actually
 	 * depends on. Left as a documented gap for the same reason as above.
 	 */
+
+	/**
+	 * A property with no `_FORMAT_SCHEMA`/`_PEFU` specification configured
+	 * (the common case, e.g. a plain Number property) gets no linkFormatter.
+	 */
+	public function testPropertyWithoutFormatterGetsNullLinkFormatter() {
+		$source = 'KGProcNumberSource';
+		$this->insertPage( 'Property:KGProcAge', '[[Has type::Number]]' );
+		$this->insertPage( $source, '[[KGProcAge::42]]' );
+		\DeferredUpdates::doUpdates();
+
+		$sourceTitle = Title::newFromText( $source );
+		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
+
+		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+
+		$data = $this->getData( $source );
+		$this->assertArrayHasKey( 'KGProcAge', $data['properties'] );
+		$this->assertNull( $data['properties']['KGProcAge']['linkFormatter'] );
+	}
+
+	/**
+	 * A Keyword property (`_keyw`) with a `_FORMAT_SCHEMA` pointing at any
+	 * schema page is reported as an 'ask' formatter; KnowledgeGraph.js builds
+	 * the actual Special:Ask link client-side (see getLinkFormatterInfo()'s
+	 * docblock), so no URL is built server-side here.
+	 */
+	public function testKeywordPropertyWithFormatSchemaGetsAskLinkFormatter() {
+		$this->insertPage( 'smw/schema:KGProcAskSchema', json_encode( [
+			'type' => 'LINK_FORMAT_SCHEMA',
+			'rule' => [ 'link_to' => 'SPECIAL_SEARCH_BY_PROPERTY' ],
+		] ) );
+		$this->insertPage(
+			'Property:KGProcKeyword',
+			"[[Has type::Keyword]]\n[[Formatter schema::smw/schema:KGProcAskSchema]]"
+		);
+		$source = 'KGProcKeywordSource';
+		$this->insertPage( $source, '[[KGProcKeyword::SomeKeyword]]' );
+		\DeferredUpdates::doUpdates();
+
+		$sourceTitle = Title::newFromText( $source );
+		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
+
+		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+
+		$data = $this->getData( $source );
+		$this->assertArrayHasKey( 'KGProcKeyword', $data['properties'] );
+		$this->assertSame( [ 'kind' => 'ask' ], $data['properties']['KGProcKeyword']['linkFormatter'] );
+
+		$values = $data['properties']['KGProcKeyword']['values'];
+		$this->assertNull( $values[0]['formattedUrl'], 'ask formatting has no server-built URL' );
+	}
+
+	/**
+	 * A Keyword property with no `_FORMAT_SCHEMA` configured gets no
+	 * linkFormatter at all, same as any other plain value type.
+	 */
+	public function testKeywordPropertyWithoutFormatSchemaGetsNullLinkFormatter() {
+		$this->insertPage( 'Property:KGProcPlainKeyword', '[[Has type::Keyword]]' );
+		$source = 'KGProcPlainKeywordSource';
+		$this->insertPage( $source, '[[KGProcPlainKeyword::SomeKeyword]]' );
+		\DeferredUpdates::doUpdates();
+
+		$sourceTitle = Title::newFromText( $source );
+		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
+
+		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+
+		$data = $this->getData( $source );
+		$this->assertNull( $data['properties']['KGProcPlainKeyword']['linkFormatter'] );
+	}
+
+	/**
+	 * An External Identifier property (`_eid`) with a `_PEFU` formatter URI
+	 * gets an 'external' linkFormatter, and each value's `formattedUrl` is
+	 * the `$1`-substituted URL, built via
+	 * ExternalFormatterUriValue::substituteAndFormatUri().
+	 */
+	public function testExternalIdentifierPropertyWithFormatterUriGetsFormattedUrlPerValue() {
+		$this->insertPage(
+			'Property:KGProcExternalId',
+			"[[Has type::External identifier]]\n[[External formatter uri::https://example.org/id/\$1]]"
+		);
+		$source = 'KGProcExternalIdSource';
+		$this->insertPage( $source, '[[KGProcExternalId::ABC123]]' );
+		\DeferredUpdates::doUpdates();
+
+		$sourceTitle = Title::newFromText( $source );
+		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
+
+		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+
+		$data = $this->getData( $source );
+		$this->assertArrayHasKey( 'KGProcExternalId', $data['properties'] );
+		$this->assertSame( [ 'kind' => 'external' ], $data['properties']['KGProcExternalId']['linkFormatter'] );
+
+		$values = $data['properties']['KGProcExternalId']['values'];
+		$this->assertSame( 'https://example.org/id/ABC123', $values[0]['formattedUrl'] );
+	}
+
+	/**
+	 * An External Identifier property with no `_PEFU` formatter configured
+	 * gets no linkFormatter, and values get no `formattedUrl`.
+	 */
+	public function testExternalIdentifierPropertyWithoutFormatterUriGetsNullLinkFormatter() {
+		$this->insertPage( 'Property:KGProcPlainExternalId', '[[Has type::External identifier]]' );
+		$source = 'KGProcPlainExternalIdSource';
+		$this->insertPage( $source, '[[KGProcPlainExternalId::ABC123]]' );
+		\DeferredUpdates::doUpdates();
+
+		$sourceTitle = Title::newFromText( $source );
+		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
+
+		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+
+		$data = $this->getData( $source );
+		$this->assertNull( $data['properties']['KGProcPlainExternalId']['linkFormatter'] );
+
+		$values = $data['properties']['KGProcPlainExternalId']['values'];
+		$this->assertArrayNotHasKey( 'formattedUrl', $values[0] );
+	}
 }

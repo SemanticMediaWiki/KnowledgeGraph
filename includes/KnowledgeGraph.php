@@ -23,6 +23,14 @@ class KnowledgeGraph {
 	private static $relationsSeen = [];
 
 	/**
+	 * Caches resolved `_PEFU` external-formatter DataValues per property key,
+	 * for `formatLinkForValue()` to reuse across values of the same property.
+	 *
+	 * @var array<string, \SMW\DataValues\ExternalFormatterUriValue>
+	 */
+	private static $externalFormatterValues = [];
+
+	/**
 	 * Configuration options for Semantic MediaWiki.
 	 *
 	 * @var array|null
@@ -749,6 +757,7 @@ nodes=TestPage
 							'description' => $description,
 							'inverse' => $isInverse,
 							'values' => [],
+							'linkFormatter' => self::getLinkFormatterInfo( $diProperty, $typeID, $propKey ),
 						];
 					} else {
 						$output['properties'][$propKey] = [
@@ -799,10 +808,17 @@ nodes=TestPage
 						$pendingRecursiveTitles[] = $linkedTitle;
 					}
 				} else {
-					$output['properties'][$propKey]['values'][] = [
+					$value = [
 						'value' => $item['item'],
 						'type' => $item['type'],
 					];
+
+					$linkFormatter = $output['properties'][$propKey]['linkFormatter'] ?? null;
+					if ( $linkFormatter !== null ) {
+						$value['formattedUrl'] = self::formatLinkForValue( $linkFormatter, $propKey, $item['item'] );
+					}
+
+					$output['properties'][$propKey]['values'][] = $value;
 				}
 			}
 		}
@@ -822,6 +838,81 @@ nodes=TestPage
 				self::setSemanticDataFromApi( $title_, $onlyProperties, $depth + 1, $maxDepth );
 			}
 		}
+	}
+
+	/**
+	 * Resolves link-formatter metadata for a property, if any is configured.
+	 * Only the JSON-serializable `kind` is kept on the property's metadata
+	 * (this array is sent to the client as-is); an 'external' formatter's
+	 * live SMW DataValue is cached separately, keyed by property, for
+	 * `formatLinkForValue()` to reuse when appending each value.
+	 *
+	 * - `_keyw` (Keyword) properties can carry a `_FORMAT_SCHEMA` pointing at a
+	 *   `LINK_FORMAT_SCHEMA` page, which SMW itself only renders as a link to
+	 *   Special:Ask/Special:SearchByProperty (never an arbitrary external URL);
+	 *   JS builds that Special:Ask link client-side from the property's
+	 *   canonical label plus the value.
+	 * - `_eid` (External Identifier) properties can carry a `_PEFU` formatter
+	 *   URI (a URL template containing `$1`), substituted per value via
+	 *   `ExternalFormatterUriValue::substituteAndFormatUri()`.
+	 *
+	 * @param \SMW\DIProperty $diProperty
+	 * @param string $typeID
+	 * @param string $propKey
+	 * @return array{kind:string}|null
+	 */
+	private static function getLinkFormatterInfo(
+		\SMW\DIProperty $diProperty,
+		string $typeID,
+		string $propKey
+	): ?array {
+		if ( $typeID === \SMW\DataValues\KeywordValue::TYPE_ID ) {
+			$lookup = \SMW\Services\ServicesFactory::getInstance()->getPropertySpecificationLookup();
+			$schema = $lookup->getSpecification( $diProperty, new \SMW\DIProperty( '_FORMAT_SCHEMA' ) );
+
+			if ( is_array( $schema ) && $schema !== [] ) {
+				return [ 'kind' => 'ask' ];
+			}
+
+			return null;
+		}
+
+		if ( $typeID === \SMW\DataValues\ExternalIdentifierValue::TYPE_ID ) {
+			$lookup = \SMW\Services\ServicesFactory::getInstance()->getPropertySpecificationLookup();
+			$formatterUriItem = $lookup->getExternalFormatterUri( $diProperty );
+
+			if ( $formatterUriItem === null ) {
+				return null;
+			}
+
+			self::$externalFormatterValues[$propKey] = \SMW\DataValueFactory::getInstance()->newDataValueByItem(
+				$formatterUriItem,
+				new \SMW\DIProperty( '_PEFU' )
+			);
+
+			return [ 'kind' => 'external' ];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Builds the formatted link URL for a single value, given the property's
+	 * resolved link-formatter info.
+	 *
+	 * @param array{kind:string} $linkFormatter
+	 * @param string $propKey
+	 * @param string $value
+	 * @return string|null
+	 */
+	private static function formatLinkForValue( array $linkFormatter, string $propKey, string $value ): ?string {
+		if ( $linkFormatter['kind'] !== 'external' || !isset( self::$externalFormatterValues[$propKey] ) ) {
+			// 'ask' formatting is built client-side (Special:Ask needs no server round-trip).
+			return null;
+		}
+
+		$formatterValue = self::$externalFormatterValues[$propKey];
+		return $formatterValue->substituteAndFormatUri( $value ) ?: null;
 	}
 
 	private static function makeRelationKey( string $a, string $b, string $prop ): string {

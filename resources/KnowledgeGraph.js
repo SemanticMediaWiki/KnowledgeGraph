@@ -435,13 +435,13 @@ KnowledgeGraph = function () {
 					default:
 					{
 						const seen = new Set();
-						for ( const { value: targetLabel } of property.values ) {
+						for ( const { value: targetLabel, type: valueType, formattedUrl } of property.values ) {
 							if ( seen.has( targetLabel ) ) {
 								continue;
 							}
 							seen.add( targetLabel );
 
-							const typeId = property.typeId === '_txt' ? 2 : property.typeId;
+							const typeId = valueType !== undefined ? valueType : 2;
 							const valueId = KnowledgeGraphFunctions.makeNodeId( targetLabel, typeId );
 							const edgeLabel = property.canonicalLabel || propLabel;
 
@@ -465,7 +465,10 @@ KnowledgeGraph = function () {
 									jQuery.extend( {}, options, {
 										id: valueId,
 										label: displayLabel,
-										typeID: typeId
+										typeID: typeId,
+										formattedUrl: formattedUrl || null,
+										hasKeywordAskFormatter: property.linkFormatter && property.linkFormatter.kind === 'ask',
+										askPropertyLabel: property.canonicalLabel
 									} )
 								);
 							}
@@ -968,12 +971,15 @@ ${ propertyOptions }|show-property-type=true
 				const currentNode = existingNodes.find( ( n ) => n.id === nodeId );
 				const nodeTypeId = currentNode ? currentNode.typeID : null;
 
-				if ( nodeTypeId !== 2 ) {
-					const url = mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel );
+				const linkUrl = nodeTypeId === 9 ?
+					mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel ) :
+					resolveFormattedLink( currentNode, titleLabel );
+
+				if ( linkUrl ) {
 					const liLink = document.createElement( 'li' );
 					liLink.classList.add( 'kg-node-properties-menu-link-entry' );
 					liLink.innerHTML = '🔗 ' + titleLabel;
-					liLink.addEventListener( 'click', () => window.open( url, '_blank' ) );
+					liLink.addEventListener( 'click', () => window.open( linkUrl, '_blank' ) );
 					$menu.append( liLink );
 				}
 
@@ -1351,6 +1357,28 @@ ${ propertyOptions }|show-property-type=true
 		} );
 	}
 
+	// Resolves the link a non-wikipage node should open (double-click/context-menu),
+	// based on the link-formatter metadata KnowledgeGraph.php attached to the node:
+	// an already-substituted External Identifier (_eid/_PEFU) URL, or a Keyword
+	// (_keyw/_FORMAT_SCHEMA) node built client-side as a Special:Ask query. Returns
+	// null when no formatter is configured, i.e. the value has nothing to link to.
+	function resolveFormattedLink( node, valueLabel ) {
+		if ( !node ) {
+			return null;
+		}
+
+		if ( node.formattedUrl ) {
+			return node.formattedUrl;
+		}
+
+		if ( node.hasKeywordAskFormatter && node.askPropertyLabel ) {
+			const condition = `[[${ node.askPropertyLabel }::${ valueLabel }]]`;
+			return mw.util.getUrl( 'Special:Ask', { q: condition } );
+		}
+
+		return null;
+	}
+
 	function fetchNamespaceNameForNode( title ) {
 		const parts = title.split( '#' );
 		const nsId = parts.length > 1 ? parseInt( parts[ 1 ], 10 ) : 0;
@@ -1580,9 +1608,16 @@ ${ propertyOptions }|show-property-type=true
 			const nodeId = params.nodes[ 0 ];
 			if ( nodeId !== undefined ) {
 				const titleLabel = nodeId.split( '#' )[ 0 ];
+				const node = self.Nodes.get( nodeId );
+				const nodeTypeId = node ? node.typeID : null;
 
-				const url = mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel );
-				window.open( url, '_blank' );
+				const url = nodeTypeId === 9 ?
+					mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel ) :
+					resolveFormattedLink( node, titleLabel );
+
+				if ( url ) {
+					window.open( url, '_blank' );
+				}
 			}
 		} );
 	}
@@ -1595,6 +1630,7 @@ ${ propertyOptions }|show-property-type=true
 		cleanLabel,
 		getPropertyValueForNode,
 		fetchNamespaceNameForNode,
+		resolveFormattedLink,
 		parseProperties,
 		fetchSemanticDataForNode,
 		loadNodes,

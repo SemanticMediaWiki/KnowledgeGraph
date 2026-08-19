@@ -293,7 +293,7 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			assert.true( called, 'Network.unselectAll is invoked' );
 		} );
 
-		QUnit.test( 'the "doubleClick" handler opens the article URL for the first double-clicked node, and no-ops without nodes', ( assert ) => {
+		QUnit.test( 'the "doubleClick" handler no-ops without nodes', ( assert ) => {
 			const container = document.createElement( 'div' );
 
 			graph.initialize( container, null, null, makeConfig() );
@@ -311,6 +311,15 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				} )(),
 				'an empty nodes array does not throw (early return)'
 			);
+		} );
+
+		QUnit.test( 'the "doubleClick" handler opens the article URL only for a typeID 9 (wikipage) node', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig() );
+			graph.self.Nodes.add( { id: 'Foo_Bar#9', typeID: 9 } );
+
+			const handler = graph.self.Network.listeners.doubleClick[ 0 ];
 
 			const originalOpen = global.window ? global.window.open : undefined;
 			let openedUrl;
@@ -321,11 +330,143 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			};
 
 			try {
-				handler( { nodes: [ 'Foo_Bar#3' ] } );
+				handler( { nodes: [ 'Foo_Bar#9' ] } );
 				assert.strictEqual( openedUrl, '/wiki/Foo_Bar', 'window.open is called with the article path for the stripped node label' );
 			} finally {
 				global.window.open = originalOpen;
 			}
+		} );
+
+		QUnit.test( 'the "doubleClick" handler does not open anything for a plain value node with no formatter', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig() );
+			graph.self.Nodes.add( { id: 'Foo#1', typeID: 1 } );
+
+			const handler = graph.self.Network.listeners.doubleClick[ 0 ];
+
+			const originalOpen = global.window ? global.window.open : undefined;
+			let opened = false;
+			global.window = global.window || {};
+			global.window.open = () => {
+				opened = true;
+				return { focus() {} };
+			};
+
+			try {
+				handler( { nodes: [ 'Foo#1' ] } );
+				assert.false( opened, 'window.open is not called for a Number-type (typeID 1) value node' );
+			} finally {
+				global.window.open = originalOpen;
+			}
+		} );
+
+		QUnit.test( 'the "doubleClick" handler opens the formatted external-identifier URL for a plain value node with a formatter', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig() );
+			graph.self.Nodes.add( { id: 'ABC123#2', typeID: 2, formattedUrl: 'https://example.org/id/ABC123' } );
+
+			const handler = graph.self.Network.listeners.doubleClick[ 0 ];
+
+			const originalOpen = global.window ? global.window.open : undefined;
+			let openedUrl;
+			global.window = global.window || {};
+			global.window.open = ( url ) => {
+				openedUrl = url;
+				return { focus() {} };
+			};
+
+			try {
+				handler( { nodes: [ 'ABC123#2' ] } );
+				assert.strictEqual( openedUrl, 'https://example.org/id/ABC123', 'window.open is called with the pre-formatted external identifier URL' );
+			} finally {
+				global.window.open = originalOpen;
+			}
+		} );
+
+		QUnit.test( 'the "doubleClick" handler opens a Special:Ask URL for a Keyword node with an ask formatter', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig() );
+			graph.self.Nodes.add( {
+				id: 'MyKeyword#2',
+				typeID: 2,
+				hasKeywordAskFormatter: true,
+				askPropertyLabel: 'Has keyword'
+			} );
+
+			const handler = graph.self.Network.listeners.doubleClick[ 0 ];
+
+			const originalOpen = global.window ? global.window.open : undefined;
+			let openedUrl;
+			global.window = global.window || {};
+			global.window.open = ( url ) => {
+				openedUrl = url;
+				return { focus() {} };
+			};
+
+			try {
+				handler( { nodes: [ 'MyKeyword#2' ] } );
+				assert.strictEqual(
+					openedUrl,
+					'/wiki/Special:Ask?q=' + encodeURIComponent( '[[Has keyword::MyKeyword]]' ),
+					'window.open is called with a Special:Ask URL built from the property label and value'
+				);
+			} finally {
+				global.window.open = originalOpen;
+			}
+		} );
+
+		QUnit.test( 'createNodes() stores a numeric typeID for a non-_wpg, non-_txt property, taken from the per-value type', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig( {
+				data: {
+					Foo: {
+						properties: {
+							'Has Age': {
+								canonicalLabel: 'Has Age',
+								preferredLabel: 'Has Age',
+								typeId: '_num',
+								typeLabel: 'Number',
+								values: [ { value: '42', type: 1 } ]
+							}
+						},
+						categories: []
+					}
+				}
+			} ) );
+
+			const node = graph.self.Nodes.get( '42#1' );
+			assert.true( !!node, 'a node is created with an id built from the numeric per-value type' );
+			assert.strictEqual( node.typeID, 1, 'typeID is the numeric SMW DataItem type (1 = NUMBER), not the string "_num"' );
+		} );
+
+		QUnit.test( 'createNodes() attaches formattedUrl from an external-identifier value onto the created node', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig( {
+				data: {
+					Foo: {
+						properties: {
+							'Has ISBN': {
+								canonicalLabel: 'Has ISBN',
+								preferredLabel: 'Has ISBN',
+								typeId: '_eid',
+								typeLabel: 'External identifier',
+								linkFormatter: { kind: 'external' },
+								values: [ { value: 'ABC123', type: 2, formattedUrl: 'https://example.org/id/ABC123' } ]
+							}
+						},
+						categories: []
+					}
+				}
+			} ) );
+
+			const node = graph.self.Nodes.get( 'ABC123#2' );
+			assert.true( !!node, 'a node is created for the external-identifier value' );
+			assert.strictEqual( node.formattedUrl, 'https://example.org/id/ABC123', 'the pre-formatted URL is carried onto the node' );
 		} );
 
 		QUnit.test( 'creates a legend div when properties-panel is enabled, and none otherwise', ( assert ) => {
@@ -919,46 +1060,69 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			assert.false( queried, 'no menu element is looked up/created when there is no node or edge under the pointer' );
 		} );
 
-		QUnit.test( 'a right-click on a node with typeID !== 2 adds a link entry for the article without throwing', ( assert ) => {
+		// Spies on document.createElement() to capture any <li> created with the
+		// article-link class, since the fake jQuery $menu.append() is a no-op that
+		// doesn't track children (see tests/node-qunit/stubs/mw-oo-stubs.js) --
+		// this is the only way to observe whether the link entry was built.
+		function captureLinkEntries( fn ) {
+			const originalCreateElement = document.createElement;
+			const created = [];
+			document.createElement = function ( tagName ) {
+				const el = originalCreateElement( tagName );
+				created.push( el );
+				return el;
+			};
+			try {
+				fn();
+			} finally {
+				document.createElement = originalCreateElement;
+			}
+			return created.filter( ( el ) => el.classList.contains( 'kg-node-properties-menu-link-entry' ) );
+		}
+
+		QUnit.test( 'a right-click on a typeID 9 (wikipage) node adds a link entry for the article', ( assert ) => {
 			graph.self.Nodes.add( { id: 'Foo', typeID: 9 } );
 			graph.self.Network.getNodeAt = () => 'Foo';
 			graph.self.Network.getEdgeAt = () => undefined;
 
-			assert.true(
-				( () => {
-					try {
-						getContextHandler()( {
-							event: { pageX: 1, pageY: 1, preventDefault() {} },
-							pointer: { DOM: { x: 0, y: 0 } }
-						} );
-						return true;
-					} catch ( e ) {
-						return false;
-					}
-				} )(),
-				'invoking the handler with a resolvable, non-type-2 node does not throw'
-			);
+			const linkEntries = captureLinkEntries( () => {
+				getContextHandler()( {
+					event: { pageX: 1, pageY: 1, preventDefault() {} },
+					pointer: { DOM: { x: 0, y: 0 } }
+				} );
+			} );
+
+			assert.strictEqual( linkEntries.length, 1, 'exactly one article-link entry is added for a typeID 9 node' );
 		} );
 
-		QUnit.test( 'a right-click on a node with typeID === 2 (a plain value node) omits the article link entry', ( assert ) => {
+		QUnit.test( 'a right-click on a typeID !== 9 node with no formatter omits the article link entry', ( assert ) => {
 			graph.self.Nodes.add( { id: 'Foo', typeID: 2 } );
 			graph.self.Network.getNodeAt = () => 'Foo';
 			graph.self.Network.getEdgeAt = () => undefined;
 
-			assert.true(
-				( () => {
-					try {
-						getContextHandler()( {
-							event: { pageX: 1, pageY: 1, preventDefault() {} },
-							pointer: { DOM: { x: 0, y: 0 } }
-						} );
-						return true;
-					} catch ( e ) {
-						return false;
-					}
-				} )(),
-				'handling a typeID === 2 node does not throw when building the (link-less) menu'
-			);
+			const linkEntries = captureLinkEntries( () => {
+				getContextHandler()( {
+					event: { pageX: 1, pageY: 1, preventDefault() {} },
+					pointer: { DOM: { x: 0, y: 0 } }
+				} );
+			} );
+
+			assert.strictEqual( linkEntries.length, 0, 'no article-link entry is added for a plain value node (typeID 2, no formatter)' );
+		} );
+
+		QUnit.test( 'a right-click on a typeID !== 9 node with an external formatter adds a formatted link entry', ( assert ) => {
+			graph.self.Nodes.add( { id: 'ABC123', typeID: 2, formattedUrl: 'https://example.org/id/ABC123' } );
+			graph.self.Network.getNodeAt = () => 'ABC123';
+			graph.self.Network.getEdgeAt = () => undefined;
+
+			const linkEntries = captureLinkEntries( () => {
+				getContextHandler()( {
+					event: { pageX: 1, pageY: 1, preventDefault() {} },
+					pointer: { DOM: { x: 0, y: 0 } }
+				} );
+			} );
+
+			assert.strictEqual( linkEntries.length, 1, 'a link entry is added when an external formatter URL is configured' );
 		} );
 
 		QUnit.test( 'a right-click on an edge with a label adds a property link entry pointing at the Property: page', ( assert ) => {

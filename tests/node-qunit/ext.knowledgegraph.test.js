@@ -225,9 +225,11 @@ QUnit.module( 'ext.knowledgegraph', ( hooks ) => {
 
 		QUnit.test( 'typeID is taken from dataitem[0].type when present, else null', ( assert ) => {
 			const withType = graph.parseProperties( [
-				{ property: 'Has_Author', direction: 'out', dataitem: [ { label: 'X', type: '_wpg' } ] }
+				// The real smwbrowse API always sends a numeric SMW DataItem::TYPE_*
+				// id here (9 = TYPE_WIKIPAGE), never the property-level type string.
+				{ property: 'Has_Author', direction: 'out', dataitem: [ { label: 'X', type: 9 } ] }
 			] );
-			assert.strictEqual( withType[ 0 ].typeID, '_wpg', 'typeID is read from dataitem[0].type' );
+			assert.strictEqual( withType[ 0 ].typeID, 9, 'typeID is read from dataitem[0].type' );
 
 			const withoutType = graph.parseProperties( [
 				{ property: 'Has_Author', direction: 'out', dataitem: [ { label: 'X' } ] }
