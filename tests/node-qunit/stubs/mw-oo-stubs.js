@@ -13,6 +13,11 @@
  */
 'use strict';
 
+// Registry of fake elements by id, populated on append/appendChild so
+// document.getElementById() can find elements added to document.body
+// (KnowledgeGraphContextMenu.js relies on this for its remove-if-present check).
+const elementsById = {};
+
 function makeFakeElement( tagName ) {
 	const el = {
 		tagName: String( tagName || '' ).toUpperCase(),
@@ -50,13 +55,23 @@ function makeFakeElement( tagName ) {
 		},
 		append( ...nodes ) {
 			el.children.push( ...nodes );
+			nodes.forEach( ( node ) => {
+				if ( node && node.id ) {
+					elementsById[ node.id ] = node;
+				}
+			} );
 		},
 		appendChild( node ) {
 			el.children.push( node );
+			if ( node && node.id ) {
+				elementsById[ node.id ] = node;
+			}
 			return node;
 		},
 		remove() {
-			// no-op: detached fake elements don't track a parent
+			if ( el.id && elementsById[ el.id ] === el ) {
+				delete elementsById[ el.id ];
+			}
 		},
 		addEventListener( type, handler ) {
 			el.listeners[ type ] = el.listeners[ type ] || [];
@@ -85,6 +100,10 @@ function makeFakeElement( tagName ) {
 }
 
 function installDocumentStub() {
+	// Reset the id registry so elements from a previous test/installStubs()
+	// call don't leak into this one via getElementById().
+	Object.keys( elementsById ).forEach( ( id ) => delete elementsById[ id ] );
+
 	const body = makeFakeElement( 'body' );
 
 	const documentStub = {
@@ -95,8 +114,8 @@ function installDocumentStub() {
 		createTextNode( text ) {
 			return { nodeType: 3, textContent: text };
 		},
-		getElementById() {
-			return null;
+		getElementById( id ) {
+			return elementsById[ id ] || null;
 		},
 		querySelector() {
 			return null;
@@ -120,6 +139,21 @@ function installDocumentStub() {
 	};
 }
 
+// click handlers bound via $( target ).click( fn ), keyed by target identity
+// (the `document` singleton, or a '#id' selector string) so a later, separate
+// $( target ).click() call -- e.g. from a test -- triggers the same handlers
+// that were registered earlier (mirrors jQuery's bind/trigger overload).
+// Needed by KnowledgeGraphContextMenu.js's $( document ).click( ... ) and
+// $( '#' + PopupMenuId ).click( ... ) listeners.
+const clickHandlersByTarget = new Map();
+
+function getClickHandlers( selectorOrElements ) {
+	if ( !clickHandlersByTarget.has( selectorOrElements ) ) {
+		clickHandlersByTarget.set( selectorOrElements, [] );
+	}
+	return clickHandlersByTarget.get( selectorOrElements );
+}
+
 function makeJQueryWrapper( selectorOrElements ) {
 	let elements;
 	if ( Array.isArray( selectorOrElements ) ) {
@@ -129,6 +163,8 @@ function makeJQueryWrapper( selectorOrElements ) {
 	} else {
 		elements = [];
 	}
+
+	const clickHandlers = getClickHandlers( selectorOrElements );
 
 	const wrapper = {
 		length: elements.length,
@@ -183,7 +219,13 @@ function makeJQueryWrapper( selectorOrElements ) {
 			}
 			return wrapper;
 		},
-		click() {
+		click( handlerOrEvent ) {
+			if ( typeof handlerOrEvent === 'function' ) {
+				clickHandlers.push( handlerOrEvent );
+				return wrapper;
+			}
+			const event = handlerOrEvent || { stopPropagation() {} };
+			clickHandlers.forEach( ( handler ) => handler( event ) );
 			return wrapper;
 		},
 		val() {
@@ -228,6 +270,10 @@ function makeJQueryWrapper( selectorOrElements ) {
 }
 
 function installJQueryStub() {
+	// Reset click-handler bindings so a previous test/installStubs() call
+	// doesn't leak handlers into this one.
+	clickHandlersByTarget.clear();
+
 	function $( selector ) {
 		return makeJQueryWrapper( selector );
 	}
