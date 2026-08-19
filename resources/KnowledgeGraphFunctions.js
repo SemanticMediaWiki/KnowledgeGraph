@@ -109,6 +109,7 @@ KnowledgeGraphFunctions = ( function () {
 		randomHSL,
 		colorForPropertyLabel,
 		getContrastColor,
+		rgbToHex,
 		getNestedProp,
 		makeEdgeId,
 		makeNodeId
