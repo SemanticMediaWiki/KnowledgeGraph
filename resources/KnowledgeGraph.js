@@ -1579,12 +1579,7 @@ ${ propertyOptions }|show-property-type=true
 
 			const nodeId = params.nodes[ 0 ];
 			if ( nodeId !== undefined ) {
-				let titleLabel = nodeId.split( '_' )[ 0 ];
-				const hashIndexTitle = titleLabel.indexOf( '#' );
-
-				if ( hashIndexTitle !== -1 ) {
-					titleLabel = titleLabel.slice( 0, Math.max( 0, hashIndexTitle ) );
-				}
+				const titleLabel = nodeId.split( '#' )[ 0 ];
 
 				const url = mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel );
 				window.open( url, '_blank' );

@@ -83,6 +83,24 @@ function makeFakeElement( tagName ) {
 			}
 			return node;
 		},
+		// Only the 'afterend' position is modeled -- the one KnowledgeGraph.js's
+		// initialize() uses to insert the per-instance legend div right after
+		// the graph container. Falls back to a no-op (register-by-id only) when
+		// `el` has no tracked parent, since the fixture containers used in tests
+		// are typically freestanding document.createElement() results.
+		insertAdjacentElement( position, node ) {
+			if ( node && node.id ) {
+				elementsById[ node.id ] = node;
+			}
+			if ( position === 'afterend' && el.parentNode ) {
+				const siblings = el.parentNode.children;
+				siblings.splice( siblings.indexOf( el ) + 1, 0, node );
+			}
+			if ( node ) {
+				node.parentNode = el.parentNode || null;
+			}
+			return node;
+		},
 		// Detaches from both the id registry and the parent's children list
 		// (needed so a caller of `querySelector( '#id' )` on the parent stops
 		// finding a removed node, e.g. KnowledgeGraph.js's removeLegendEntry).
@@ -319,6 +337,12 @@ function makeJQueryWrapper( selectorOrElements ) {
 		toggle() {
 			return wrapper;
 		},
+		// Clears the (never-simulated) jQuery animation queue -- needed by
+		// KnowledgeGraph.js's attachContextMenuListener(), which calls
+		// `$menu.finish().toggle( 100 ).css( {...} )` before showing the menu.
+		finish() {
+			return wrapper;
+		},
 		addClass() {
 			return wrapper;
 		},
@@ -516,8 +540,15 @@ function installOoStub() {
 
 	// ProcessDialog action set + process chaining (KnowledgeGraphDialog.js).
 	OO.ui.ProcessDialog.static.actions = [];
+	// Returns a thenable (not just `this`) since KnowledgeGraph.js's
+	// getDialogActionProcessCallback() 'done' branch calls `.close(...).then(...)`.
 	OO.ui.Dialog.prototype.close = function () {
-		return this;
+		return { then( fn ) {
+			if ( fn ) {
+				fn();
+			}
+			return this;
+		} };
 	};
 	OO.ui.Dialog.prototype.setElementId = function ( id ) {
 		this.elementId = id;
@@ -561,6 +592,13 @@ function installOoStub() {
 		this.fn = fn;
 		this.context = context;
 	};
+	// KnowledgeGraph.js's getDialogActionProcessCallback() constructs these
+	// directly (`new OO.ui.Process( fn )`) rather than via the dialog's chained
+	// getActionProcess()/makeProcess() helper above -- needs its own execute().
+	OO.ui.Process.prototype.execute = function () {
+		this.fn.call( this.context );
+		return Promise.resolve();
+	};
 
 	// mixin.PendingElement is applied via OO.mixinClass, e.g. in
 	// KnowledgeGraphToolbar.js / KnowledgeGraphActionToolbar.js createTool().
@@ -584,6 +622,17 @@ function installOoStub() {
 		this.tools.push( ToolClass );
 		return this;
 	};
+	// $actions holds the action-toolbar's $element when `actions: true`
+	// (KnowledgeGraph.js's initialize() appends the action toolbar into it via
+	// `toolbar.$actions.append( actionToolbar.$element )`).
+	OO.ui.Toolbar.prototype.$actions = null;
+	const originalToolbarConstructor = OO.ui.Toolbar;
+	OO.ui.Toolbar = function ( ...args ) {
+		originalToolbarConstructor.apply( this, args );
+		this.$actions = makeJQueryWrapper( makeFakeElement( 'div' ) );
+	};
+	OO.ui.Toolbar.prototype = originalToolbarConstructor.prototype;
+	OO.ui.Toolbar.static = originalToolbarConstructor.static;
 	OO.ui.Toolbar.prototype.setup = function ( groups ) {
 		this.groups = groups;
 		return this;
@@ -601,6 +650,11 @@ function installOoStub() {
 	OO.ui.Tool.prototype.setDisabled = function ( disabled ) {
 		this.disabled = disabled;
 		return this;
+	};
+	// KnowledgeGraph.js's getOnSelectToolbar()/getOnSelectActionToolbar() switch
+	// on `selfTool.getName()` (bound to `this` inside Tool.prototype.onSelect).
+	OO.ui.Tool.prototype.getName = function () {
+		return this.constructor.static.name;
 	};
 
 	// WindowManager: addWindows()/openWindow() only referenced, never rendered.
@@ -730,9 +784,13 @@ function installVisStub() {
 		DataSet: function ( initial ) {
 			return makeDataSetStub( initial );
 		},
-		Network: function ( container, data ) {
+		// Captures the 3rd constructor argument (`options`, e.g. self.Config.graphOptions
+		// in KnowledgeGraph.js's initialize()) as this.options -- needed so a test can
+		// assert what options a `new vis.Network(...)` call was constructed with.
+		Network: function ( container, data, options ) {
 			this.container = container;
 			this.data = data;
+			this.options = options;
 			this.listeners = {};
 		}
 	};
@@ -747,6 +805,16 @@ function installVisStub() {
 	global.vis.Network.prototype.getConnectedEdges = function () {
 		return [];
 	};
+	// Needed by KnowledgeGraph.js's attachContextMenuListener() (pointer hit-testing
+	// on right-click) and its Network 'hoverEdge'/'blurNode'/'blurEdge' handlers.
+	global.vis.Network.prototype.getEdgeAt = function () {
+		return undefined;
+	};
+	global.vis.Network.prototype.getNodeAt = function () {
+		return undefined;
+	};
+	global.vis.Network.prototype.selectEdges = function () {};
+	global.vis.Network.prototype.unselectAll = function () {};
 	global.vis.Network.prototype.setOptions = function () {};
 	global.vis.Network.prototype.fit = function () {};
 	global.vis.Network.prototype.destroy = function () {};
