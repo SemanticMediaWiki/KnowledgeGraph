@@ -7,7 +7,6 @@
  * @author thomas-topway-it for KM-A
  */
 
-use MediaWiki\MediaWikiServices;
 use MediaWiki\Title\Title;
 
 class KnowledgeGraphApiLoadCategories extends ApiBase {
@@ -53,27 +52,20 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 		self::$SMWStore = \SMW\StoreFactory::getStore();
 		self::$SMWDataValueFactory = SMW\DataValueFactory::getInstance();
 
-		$services = MediaWikiServices::getInstance();
-		$urlUtils = $services->getUrlUtils();
-		$httpRequestFactory = $services->getHttpRequestFactory();
-
-		$scriptPath = $services->getMainConfig()->get( 'ScriptPath' );
-		$server = $services->getMainConfig()->get( 'Server' );
-		$apiUrl = $server . $scriptPath . '/api.php';
-
 		$queryParams = [
 			'action' => 'query',
 			'list' => 'allpages',
-			'apnamespace' => 102,
+			'apnamespace' => \SMW_NS_PROPERTY,
 			'aplimit' => 'max',
 			'format' => 'json'
 		];
 
-		$query = http_build_query( $queryParams );
-		$response = $httpRequestFactory->get( "$apiUrl?$query", [], __METHOD__ );
-		$data = json_decode( $response, true );
+		$api = new ApiMain( \KnowledgeGraph::newDerivativeApiContext( $context, $queryParams, false ) );
+		$api->execute();
+		$data = $api->getResult()->getResultData();
 
-		$propertyTitles = array_column( $data['query']['allpages'], 'title' );
+		$propertyTitles = $data['query']['allpages'] ?? [];
+		$propertyTitles = array_column( $propertyTitles, 'title' );
 		$propertyNames = array_map( static function ( $title ) {
 			return substr( $title, strrpos( $title, ':' ) + 1 );
 		}, $propertyTitles );

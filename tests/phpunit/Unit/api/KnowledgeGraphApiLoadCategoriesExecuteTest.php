@@ -1,11 +1,11 @@
 <?php
 
-use MediaWiki\Http\HttpRequestFactory;
-
 /**
  * execute() needs a real category-links DB fixture (KnowledgeGraph::articlesInCategories()
- * runs a real DB query) and drives the request through the real API stack (needsToken(),
- * mustBePosted()), so these tests extend ApiTestCase rather than mocking ApiMain by hand.
+ * runs a real DB query), discovers Property: namespace pages via an in-process ApiMain
+ * call (action=query&list=allpages), and drives the request through the real API stack
+ * (needsToken(), mustBePosted()), so these tests extend ApiTestCase rather than mocking
+ * ApiMain by hand.
  *
  * @covers KnowledgeGraphApiLoadCategories::execute
  * @group Database
@@ -62,16 +62,6 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 		return $storeMock;
 	}
 
-	private function mockAllPagesResponse( array $propertyTitles ): void {
-		$httpRequestFactory = $this->createMock( HttpRequestFactory::class );
-		$httpRequestFactory->method( 'get' )->willReturn( json_encode( [
-			'query' => [
-				'allpages' => array_map( static fn ( $title ) => [ 'title' => $title ], $propertyTitles ),
-			],
-		] ) );
-		$this->setService( 'HttpRequestFactory', $httpRequestFactory );
-	}
-
 	/**
 	 * Builds an empty SemanticData container via a throwaway real store instance rather than
 	 * `new \SMW\DataModel\SemanticData(...)`: that class only exists under that namespace/path
@@ -101,8 +91,6 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 	}
 
 	public function testMultipleCategoriesAreEachProcessed() {
-		$this->mockAllPagesResponse( [] );
-
 		$this->insertPage( 'KGTestMultiCatMemberA', '[[Category:KGTestMultiCatA]]' );
 		$this->insertPage( 'KGTestMultiCatMemberB', '[[Category:KGTestMultiCatB]]' );
 		\DeferredUpdates::doUpdates();
@@ -119,8 +107,6 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 	}
 
 	public function testInvalidCategoryInListIsSkippedWithoutAffectingOthers() {
-		$this->mockAllPagesResponse( [] );
-
 		$this->insertPage( 'KGTestInvalidCatMember', '[[Category:KGTestValidCat]]' );
 		\DeferredUpdates::doUpdates();
 
@@ -143,8 +129,7 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 	 * non-empty, which is a fatal `Error: Undefined variable $limit` on PHP 8+.
 	 */
 	public function testExecuteDoesNotFatalWhenAllPagesReturnsAProperty() {
-		$this->mockAllPagesResponse( [ 'Property:KGTestAllPagesProp' ] );
-
+		$this->insertPage( 'Property:KGTestAllPagesProp' );
 		$this->insertPage( 'KGTestLimitBugMember', '[[Category:KGTestLimitBugCat]]' );
 		\DeferredUpdates::doUpdates();
 
@@ -156,5 +141,36 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 		] );
 
 		$this->assertArrayHasKey( 'KGTestLimitBugMember', $data );
+	}
+
+	/**
+	 * Regression test for #31: execute() previously discovered Property: namespace
+	 * pages via an unauthenticated outbound HTTP self-call to the wiki's own api.php.
+	 * If that self-call failed for any reason (e.g. a wiki not reachable from itself
+	 * over HTTP, such as behind a restrictive proxy/firewall), json_decode() of the
+	 * non-JSON/empty response returned null, and array_column( null, ... ) fataled
+	 * with a TypeError. The in-process ApiMain call that replaced it can no longer
+	 * fail at the network layer, but as defense in depth execute() must still
+	 * tolerate the inner list=allpages call returning no "allpages" key at all
+	 * (e.g. because the querying user cannot see any Property: pages) without
+	 * fataling.
+	 */
+	public function testExecuteDoesNotFatalWhenAllPagesKeyIsMissingFromApiResult() {
+		$this->insertPage( 'KGTestMissingAllPagesMember', '[[Category:KGTestMissingAllPagesCat]]' );
+		\DeferredUpdates::doUpdates();
+
+		$storeMock = $this->injectStoreMock();
+		$this->stubEmptySemanticDataAndPropertySubjects( $storeMock );
+
+		// SMW_NS_PROPERTY has no pages in this fixture, so the real in-process
+		// action=query&list=allpages call legitimately omits the "allpages" key
+		// from its result data — the same shape a denied/failed sub-request would
+		// produce. execute() must fall back to an empty properties list rather
+		// than fatal.
+		$data = $this->runLoadCategories( [
+			'categories' => 'KGTestMissingAllPagesCat',
+		] );
+
+		$this->assertArrayHasKey( 'KGTestMissingAllPagesMember', $data );
 	}
 }

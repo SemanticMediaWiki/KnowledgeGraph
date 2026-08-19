@@ -81,6 +81,35 @@ class KnowledgeGraph {
 		return new \FauxRequest( $params, $wasPosted );
 	}
 
+	/**
+	 * Builds a context for an in-process ApiMain call that carries the
+	 * given request params while preserving the base context's
+	 * authenticated user/session, so permission checks inside the invoked
+	 * API module see the real caller instead of an anonymous default.
+	 *
+	 * @param \IContextSource $baseContext
+	 * @param array $params
+	 * @param bool $wasPosted
+	 * @return \IContextSource
+	 */
+	public static function newDerivativeApiContext( $baseContext, array $params, bool $wasPosted ) {
+		$derivativeContextClass = class_exists( \MediaWiki\Context\DerivativeContext::class ) ?
+			\MediaWiki\Context\DerivativeContext::class : \DerivativeContext::class;
+
+		$context = new $derivativeContextClass( $baseContext );
+		$context->setRequest( self::newFauxRequest( $params, $wasPosted ) );
+		return $context;
+	}
+
+	/**
+	 * @return \IContextSource
+	 */
+	private static function getMainRequestContext() {
+		$requestContextClass = class_exists( \MediaWiki\Context\RequestContext::class ) ?
+			\MediaWiki\Context\RequestContext::class : \RequestContext::class;
+		return $requestContextClass::getMain();
+	}
+
 	public static function initSMW() {
 		if ( !defined( 'SMW_VERSION' ) ) {
 			return;
@@ -415,8 +444,7 @@ nodes=TestPage
 			] ),
 		];
 
-		$request = self::newFauxRequest( $apiParams, false );
-		$api = new \ApiMain( $request );
+		$api = new \ApiMain( self::newDerivativeApiContext( self::getMainRequestContext(), $apiParams, false ) );
 		$api->execute();
 		$data = $api->getResult()->getResultData();
 
@@ -687,8 +715,7 @@ nodes=TestPage
 			] ),
 		];
 
-		$request = self::newFauxRequest( $apiParams, false );
-		$api = new \ApiMain( $request );
+		$api = new \ApiMain( self::newDerivativeApiContext( self::getMainRequestContext(), $apiParams, false ) );
 		$api->execute();
 		$result = $api->getResult()->getResultData();
 
