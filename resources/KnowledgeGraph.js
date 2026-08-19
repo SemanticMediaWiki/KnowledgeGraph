@@ -1395,6 +1395,7 @@ ${ propertyOptions }|show-property-type=true
 	}
 
 	function cleanLabel( label ) {
+		label = label.trim();
 		if ( label.startsWith( '-' ) ) {
 			label = label.slice( 1 );
 		}
@@ -1587,8 +1588,26 @@ ${ propertyOptions }|show-property-type=true
 	}
 
 	return {
-		initialize
+		initialize,
+		checkAndToogleId,
+		wrapLabel,
+		cleanLabel,
+		getPropertyValueForNode,
+		fetchNamespaceNameForNode,
+		nodePropertiesCache: self.nodePropertiesCache
 	};
+};
+
+// Returns true only for plain objects (not arrays, not strings, not functions).
+// Attached to the KnowledgeGraph constructor (rather than kept as a closure
+// inside the $( document ).ready() handler below) so it is reachable for
+// testing, since JS closures have no other runtime escape hatch.
+KnowledgeGraph.isPlainObject = function ( value ) {
+	return (
+		value !== null &&
+		typeof value === 'object' &&
+		value.constructor === Object
+	);
 };
 
 $( document ).ready( async () => {
@@ -1629,15 +1648,6 @@ $( document ).ready( async () => {
 		}
 	}
 
-	// Returns true only for plain objects (not arrays, not strings, not functions)
-	function isPlainObject( value ) {
-		return (
-			value !== null &&
-			typeof value === 'object' &&
-			value.constructor === Object
-		);
-	}
-
 	$( '.KnowledgeGraph' ).each( async function ( index ) {
 		// Retrieve semantic graph config by index
 		const graphData = semanticGraphs[ index ];
@@ -1666,12 +1676,12 @@ $( document ).ready( async () => {
 				if ( result ) {
 					graphData.graphOptions = result;
 				}
-			} else if ( !isPlainObject( graphData.graphOptions ) ) {
+			} else if ( !KnowledgeGraph.isPlainObject( graphData.graphOptions ) ) {
 				graphData.graphOptions = {};
 			}
 
 			// propertyOptions contains a map of property → JS module string or object
-			if ( isPlainObject( graphData.propertyOptions ) ) {
+			if ( KnowledgeGraph.isPlainObject( graphData.propertyOptions ) ) {
 				for ( const key in graphData.propertyOptions ) {
 					const value = graphData.propertyOptions[ key ];
 
@@ -1680,7 +1690,7 @@ $( document ).ready( async () => {
 						if ( result ) {
 							graphData.propertyOptions[ key ] = result;
 						}
-					} else if ( !isPlainObject( value ) ) {
+					} else if ( !KnowledgeGraph.isPlainObject( value ) ) {
 						graphData.propertyOptions[ key ] = {};
 					}
 				}

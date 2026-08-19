@@ -10,6 +10,7 @@ require( path.resolve( __dirname, '../../resources/KnowledgeGraphToolbar.js' ) )
 require( path.resolve( __dirname, '../../resources/KnowledgeGraphActionToolbar.js' ) );
 require( path.resolve( __dirname, '../../resources/KnowledgeGraphNonModalDialog.js' ) );
 require( path.resolve( __dirname, '../../resources/KnowledgeGraphDialog.js' ) );
+require( path.resolve( __dirname, '../../resources/KnowledgeGraph.js' ) );
 
 global.KnowledgeGraphFunctions = KnowledgeGraphFunctions;
 global.KnowledgeGraphOptions = KnowledgeGraphOptions;
@@ -18,3 +19,4 @@ global.KnowledgeGraphToolbar = KnowledgeGraphToolbar;
 global.KnowledgeGraphActionToolbar = KnowledgeGraphActionToolbar;
 global.KnowledgeGraphNonModalDialog = KnowledgeGraphNonModalDialog;
 global.KnowledgeGraphDialog = KnowledgeGraphDialog;
+global.KnowledgeGraph = KnowledgeGraph;
