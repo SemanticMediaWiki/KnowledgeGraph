@@ -274,11 +274,29 @@ class KnowledgeGraph {
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/c997fbd2583ccc088dc232288f883716ca2f5777/includes/PageProperties.php
 	 * @param Parser $parser
 	 * @param mixed ...$argv
-	 * @return array
+	 * @return array|string
 	 */
 	public static function parserFunctionKnowledgeGraph( Parser $parser, ...$argv ) {
 		$out = $parser->getOutput();
 		$title = $parser->getTitle();
+
+		// The internal smwbrowse API calls performed below need the acting user to
+		// have read access; without it, e.g. the anonymous user under a maintenance
+		// script (rebuildData.php, ...) on a wiki with
+		// $wgGroupPermissions['*']['read'] = false, they would throw an
+		// ApiUsageException and abort the whole parse. Since this parser function
+		// only reads and renders SMW data (it records no page annotations of its
+		// own), it's safe to skip it entirely whenever the acting user can't read
+		// the page being parsed.
+		if (
+			!MediaWikiServices::getInstance()->getPermissionManager()->userCan(
+				'read',
+				User::newFromIdentity( $parser->getUserIdentity() ),
+				$title
+			)
+		) {
+			return '';
+		}
 
 /*
 {{#knowledgegraph:

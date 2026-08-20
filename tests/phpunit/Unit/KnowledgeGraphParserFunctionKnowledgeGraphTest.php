@@ -3,12 +3,14 @@
 use MediaWiki\Title\Title;
 
 /**
- * parserFunctionKnowledgeGraph() only calls getOutput() and getTitle() on the
- * Parser it receives, so a Parser mock stubbing just those two methods is
- * sufficient - no need for a real Parser/parse() round trip. getOutput() is
- * stubbed to return a real ParserOutput (a concrete class), so
+ * parserFunctionKnowledgeGraph() only calls getOutput(), getTitle() and
+ * getUserIdentity() on the Parser it receives, so a Parser mock stubbing just
+ * those methods is sufficient - no need for a real Parser/parse() round trip.
+ * getOutput() is stubbed to return a real ParserOutput (a concrete class), so
  * setExtensionData()/addJsConfigVars() calls can be asserted against real
- * state instead of mock expectations.
+ * state instead of mock expectations. getUserIdentity() defaults to the test
+ * runner's User (which has full rights), so the read-permission early-return
+ * doesn't trigger unless a test explicitly overrides it.
  *
  * @covers KnowledgeGraph::parserFunctionKnowledgeGraph
  * @group Database
@@ -48,18 +50,27 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		$graphsProp->setValue( null, [] );
 	}
 
-	private function newParserMock( Title $title ): Parser {
+	private function newParserMock( Title $title, ?\MediaWiki\User\UserIdentity $user = null ): Parser {
 		$parserOutput = new ParserOutput();
 
 		$parser = $this->createMock( Parser::class );
 		$parser->method( 'getOutput' )->willReturn( $parserOutput );
 		$parser->method( 'getTitle' )->willReturn( $title );
+		$parser->method( 'getUserIdentity' )->willReturn( $user ?? $this->getTestUser()->getUser() );
 
 		return $parser;
 	}
 
-	private function callParserFunction( Title $title, array $argv ): array {
-		$parser = $this->newParserMock( $title );
+	/**
+	 * @return array|string parserFunctionKnowledgeGraph()'s normal return is an
+	 *  array wrapper, but the read-permission early-return yields a plain string.
+	 */
+	private function callParserFunction(
+		Title $title,
+		array $argv,
+		?\MediaWiki\User\UserIdentity $user = null
+	) {
+		$parser = $this->newParserMock( $title, $user );
 		return KnowledgeGraph::parserFunctionKnowledgeGraph( $parser, ...$argv );
 	}
 
@@ -319,5 +330,32 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		$this->callParserFunction( $title, [ 'nodes=KGParserFunctionNodeDoesNotExistAnywhere', 'depth=0' ] );
 
 		$this->assertSame( [], KnowledgeGraph::$graphs[0]['data'] );
+	}
+
+	/**
+	 * Reproduces https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/79:
+	 * on a closed wiki ($wgGroupPermissions['*']['read'] = false), the ambient
+	 * user under a maintenance script like rebuildData.php is anonymous and has
+	 * no read right. Without an early return, the internal smwbrowse ApiMain
+	 * call in setSemanticDataFromApi() throws an uncaught ApiUsageException,
+	 * aborting the whole page parse/rebuild. Since this parser function only
+	 * reads and renders SMW data, skipping it entirely for a user who can't
+	 * read the page is safe and avoids the crash.
+	 */
+	public function testSkipsEntirelyWhenActingUserCannotReadThePage() {
+		$this->setGroupPermissions( '*', 'read', false );
+
+		$this->insertPage( 'KGParserFunctionNoReadNode' );
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionNoReadCallerPage' );
+		$anonUser = User::newFromName( '127.0.0.1', false );
+
+		$result = $this->callParserFunction(
+			$title,
+			[ 'nodes=KGParserFunctionNoReadNode', 'depth=0' ],
+			$anonUser
+		);
+
+		$this->assertSame( '', $result );
+		$this->assertSame( [], KnowledgeGraph::$graphs );
 	}
 }
