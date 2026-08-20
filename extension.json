@@ -48,6 +48,7 @@
 				"KnowledgeGraph.css"
 			],
 			"scripts":[
+				"KnowledgeGraphCanvasPolyfill.js",
 				"visNetwork/vis-network.min.js",
 				"KnowledgeGraphFunctions.js",
 				"KnowledgeGraphOptions.js",
