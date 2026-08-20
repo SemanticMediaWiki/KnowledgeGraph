@@ -188,7 +188,7 @@ class KnowledgeGraphApiLoadPropertiesExecuteTest extends ApiTestCase {
 		] );
 
 		$this->assertSame(
-			[ 'properties' => [], 'categories' => [] ],
+			[ 'properties' => [], 'categories' => [], 'displayTitle' => null ],
 			$data['KGPropsDepthZeroNode']
 		);
 	}
@@ -245,7 +245,7 @@ class KnowledgeGraphApiLoadPropertiesExecuteTest extends ApiTestCase {
 		] );
 
 		$this->assertSame(
-			[ 'properties' => [], 'categories' => [] ],
+			[ 'properties' => [], 'categories' => [], 'displayTitle' => null ],
 			$data['KGPropsInverseNode']
 		);
 	}
