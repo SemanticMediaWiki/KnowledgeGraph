@@ -600,11 +600,7 @@ nodes=TestPage
 			switch ( $type ) {
 				case 'bool':
 				case 'boolean':
-					$val = filter_var( $val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
-					if ( $val === null ) {
-						$val = filter_var( $defaultValue, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
-					}
-					settype( $val, "bool" );
+					$val = self::validateOrFallback( $val, $defaultValue, FILTER_VALIDATE_BOOLEAN, 'bool' );
 					break;
 
 				case 'array':
@@ -619,20 +615,12 @@ nodes=TestPage
 					break;
 
 				case 'number':
-					$val = filter_var( $val, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE );
-					if ( $val === null ) {
-						$val = filter_var( $defaultValue, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE );
-					}
-					settype( $val, "float" );
+					$val = self::validateOrFallback( $val, $defaultValue, FILTER_VALIDATE_FLOAT, 'float' );
 					break;
 
 				case 'int':
 				case 'integer':
-					$val = filter_var( $val, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE );
-					if ( $val === null ) {
-						$val = filter_var( $defaultValue, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE );
-					}
-					settype( $val, "integer" );
+					$val = self::validateOrFallback( $val, $defaultValue, FILTER_VALIDATE_INT, 'integer' );
 					break;
 
 				default:
@@ -642,6 +630,26 @@ nodes=TestPage
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Validates $val with $filter, falling back to validating $defaultValue
+	 * with the same filter if $val doesn't pass, then casts the result to
+	 * $settypeTo.
+	 *
+	 * @param mixed $val
+	 * @param mixed $defaultValue
+	 * @param int $filter one of the FILTER_VALIDATE_* constants
+	 * @param string $settypeTo a settype() type name
+	 * @return mixed
+	 */
+	private static function validateOrFallback( $val, $defaultValue, int $filter, string $settypeTo ) {
+		$val = filter_var( $val, $filter, FILTER_NULL_ON_FAILURE );
+		if ( $val === null ) {
+			$val = filter_var( $defaultValue, $filter, FILTER_NULL_ON_FAILURE );
+		}
+		settype( $val, $settypeTo );
+		return $val;
 	}
 
 	/**
@@ -911,8 +919,9 @@ nodes=TestPage
 
 					$output['properties'][$propKey]['values'][] = [ 'value' => $linkedTitle ];
 
-					if ( $depth < $maxDepth && !isset( $data[$linkedTitle] ) ) {
-						$pendingRecursiveTitles[] = $linkedTitle;
+					$alreadyPending = isset( $pendingRecursiveTitles[$linkedTitle] );
+					if ( $depth < $maxDepth && !isset( $data[$linkedTitle] ) && !$alreadyPending ) {
+						$pendingRecursiveTitles[$linkedTitle] = true;
 					}
 				} else {
 					$value = [
@@ -939,7 +948,7 @@ nodes=TestPage
 			}
 		}
 
-		foreach ( $pendingRecursiveTitles as $linkedTitle ) {
+		foreach ( array_keys( $pendingRecursiveTitles ) as $linkedTitle ) {
 			$title_ = Title::newFromText( $linkedTitle );
 			if ( $title_ && $title_->isKnown() ) {
 				self::setSemanticDataFromApi( $title_, $onlyProperties, $depth + 1, $maxDepth, $data, $relationsSeen );

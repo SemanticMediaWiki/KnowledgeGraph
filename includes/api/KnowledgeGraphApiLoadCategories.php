@@ -14,20 +14,6 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	use KnowledgeGraphApiLoadTrait;
 
 	/**
-	 * Store instance for Semantic MediaWiki data.
-	 *
-	 * @var SMW\Store|null
-	 */
-	protected static $SMWStore = null;
-
-	/**
-	 * Factory instance for creating Semantic MediaWiki data values.
-	 *
-	 * @var SMW\DataValueFactory|null
-	 */
-	protected static $SMWDataValueFactory = null;
-
-	/**
 	 * Names (without namespace prefix) of all known Property: pages, used by
 	 * buildPropertiesList() to find properties for which a category member is
 	 * a target value. Populated once per execute() call.
@@ -39,20 +25,29 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	/**
 	 * Running list of properties accumulated across category members already
 	 * processed in the current execute() call; each member's properties are
-	 * merged into this list, and the merged result is used for every
-	 * subsequent member. Reset at the start of getTitlesToLoad().
+	 * merged into this list, and the merged result is used for that member
+	 * and every subsequent one. Reset at the start of getTitlesToLoad().
 	 *
 	 * @var array
 	 */
 	private $accumulatedProperties = [];
 
 	/**
+	 * Snapshot of $accumulatedProperties taken right after each title yielded
+	 * by getTitlesToLoad() is merged in, keyed by the same $titleText used as
+	 * that generator's key. getPropertiesForTitle() reads from here instead
+	 * of the live $accumulatedProperties, so its result for a given title
+	 * does not depend on when the trait's execute() loop happens to call it
+	 * relative to later titles being merged in.
+	 *
+	 * @var array<string, array>
+	 */
+	private $propertiesByTitle = [];
+
+	/**
 	 * @inheritDoc
 	 */
 	protected function getTitlesToLoad( array $params ): iterable {
-		self::$SMWStore = \SMW\StoreFactory::getStore();
-		self::$SMWDataValueFactory = SMW\DataValueFactory::getInstance();
-
 		$queryParams = [
 			'action' => 'query',
 			'list' => 'allpages',
@@ -73,8 +68,8 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 			return substr( $title, strrpos( $title, ':' ) + 1 );
 		}, $propertyTitles );
 
-		$this->accumulatedProperties = ( !empty( $params['properties'] ) ?
-			json_decode( $params['properties'], true ) : [] );
+		$this->accumulatedProperties = empty( $params['properties'] )
+			? [] : explode( '|', $params['properties'] );
 
 		$categories = explode( '|', $params['categories'] );
 
@@ -101,6 +96,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 					$this->accumulatedProperties,
 					$params['limit']
 				);
+				$this->propertiesByTitle[$titleText] = $this->accumulatedProperties;
 
 				if ( $title_->isKnown() ) {
 					yield $titleText => $title_;
@@ -113,7 +109,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	 * @inheritDoc
 	 */
 	protected function getPropertiesForTitle( array $params, Title $title_, string $titleText ): array {
-		return $this->accumulatedProperties;
+		return $this->propertiesByTitle[$titleText] ?? $this->accumulatedProperties;
 	}
 
 	/**
@@ -146,7 +142,8 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 		}
 
 		$subject = new \SMW\DIWikiPage( $title_->getDbKey(), $title_->getNamespace() );
-		$semanticData = self::$SMWStore->getSemanticData( $subject );
+		$semanticData = \SMW\StoreFactory::getStore()->getSemanticData( $subject );
+		$dataValueFactory = SMW\DataValueFactory::getInstance();
 
 		foreach ( $semanticData->getProperties() as $property ) {
 			$key = $property->getKey();
@@ -155,7 +152,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 				continue;
 			}
 
-			$propertyDv = self::$SMWDataValueFactory->newDataValueByItem( $property, null );
+			$propertyDv = $dataValueFactory->newDataValueByItem( $property, null );
 			if ( !$property->isUserAnnotable() || !$propertyDv->isVisible() ) {
 				continue;
 			}
@@ -186,6 +183,10 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 			'categories' => [
 				ApiBase::PARAM_TYPE => 'string',
 				ApiBase::PARAM_REQUIRED => true
+			],
+			'properties' => [
+				ApiBase::PARAM_TYPE => 'string',
+				ApiBase::PARAM_REQUIRED => false
 			],
 			'depth' => [
 				ApiBase::PARAM_TYPE => 'integer',

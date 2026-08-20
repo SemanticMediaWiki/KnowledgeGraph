@@ -64,14 +64,6 @@ class KnowledgeGraphApiLoadCategoriesBuildPropertiesListTest extends MediaWikiIn
 		$instance = new KnowledgeGraphApiLoadCategories( new ApiMain(), '' );
 		$reflection = new ReflectionClass( KnowledgeGraphApiLoadCategories::class );
 
-		$storeProp = $reflection->getProperty( 'SMWStore' );
-		$storeProp->setAccessible( true );
-		$storeProp->setValue( null, \SMW\StoreFactory::getStore() );
-
-		$dvfProp = $reflection->getProperty( 'SMWDataValueFactory' );
-		$dvfProp->setAccessible( true );
-		$dvfProp->setValue( null, \SMW\DataValueFactory::getInstance() );
-
 		$method = $reflection->getMethod( 'buildPropertiesList' );
 		$method->setAccessible( true );
 

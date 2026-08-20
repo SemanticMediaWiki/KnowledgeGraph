@@ -14,6 +14,14 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 	use KnowledgeGraphApiLoadTrait;
 
 	/**
+	 * Result of expandInverseProperties(), identical for every title in a
+	 * given execute() call; computed once on first use instead of per title.
+	 *
+	 * @var string[]|null
+	 */
+	private $expandedProperties;
+
+	/**
 	 * @inheritDoc
 	 */
 	protected function getTitlesToLoad( array $params ): iterable {
@@ -31,10 +39,14 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 	 * @inheritDoc
 	 */
 	protected function getPropertiesForTitle( array $params, Title $title_, string $titleText ): array {
-		return self::expandInverseProperties(
-			explode( '|', $params['properties'] ),
-			(bool)$params['inversePropsIncluded']
-		);
+		if ( $this->expandedProperties === null ) {
+			$this->expandedProperties = self::expandInverseProperties(
+				explode( '|', $params['properties'] ),
+				(bool)$params['inversePropsIncluded']
+			);
+		}
+
+		return $this->expandedProperties;
 	}
 
 	/**

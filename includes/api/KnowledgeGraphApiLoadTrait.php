@@ -59,10 +59,8 @@ trait KnowledgeGraphApiLoadTrait {
 		$relationsSeen = [];
 
 		foreach ( $this->getTitlesToLoad( $params ) as $titleText => $title_ ) {
-			if ( isset( $data[$title_->getFullText()] ) ) {
-				continue;
-			}
-
+			// KnowledgeGraph::setSemanticDataFromApi() already no-ops on a
+			// title already present in $data, using the same key.
 			\KnowledgeGraph::setSemanticDataFromApi(
 				$title_,
 				$this->getPropertiesForTitle( $params, $title_, $titleText ),
