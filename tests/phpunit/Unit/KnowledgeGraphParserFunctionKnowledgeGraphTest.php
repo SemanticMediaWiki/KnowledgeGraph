@@ -41,10 +41,6 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 	private function resetKnowledgeGraphStatics(): void {
 		$reflection = new ReflectionClass( KnowledgeGraph::class );
 
-		$dataProp = $reflection->getProperty( 'data' );
-		$dataProp->setAccessible( true );
-		$dataProp->setValue( null, [] );
-
 		$graphsProp = $reflection->getProperty( 'graphs' );
 		$graphsProp->setAccessible( true );
 		$graphsProp->setValue( null, [] );
@@ -296,7 +292,7 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		$this->assertTrue( $resultA['isHTML'] );
 	}
 
-	public function testDataIsResetAfterProcessingSoSubsequentCallsAreNotContaminated() {
+	public function testDataIsNotCarriedOverToSubsequentCalls() {
 		$this->insertPage( 'KGParserFunctionResetNode' );
 
 		$titleA = Title::makeTitle( NS_MAIN, 'KGParserFunctionResetPageA' );
@@ -304,7 +300,6 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 
 		$this->callParserFunction( $titleA, [ 'nodes=KGParserFunctionResetNode', 'depth=0' ] );
 
-		$this->assertSame( [], KnowledgeGraph::$data );
 		$this->assertArrayHasKey(
 			'KGParserFunctionResetNode',
 			KnowledgeGraph::$graphs[0]['data']

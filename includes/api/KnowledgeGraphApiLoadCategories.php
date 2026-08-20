@@ -75,6 +75,8 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 
 		$categories = explode( '|', $params['categories'] );
 
+		$data = [];
+		$relationsSeen = [];
 		$titles = [];
 		foreach ( $categories as $categoryText ) {
 			$category_ = Title::makeTitleSafe( NS_CATEGORY, $categoryText );
@@ -101,12 +103,14 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 					);
 
 					if ( $title_ && $title_->isKnown() ) {
-						if ( !isset( self::$data[$title_->getFullText()] ) ) {
+						if ( !isset( $data[$title_->getFullText()] ) ) {
 							\KnowledgeGraph::setSemanticDataFromApi(
 								$title_,
 								$params['properties'],
 								0,
-								$params['depth']
+								$params['depth'],
+								$data,
+								$relationsSeen
 							);
 						}
 					}
@@ -114,7 +118,7 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 			}
 		}
 
-		$res = json_encode( \KnowledgeGraph::$data );
+		$res = json_encode( $data );
 		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
 	}
 

@@ -38,22 +38,26 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 			(bool)$params['inversePropsIncluded']
 		);
 
+		$data = [];
+		$relationsSeen = [];
 		$params['nodes'] = explode( '|', $params['nodes'] );
 		foreach ( $params['nodes'] as $titleText ) {
 			$title_ = Title::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
-				if ( !isset( \KnowledgeGraph::$data[$title_->getFullText()] ) ) {
+				if ( !isset( $data[$title_->getFullText()] ) ) {
 					\KnowledgeGraph::setSemanticDataFromApi(
 						$title_,
 						$params['properties'],
 						0,
-						$params['depth']
+						$params['depth'],
+						$data,
+						$relationsSeen
 					);
 				}
 			}
 		}
 
-		$res = json_encode( \KnowledgeGraph::$data );
+		$res = json_encode( $data );
 		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
 	}
 

@@ -4,12 +4,9 @@ use MediaWiki\Title\Title;
 use PHPUnit\Framework\TestCase;
 
 /**
- * setSemanticDataFromApi() populates the public static self::$data
- * property as a side effect; every caller (KnowledgeGraph::parserFunctionKnowledgeGraph,
- * KnowledgeGraphApiLoadProperties, KnowledgeGraphApiLoadCategories,
- * KnowledgeGraphApiLoadNodes) reads the result from that property rather
- * than from a return value. This test locks in that contract: the method
- * returns void/null and self::$data is populated regardless.
+ * setSemanticDataFromApi() accumulates into and returns the $data map passed
+ * by reference, rather than mutating a shared static property; callers
+ * thread their own local $data (and $relationsSeen) through the call.
  *
  * @covers KnowledgeGraph::setSemanticDataFromApi
  */
@@ -19,45 +16,44 @@ class KnowledgeGraphSetSemanticDataFromApiTest extends TestCase {
 		parent::setUp();
 
 		KnowledgeGraph::initSMW();
-
-		$reflection = new ReflectionClass( KnowledgeGraph::class );
-		$property = $reflection->getProperty( 'data' );
-		$property->setAccessible( true );
-		$property->setValue( null, [] );
 	}
 
-	public function testReturnsNullAndPopulatesDataWhenMaxDepthIsZero() {
+	public function testReturnsDataWithRootNodeWhenMaxDepthIsZero() {
 		$title = Title::makeTitle( NS_MAIN, 'SetSemanticDataFromApiTestPage' );
+		$data = [];
+		$relationsSeen = [];
 
-		$result = KnowledgeGraph::setSemanticDataFromApi( $title, [], 0, 0 );
+		$result = KnowledgeGraph::setSemanticDataFromApi( $title, [], 0, 0, $data, $relationsSeen );
 
-		$this->assertNull( $result );
 		$this->assertSame(
 			[ 'properties' => [], 'categories' => [], 'displayTitle' => null ],
-			KnowledgeGraph::$data[ $title->getFullText() ]
+			$result[ $title->getFullText() ]
 		);
+		$this->assertSame( $data, $result );
 	}
 
-	public function testReturnsNullAndLeavesDataUnsetWhenDepthReachesMaxDepth() {
+	public function testLeavesDataUnsetWhenDepthReachesMaxDepth() {
 		$title = Title::makeTitle( NS_MAIN, 'SetSemanticDataFromApiTestPage2' );
+		$data = [];
+		$relationsSeen = [];
 
-		$result = KnowledgeGraph::setSemanticDataFromApi( $title, [], 1, 1 );
+		$result = KnowledgeGraph::setSemanticDataFromApi( $title, [], 1, 1, $data, $relationsSeen );
 
-		$this->assertNull( $result );
-		$this->assertArrayNotHasKey( $title->getFullText(), KnowledgeGraph::$data );
+		$this->assertArrayNotHasKey( $title->getFullText(), $result );
 	}
 
-	public function testReturnsNullWhenTitleAlreadyPresentInData() {
+	public function testLeavesExistingEntryUnchangedWhenTitleAlreadyPresentInData() {
 		$title = Title::makeTitle( NS_MAIN, 'SetSemanticDataFromApiTestPage3' );
+		$data = [
+			$title->getFullText() => [ 'properties' => [], 'categories' => [ 'Preexisting' ] ],
+		];
+		$relationsSeen = [];
 
-		KnowledgeGraph::$data[ $title->getFullText() ] = [ 'properties' => [], 'categories' => [ 'Preexisting' ] ];
+		$result = KnowledgeGraph::setSemanticDataFromApi( $title, [], 0, 5, $data, $relationsSeen );
 
-		$result = KnowledgeGraph::setSemanticDataFromApi( $title, [], 0, 5 );
-
-		$this->assertNull( $result );
 		$this->assertSame(
 			[ 'properties' => [], 'categories' => [ 'Preexisting' ] ],
-			KnowledgeGraph::$data[ $title->getFullText() ]
+			$result[ $title->getFullText() ]
 		);
 	}
 }

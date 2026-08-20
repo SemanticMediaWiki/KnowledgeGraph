@@ -16,13 +16,6 @@ use SMW\MediaWiki\Specials\SearchByProperty\PageRequestOptions;
 class KnowledgeGraph {
 
 	/**
-	 * Tracks seen relations to prevent duplicate processing.
-	 *
-	 * @var array<string, bool>
-	 */
-	private static $relationsSeen = [];
-
-	/**
 	 * Caches resolved `_PEFU` external-formatter DataValues per property key,
 	 * for `formatLinkForValue()` to reuse across values of the same property.
 	 *
@@ -69,13 +62,6 @@ class KnowledgeGraph {
 	 * @var SMW\DataValueFactory|null
 	 */
 	protected static $SMWDataValueFactory = null;
-
-	/**
-	 * An array to hold various data values.
-	 *
-	 * @var array
-	 */
-	public static $data = [];
 
 	/**
 	 * MediaWiki\Request\FauxRequest exists since MW 1.40; the global \FauxRequest
@@ -360,11 +346,15 @@ nodes=TestPage
 			}
 		}
 
+		$data = [];
+		$relationsSeen = [];
 		foreach ( $params['nodes'] as $titleText ) {
 			$title_ = Title::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
-				if ( !isset( self::$data[$title_->getFullText()] ) ) {
-					self::setSemanticDataFromApi( $title_, $params['properties'], 0, $params['depth'] );
+				if ( !isset( $data[$title_->getFullText()] ) ) {
+					self::setSemanticDataFromApi(
+						$title_, $params['properties'], 0, $params['depth'], $data, $relationsSeen
+					);
 				}
 			}
 		}
@@ -399,11 +389,10 @@ nodes=TestPage
 			$propertyOptions[$property] = $attributes;
 		}
 
-		$params['data'] = self::$data;
+		$params['data'] = $data;
 		$params['graphOptions'] = $graphOptions;
 		$params['propertyOptions'] = $propertyOptions;
 		self::$graphs[] = $params;
-		self::$data = [];
 
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
 
@@ -744,38 +733,47 @@ nodes=TestPage
 	}
 
 	/**
-	 * Populates self::$data[$title->getFullText()] as a side effect; callers
-	 * read the result from that static property rather than a return value.
+	 * Builds the semantic-data structure for $title (and, recursively, any
+	 * linked titles within $maxDepth), accumulating into and returning $data
+	 * - a map keyed by title full-text, shared across an entire top-level
+	 * call (including its recursion) so repeated/linked titles are not
+	 * reprocessed. $relationsSeen is likewise shared across that same call
+	 * tree, to prevent a relation between two titles from being recorded
+	 * twice (e.g. once directly and once via its inverse).
 	 *
 	 * @see https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/PageProperties/+/refs/heads/1.0.3/includes/PageProperties.php
 	 * @param Title $title
 	 * @param array $onlyProperties
 	 * @param int $depth
 	 * @param int $maxDepth
-	 * @return void
+	 * @param array &$data
+	 * @param array<string, bool> &$relationsSeen
+	 * @return array
 	 */
-	public static function setSemanticDataFromApi( Title $title, $onlyProperties, $depth, $maxDepth ) {
+	public static function setSemanticDataFromApi(
+		Title $title, $onlyProperties, $depth, $maxDepth, array &$data, array &$relationsSeen
+	) {
 		$titleText = $title->getFullText();
 
-		if ( isset( self::$data[$titleText] ) ) {
-			return;
+		if ( isset( $data[$titleText] ) ) {
+			return $data;
 		}
 
 		// If maxDepth is 0, only create the root node without loading SMW data
 		if ( $maxDepth === 0 ) {
-			self::$data[$titleText] = [
+			$data[$titleText] = [
 				'properties' => [],
 				'categories' => [],
 				'displayTitle' => self::getDisplayTitle( $title ),
 			];
-			return;
+			return $data;
 		}
 
 		if ( $depth >= $maxDepth ) {
-			return;
+			return $data;
 		}
 
-		self::$data[$titleText] = [
+		$data[$titleText] = [
 			'properties' => [],
 			'categories' => [],
 			'displayTitle' => self::getDisplayTitle( $title ),
@@ -797,11 +795,11 @@ nodes=TestPage
 
 		if ( isset( $result['error'] ) ) {
 			wfDebugLog( 'SemanticData', 'SMW API error: ' . json_encode( $result['error'] ) );
-			return;
+			return $data;
 		}
 
-		$data = $result['query']['data'] ?? [];
-		$output = &self::$data[$titleText];
+		$rows = $result['query']['data'] ?? [];
+		$output = &$data[$titleText];
 
 		if ( $title->getNamespace() === NS_FILE ) {
 			$file = MediaWikiServices::getInstance()->getRepoGroup()->findFile( $title );
@@ -814,7 +812,7 @@ nodes=TestPage
 		$dataTypeRegistry = \SMW\DataTypeRegistry::getInstance();
 		$pendingRecursiveTitles = [];
 
-		foreach ( $data as $entry ) {
+		foreach ( $rows as $entry ) {
 			$direction = $entry['direction'] ?? 'direct';
 			$keyRaw = $entry['property'] ?? null;
 			$key = $keyRaw ? str_replace( '_', ' ', $keyRaw ) : null;
@@ -900,14 +898,14 @@ nodes=TestPage
 					$relation = ltrim( $propKey, '-' );
 					$relKey = self::makeRelationKey( $source, $target, $relation );
 
-					if ( isset( self::$relationsSeen[$relKey] ) ) {
+					if ( isset( $relationsSeen[$relKey] ) ) {
 						continue;
 					}
-					self::$relationsSeen[$relKey] = true;
+					$relationsSeen[$relKey] = true;
 
 					$output['properties'][$propKey]['values'][] = [ 'value' => $linkedTitle ];
 
-					if ( $depth < $maxDepth && !isset( self::$data[$linkedTitle] ) ) {
+					if ( $depth < $maxDepth && !isset( $data[$linkedTitle] ) ) {
 						$pendingRecursiveTitles[] = $linkedTitle;
 					}
 				} else {
@@ -938,9 +936,11 @@ nodes=TestPage
 		foreach ( $pendingRecursiveTitles as $linkedTitle ) {
 			$title_ = Title::newFromText( $linkedTitle );
 			if ( $title_ && $title_->isKnown() ) {
-				self::setSemanticDataFromApi( $title_, $onlyProperties, $depth + 1, $maxDepth );
+				self::setSemanticDataFromApi( $title_, $onlyProperties, $depth + 1, $maxDepth, $data, $relationsSeen );
 			}
 		}
+
+		return $data;
 	}
 
 	/**
@@ -1055,9 +1055,5 @@ nodes=TestPage
 		$cursor[$leaf] = $value;
 
 		return $array;
-	}
-
-	public static function resetSeenRelations(): void {
-		self::$relationsSeen = [];
 	}
 }

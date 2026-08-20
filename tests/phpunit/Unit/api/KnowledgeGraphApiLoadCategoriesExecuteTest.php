@@ -19,20 +19,12 @@ class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {
 		parent::setUp();
 		\SMW\StoreFactory::clear();
 		\KnowledgeGraph::initSMW();
-		$this->resetKnowledgeGraphData();
 	}
 
 	protected function tearDown(): void {
 		\SMW\StoreFactory::clear();
 		\KnowledgeGraph::initSMW();
 		parent::tearDown();
-	}
-
-	private function resetKnowledgeGraphData(): void {
-		$reflection = new ReflectionClass( KnowledgeGraph::class );
-		$dataProp = $reflection->getProperty( 'data' );
-		$dataProp->setAccessible( true );
-		$dataProp->setValue( null, [] );
 	}
 
 	/**

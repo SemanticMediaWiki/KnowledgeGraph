@@ -43,20 +43,12 @@ class KnowledgeGraphApiLoadPropertiesExecuteTest extends ApiTestCase {
 		\SMW\PropertyRegistry::clear();
 
 		\KnowledgeGraph::initSMW();
-		$this->resetKnowledgeGraphData();
 	}
 
 	protected function tearDown(): void {
 		\SMW\StoreFactory::clear();
 		\KnowledgeGraph::initSMW();
 		parent::tearDown();
-	}
-
-	private function resetKnowledgeGraphData(): void {
-		$reflection = new ReflectionClass( KnowledgeGraph::class );
-		$dataProp = $reflection->getProperty( 'data' );
-		$dataProp->setAccessible( true );
-		$dataProp->setValue( null, [] );
 	}
 
 	/**
@@ -194,9 +186,10 @@ class KnowledgeGraphApiLoadPropertiesExecuteTest extends ApiTestCase {
 	}
 
 	/**
-	 * A node already present in KnowledgeGraph::$data (e.g. because it was
-	 * already processed as a previous entry in the same nodes list) must not
-	 * be reprocessed: setSemanticDataFromApi() must not be invoked for it again.
+	 * A node listed twice in the same request's `nodes` list must not be
+	 * reprocessed the second time: setSemanticDataFromApi() must not be
+	 * invoked again once the accumulated $data already holds the entry from
+	 * the first occurrence.
 	 */
 	public function testNodeAlreadyInDataIsNotReprocessed() {
 		$this->insertPage( 'KGPropsAlreadySeenNode' );
@@ -205,20 +198,13 @@ class KnowledgeGraphApiLoadPropertiesExecuteTest extends ApiTestCase {
 		$storeMock = $this->injectStoreMock();
 		$this->stubEmptySemanticDataAndPropertySubjects( $storeMock );
 
-		$reflection = new ReflectionClass( KnowledgeGraph::class );
-		$dataProp = $reflection->getProperty( 'data' );
-		$dataProp->setAccessible( true );
-		$dataProp->setValue( null, [
-			'KGPropsAlreadySeenNode' => [ 'properties' => [ 'sentinel' => true ], 'categories' => [] ],
-		] );
-
 		$data = $this->runLoadProperties( [
-			'nodes' => 'KGPropsAlreadySeenNode',
+			'nodes' => 'KGPropsAlreadySeenNode|KGPropsAlreadySeenNode',
 			'depth' => 5,
 		] );
 
 		$this->assertSame(
-			[ 'properties' => [ 'sentinel' => true ], 'categories' => [] ],
+			[ 'properties' => [], 'categories' => [], 'displayTitle' => null ],
 			$data['KGPropsAlreadySeenNode']
 		);
 	}

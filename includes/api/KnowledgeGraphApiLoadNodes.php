@@ -51,6 +51,8 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 		self::$SMWStore = \SMW\StoreFactory::getStore();
 		self::$SMWDataValueFactory = SMW\DataValueFactory::getInstance();
 
+		$data = [];
+		$relationsSeen = [];
 		$titles = explode( '|', $params['titles'] );
 		foreach ( $titles as $titleText ) {
 			$title_ = Title::newFromText( $titleText );
@@ -60,17 +62,19 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 
 			$listOfProps = \KnowledgeGraph::getAllPropertiesForNode( $titleText );
 
-			if ( !isset( \KnowledgeGraph::$data[$title_->getFullText()] ) ) {
+			if ( !isset( $data[$title_->getFullText()] ) ) {
 				\KnowledgeGraph::setSemanticDataFromApi(
 					$title_,
 					$listOfProps,
 					0,
-					$params['depth']
+					$params['depth'],
+					$data,
+					$relationsSeen
 				);
 			}
 		}
 
-		$res = json_encode( \KnowledgeGraph::$data );
+		$res = json_encode( $data );
 		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
 	}
 

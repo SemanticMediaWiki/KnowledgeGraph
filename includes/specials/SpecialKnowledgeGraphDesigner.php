@@ -53,7 +53,7 @@ class SpecialKnowledgeGraphDesigner extends SpecialPage {
 		}
 		$propertyOptions = [];
 
-		$params['data'] = \KnowledgeGraph::$data;
+		$params['data'] = [];
 		$params['graphOptions'] = $graphOptions;
 		$params['propertyOptions'] = $propertyOptions;
 		$params['context'] = 'specialpage';

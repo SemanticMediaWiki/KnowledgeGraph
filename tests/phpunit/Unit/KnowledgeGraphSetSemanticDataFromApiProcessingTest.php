@@ -16,6 +16,12 @@ use MediaWiki\Title\Title;
  */
 class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegrationTestCase {
 
+	/** @var array */
+	private $data = [];
+
+	/** @var array<string, bool> */
+	private $relationsSeen = [];
+
 	protected function setUp(): void {
 		parent::setUp();
 
@@ -42,28 +48,27 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 	protected function tearDown(): void {
 		\SMW\StoreFactory::clear();
 		KnowledgeGraph::initSMW();
-		$this->resetKnowledgeGraphStatics();
 		parent::tearDown();
 	}
 
 	private function resetKnowledgeGraphStatics(): void {
+		$this->data = [];
+		$this->relationsSeen = [];
+
 		$reflection = new ReflectionClass( KnowledgeGraph::class );
-
-		$dataProp = $reflection->getProperty( 'data' );
-		$dataProp->setAccessible( true );
-		$dataProp->setValue( null, [] );
-
-		$relationsSeenProp = $reflection->getProperty( 'relationsSeen' );
-		$relationsSeenProp->setAccessible( true );
-		$relationsSeenProp->setValue( null, [] );
-
 		$externalFormatterValuesProp = $reflection->getProperty( 'externalFormatterValues' );
 		$externalFormatterValuesProp->setAccessible( true );
 		$externalFormatterValuesProp->setValue( null, [] );
 	}
 
+	private function call( Title $title, array $onlyProperties, int $depth, int $maxDepth ): array {
+		return KnowledgeGraph::setSemanticDataFromApi(
+			$title, $onlyProperties, $depth, $maxDepth, $this->data, $this->relationsSeen
+		);
+	}
+
 	private function getData( string $titleText ): array {
-		return KnowledgeGraph::$data[ $titleText ];
+		return $this->data[ $titleText ];
 	}
 
 	/**
@@ -97,7 +102,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [ 'SomeOtherProperty' ], 0, 5 );
+		$this->call( $sourceTitle, [ 'SomeOtherProperty' ], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertArrayNotHasKey( 'KGProcRelatesFiltered', $data['properties'] );
@@ -113,7 +118,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [ 'KGProcRelatesAllowed' ], 0, 5 );
+		$this->call( $sourceTitle, [ 'KGProcRelatesAllowed' ], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertArrayHasKey( 'KGProcRelatesAllowed', $data['properties'] );
@@ -136,7 +141,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$this->skipIfFixtureDidNotTakeEffect( $targetTitle );
 
 		// Querying from $target's perspective surfaces the relation as inverse.
-		KnowledgeGraph::setSemanticDataFromApi( $targetTitle, [ 'KGProcInverseRel1' ], 0, 5 );
+		$this->call( $targetTitle, [ 'KGProcInverseRel1' ], 0, 5 );
 
 		$data = $this->getData( $target );
 		$this->assertArrayNotHasKey( '-KGProcInverseRel1', $data['properties'] );
@@ -152,7 +157,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$targetTitle = Title::newFromText( $target );
 		$this->skipIfFixtureDidNotTakeEffect( $targetTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $targetTitle, [ '-KGProcInverseRel2' ], 0, 5 );
+		$this->call( $targetTitle, [ '-KGProcInverseRel2' ], 0, 5 );
 
 		$data = $this->getData( $target );
 		$this->assertArrayHasKey( '-KGProcInverseRel2', $data['properties'] );
@@ -174,7 +179,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertArrayHasKey( 'KGProcLinksTo', $data['properties'] );
@@ -192,7 +197,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 
 	/**
 	 * depth < maxDepth: a linked title discovered via a dataitem entry is
-	 * recursively processed, gaining its own self::$data entry.
+	 * recursively processed, gaining its own entry in the accumulated $data.
 	 */
 	public function testLinkedTitleIsRecursivelyProcessedWhenDepthBelowMaxDepth() {
 		$target = 'KGProcRecurseTarget';
@@ -204,14 +209,14 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
-		$this->assertArrayHasKey( $target, KnowledgeGraph::$data );
+		$this->assertArrayHasKey( $target, $this->data );
 	}
 
 	/**
 	 * depth >= maxDepth for the recursive call: the linked title must NOT
-	 * gain a self::$data entry (setSemanticDataFromApi's own depth-guard
+	 * gain a $data entry (setSemanticDataFromApi's own depth-guard
 	 * short-circuits it).
 	 */
 	public function testLinkedTitleIsNotProcessedWhenDepthReachesMaxDepth() {
@@ -227,15 +232,15 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		// maxDepth=1, depth=0: the root itself is processed (0 < 1), but the
 		// recursive call for the linked title runs at depth=1 which is not
 		// < maxDepth=1, so it must short-circuit without adding data.
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 1 );
+		$this->call( $sourceTitle, [], 0, 1 );
 
-		$this->assertArrayNotHasKey( $target, KnowledgeGraph::$data );
+		$this->assertArrayNotHasKey( $target, $this->data );
 	}
 
 	/**
-	 * makeRelationKey()/self::$relationsSeen: processing the same relation
-	 * twice (simulated by pre-seeding relationsSeen for the fixture's
-	 * relation before calling) must not duplicate the value entry.
+	 * makeRelationKey()/the $relationsSeen accumulator: processing the same
+	 * relation twice (simulated by pre-seeding relationsSeen for the
+	 * fixture's relation before calling) must not duplicate the value entry.
 	 */
 	public function testDuplicateRelationIsNotProcessedTwice() {
 		$target = 'KGProcDupTarget';
@@ -252,16 +257,14 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$method->setAccessible( true );
 		$relKey = $method->invoke( null, $source, $target, 'KGProcDupRel' );
 
-		$relationsSeenProp = $reflection->getProperty( 'relationsSeen' );
-		$relationsSeenProp->setAccessible( true );
-		$relationsSeenProp->setValue( null, [ $relKey => true ] );
+		$this->relationsSeen = [ $relKey => true ];
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertSame( [], $data['properties']['KGProcDupRel']['values'] );
 		// Already-seen relation must not trigger recursion either.
-		$this->assertArrayNotHasKey( $target, KnowledgeGraph::$data );
+		$this->assertArrayNotHasKey( $target, $this->data );
 	}
 
 	public function testCategoriesArePopulatedFromWikiPage() {
@@ -272,7 +275,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$title = Title::newFromText( $page );
 		$this->skipIfFixtureDidNotTakeEffect( $title );
 
-		KnowledgeGraph::setSemanticDataFromApi( $title, [], 0, 5 );
+		$this->call( $title, [], 0, 5 );
 
 		$data = $this->getData( $page );
 		$this->assertContains( 'KGProcTestCategory', $data['categories'] );
@@ -292,7 +295,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$repoGroup->method( 'findFile' )->willReturn( $file );
 		$this->setService( 'RepoGroup', $repoGroup );
 
-		KnowledgeGraph::setSemanticDataFromApi( $fileTitle, [], 0, 5 );
+		$this->call( $fileTitle, [], 0, 5 );
 
 		$data = $this->getData( $fileTitle->getFullText() );
 		$this->assertSame( 'https://example.test/KGProcTestFile.png', $data['src'] );
@@ -305,7 +308,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$repoGroup->method( 'findFile' )->willReturn( false );
 		$this->setService( 'RepoGroup', $repoGroup );
 
-		KnowledgeGraph::setSemanticDataFromApi( $fileTitle, [], 0, 5 );
+		$this->call( $fileTitle, [], 0, 5 );
 
 		$data = $this->getData( $fileTitle->getFullText() );
 		$this->assertArrayNotHasKey( 'src', $data );
@@ -346,7 +349,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertArrayHasKey( 'KGProcAge', $data['properties'] );
@@ -375,7 +378,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertArrayHasKey( 'KGProcKeyword', $data['properties'] );
@@ -398,7 +401,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertNull( $data['properties']['KGProcPlainKeyword']['linkFormatter'] );
@@ -422,7 +425,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertArrayHasKey( 'KGProcExternalId', $data['properties'] );
@@ -445,7 +448,7 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 		$sourceTitle = Title::newFromText( $source );
 		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
 
-		KnowledgeGraph::setSemanticDataFromApi( $sourceTitle, [], 0, 5 );
+		$this->call( $sourceTitle, [], 0, 5 );
 
 		$data = $this->getData( $source );
 		$this->assertNull( $data['properties']['KGProcPlainExternalId']['linkFormatter'] );

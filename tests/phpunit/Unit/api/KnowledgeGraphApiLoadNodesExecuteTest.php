@@ -18,20 +18,12 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 		parent::setUp();
 		\SMW\StoreFactory::clear();
 		\KnowledgeGraph::initSMW();
-		$this->resetKnowledgeGraphData();
 	}
 
 	protected function tearDown(): void {
 		\SMW\StoreFactory::clear();
 		\KnowledgeGraph::initSMW();
 		parent::tearDown();
-	}
-
-	private function resetKnowledgeGraphData(): void {
-		$reflection = new ReflectionClass( KnowledgeGraph::class );
-		$dataProp = $reflection->getProperty( 'data' );
-		$dataProp->setAccessible( true );
-		$dataProp->setValue( null, [] );
 	}
 
 	/**
@@ -181,9 +173,10 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 	}
 
 	/**
-	 * A title already present in KnowledgeGraph::$data (e.g. because it was
-	 * already processed as a previous entry in the same titles list) must not
-	 * be reprocessed: setSemanticDataFromApi() must not be invoked for it again.
+	 * A title listed twice in the same request's `titles` list must not be
+	 * reprocessed the second time: setSemanticDataFromApi() must not be
+	 * invoked again once the accumulated $data already holds the entry from
+	 * the first occurrence.
 	 */
 	public function testTitleAlreadyInDataIsNotReprocessed() {
 		$this->insertPage( 'KGTestAlreadySeenNode' );
@@ -192,20 +185,13 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 		$storeMock = $this->injectStoreMock();
 		$this->stubEmptySemanticDataAndPropertySubjects( $storeMock );
 
-		$reflection = new ReflectionClass( KnowledgeGraph::class );
-		$dataProp = $reflection->getProperty( 'data' );
-		$dataProp->setAccessible( true );
-		$dataProp->setValue( null, [
-			'KGTestAlreadySeenNode' => [ 'properties' => [ 'sentinel' => true ], 'categories' => [] ],
-		] );
-
 		$data = $this->runLoadNodes( [
-			'titles' => 'KGTestAlreadySeenNode',
-			'depth' => 5,
+			'titles' => 'KGTestAlreadySeenNode|KGTestAlreadySeenNode',
+			'depth' => 0,
 		] );
 
 		$this->assertSame(
-			[ 'properties' => [ 'sentinel' => true ], 'categories' => [] ],
+			[ 'properties' => [], 'categories' => [], 'displayTitle' => null ],
 			$data['KGTestAlreadySeenNode']
 		);
 	}
