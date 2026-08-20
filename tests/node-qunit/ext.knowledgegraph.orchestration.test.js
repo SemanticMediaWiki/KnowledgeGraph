@@ -1431,16 +1431,185 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			);
 		} );
 
-		// The property-click-to-edit-graph logic nested deep inside
-		// attachContextMenuListener() (including the stripHashSuffix() helper) --
-		// roughly resources/KnowledgeGraph.js lines 1022-1265 -- re-implements a
-		// large slice of edge/node diffing against self.Nodes/self.Edges/self.Data
-		// keyed off a clicked <li>'s data-action/data-direction attributes. Driving
-		// it meaningfully would require faithfully reproducing jQuery event
-		// delegation, PropColors/PropIdPropLabelMap bookkeeping, and vis.DataSet
-		// mutation semantics well beyond what mw-oo-stubs.js models -- explicitly
-		// flagged as a low-value-to-effort branch per issue #90. Documented here
-		// as a known gap rather than forcing a shallow test.
+		// Property-click-to-edit-graph logic: since issue #100, this reads the
+		// server-canonical `properties` shape via loadNodes() (the same shape/ids
+		// createNodes() consumes for the initial graph load) instead of re-deriving
+		// node/edge identity from a separate, independently-normalized smwbrowse
+		// call -- see resources/KnowledgeGraph.js's buildNodeAndEdgeFromValue().
+		QUnit.module( 'property-toggle click handler', ( propertyHooks ) => {
+
+			let api;
+
+			// Stubs mw.Api().postWithToken() so loadNodes() (called internally by
+			// the property-click handler) resolves with the given per-title
+			// `properties` map, in the same server-canonical shape
+			// KnowledgeGraphApiLoadNodes.php returns.
+			function stubLoadNodesApi( title, properties ) {
+				const OriginalApi = mw.Api;
+				mw.Api = function () {};
+				mw.Api.prototype.postWithToken = function () {
+					return {
+						done( fn ) {
+							fn( {
+								'knowledgegraph-load-nodes': {
+									data: JSON.stringify( { [ title ]: { properties } } )
+								}
+							} );
+							return this;
+						},
+						fail() {
+							return this;
+						}
+					};
+				};
+				return {
+					restore() {
+						mw.Api = OriginalApi;
+					}
+				};
+			}
+
+			propertyHooks.afterEach( () => {
+				if ( api ) {
+					api.restore();
+					api = null;
+				}
+			} );
+
+			// Right-clicks 'Site', waits for the loadNodes()-backed menu build to
+			// resolve, then returns the fake <li> elements added to the per-instance
+			// menu (tracked by the extended jQuery stub's real append()/find()).
+			function openMenuFor( nodeId ) {
+				graph.self.Nodes.add( { id: nodeId, typeID: 9 } );
+				graph.self.Network.getNodeAt = () => nodeId;
+				graph.self.Network.getEdgeAt = () => undefined;
+
+				getContextHandler()( {
+					event: { pageX: 1, pageY: 1, preventDefault() {} },
+					pointer: { DOM: { x: 0, y: 0 } }
+				} );
+
+				return new Promise( ( resolve ) => {
+					setTimeout( resolve, 0 );
+				} ).then( () => {
+					const $menu = $( `.kg-node-properties-menu[data-instance-id="${ graph.self.id }"]` );
+					return $menu.find( 'li.kg-node-properties-menu-property-entry' ).get();
+				} );
+			}
+
+			QUnit.test( 'a property whose canonical edge already exists (including hidden) is marked selected', ( assert ) => {
+				const property = {
+					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',
+					typeId: '_wpg', inverse: false, values: [ { value: 'Category:Site' } ]
+				};
+				api = stubLoadNodesApi( 'Site', { 'Main Category': property } );
+
+				const edgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', 'Category:Site', 'Main Category', 9, graph.self.Nodes );
+				graph.self.Edges.add( { id: edgeId, from: 'Site', to: 'Category:Site', label: 'Main Category', hidden: true } );
+
+				return openMenuFor( 'Site' ).then( ( entries ) => {
+					assert.strictEqual( entries.length, 1, 'exactly one property entry is rendered' );
+					assert.true(
+						entries[ 0 ].classList.contains( 'kg-node-properties-menu-property-entry-selected' ),
+						'the entry is marked selected even though its edge is currently hidden'
+					);
+				} );
+			} );
+
+			QUnit.test( 'a property with no matching edge in the graph is not marked selected', ( assert ) => {
+				const property = {
+					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',
+					typeId: '_wpg', inverse: false, values: [ { value: 'Category:Site' } ]
+				};
+				api = stubLoadNodesApi( 'Site', { 'Main Category': property } );
+
+				return openMenuFor( 'Site' ).then( ( entries ) => {
+					assert.false(
+						entries[ 0 ].classList.contains( 'kg-node-properties-menu-property-entry-selected' ),
+						'the entry is not selected when no matching edge exists'
+					);
+				} );
+			} );
+
+			QUnit.test( 'clicking an existing (hidden) property entry un-hides its edge and target node without creating a duplicate', ( assert ) => {
+				const property = {
+					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',
+					typeId: '_wpg', inverse: false, values: [ { value: 'Category:Site' } ]
+				};
+				api = stubLoadNodesApi( 'Site', { 'Main Category': property } );
+
+				const edgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', 'Category:Site', 'Main Category', 9, graph.self.Nodes );
+				graph.self.Edges.add( { id: edgeId, from: 'Site', to: 'Category:Site', label: 'Main Category', hidden: true } );
+				graph.self.Nodes.add( { id: 'Category:Site', typeID: 9, hidden: true } );
+
+				return openMenuFor( 'Site' ).then( ( entries ) => {
+					$( entries[ 0 ] ).trigger( 'click' );
+
+					assert.strictEqual( graph.self.Edges.get().length, 1, 'no duplicate edge is created' );
+					assert.strictEqual( graph.self.Nodes.get().length, 2, 'no duplicate node is created' );
+					assert.false( graph.self.Edges.get( edgeId ).hidden, 'the existing edge is un-hidden' );
+					assert.false( graph.self.Nodes.get( 'Category:Site' ).hidden, 'the existing target node is un-hidden' );
+				} );
+			} );
+
+			QUnit.test( 'clicking a visible property entry hides its edge and target node back again (toggle round-trip)', ( assert ) => {
+				const property = {
+					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',
+					typeId: '_wpg', inverse: false, values: [ { value: 'Category:Site' } ]
+				};
+				api = stubLoadNodesApi( 'Site', { 'Main Category': property } );
+
+				const edgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', 'Category:Site', 'Main Category', 9, graph.self.Nodes );
+				graph.self.Edges.add( { id: edgeId, from: 'Site', to: 'Category:Site', label: 'Main Category', hidden: false } );
+				graph.self.Nodes.add( { id: 'Category:Site', typeID: 9, hidden: false } );
+
+				return openMenuFor( 'Site' ).then( ( entries ) => {
+					$( entries[ 0 ] ).trigger( 'click' );
+
+					assert.true( graph.self.Edges.get( edgeId ).hidden, 'the visible edge is hidden again' );
+					assert.true( graph.self.Nodes.get( 'Category:Site' ).hidden, 'the visible target node is hidden again' );
+				} );
+			} );
+
+			QUnit.test( 'clicking a brand-new _wpg property creates a node and edge using the canonical namespace prefix', ( assert ) => {
+				const property = {
+					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',
+					typeId: '_wpg', inverse: false, values: [ { value: 'Category:Site' } ]
+				};
+				api = stubLoadNodesApi( 'Site', { 'Main Category': property } );
+
+				return openMenuFor( 'Site' ).then( ( entries ) => {
+					$( entries[ 0 ] ).trigger( 'click' );
+
+					const edgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', 'Category:Site', 'Main Category', 9, graph.self.Nodes );
+					const edge = graph.self.Edges.get( edgeId );
+					const node = graph.self.Nodes.get( 'Category:Site' );
+
+					assert.true( !!edge, 'a new edge is created for the new property value' );
+					assert.true( !!node, 'a new node is created for the new property value' );
+					assert.strictEqual( node.label, 'Category:Site', 'the node label uses the canonical (not localized) namespace prefix' );
+				} );
+			} );
+
+			QUnit.test( 'clicking a brand-new default-type property creates a node and edge', ( assert ) => {
+				const property = {
+					key: 'Has Color', canonicalLabel: 'Has Color', preferredLabel: '',
+					typeId: '_txt', inverse: false, values: [ { value: 'Red', type: 2 } ]
+				};
+				api = stubLoadNodesApi( 'Site', { 'Has Color': property } );
+
+				return openMenuFor( 'Site' ).then( ( entries ) => {
+					$( entries[ 0 ] ).trigger( 'click' );
+
+					const valueId = KnowledgeGraphFunctions.makeNodeId( 'Red', 2 );
+					const edgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', valueId, 'Has Color' );
+
+					assert.true( !!graph.self.Edges.get( edgeId ), 'a new edge is created for the new default-type property value' );
+					assert.true( !!graph.self.Nodes.get( valueId ), 'a new node is created for the new default-type property value' );
+				} );
+			} );
+
+		} );
 
 	} );
 

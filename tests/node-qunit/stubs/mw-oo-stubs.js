@@ -219,12 +219,81 @@ function getOnHandlers( element, event ) {
 	return byEvent[ event ];
 }
 
+// Registry of fake elements created via an HTML-string `$( '<tag ...>...</tag>' )`
+// call, keyed by the exact markup string, so a later lookup-by-selector call for
+// the same element (e.g. KnowledgeGraph.js's per-instance
+// `.kg-node-properties-menu[data-instance-id="..."]` re-lookup on a second
+// `oncontext` event) finds the element created on the first call instead of
+// building an unrelated, empty wrapper.
+const elementsByMarkup = {};
+
+// Very small subset of an HTML parser: only handles the single self-contained
+// `<tag class="..." data-x="y">...</tag>` shape KnowledgeGraph.js actually
+// constructs for its per-instance context menu (`$menu`) and menu `<li>`
+// entries. Returns null for anything else so callers fall back to elements: [].
+function parseSingleElementMarkup( markup ) {
+	const match = /^<([a-z]+)((?:\s+[^\s=>]+(?:="[^"]*")?)*)\s*>([\s\S]*)<\/\1>$/i.exec( markup.trim() );
+	if ( !match ) {
+		return null;
+	}
+	const [ , tagName, attrsStr, innerHtml ] = match;
+	const el = makeFakeElement( tagName );
+	el.innerHTML = innerHtml;
+	const attrRegex = /([^\s=]+)(?:="([^"]*)")?/g;
+	let attrMatch;
+	while ( ( attrMatch = attrRegex.exec( attrsStr ) ) !== null ) {
+		const [ , name, value ] = attrMatch;
+		if ( name === 'class' ) {
+			( value || '' ).split( /\s+/ ).filter( Boolean ).forEach( ( cls ) => el.classList.add( cls ) );
+		} else if ( name.startsWith( 'data-' ) ) {
+			el.dataset[ name.slice( 5 ).replace( /-([a-z])/g, ( m, c ) => c.toUpperCase() ) ] = value || '';
+		} else if ( name ) {
+			el.setAttribute( name, value || '' );
+		}
+	}
+	return el;
+}
+
+// Matches a simple `tag.class1.class2[data-x="y"]` selector (as used by
+// KnowledgeGraph.js's per-instance menu re-lookup) against elements registered
+// in elementsByMarkup, so a second `oncontext` call finds the menu the first
+// call created instead of creating a fresh, disconnected one.
+function findByCssLikeSelector( selector ) {
+	const attrMatch = /^([a-z.\-_]*)(?:\[data-([a-z-]+)="([^"]*)"])?$/i.exec( selector.trim() );
+	if ( !attrMatch ) {
+		return [];
+	}
+	const [ , classPart, dataName, dataValue ] = attrMatch;
+	const classes = classPart.split( '.' ).filter( Boolean );
+	const dataKey = dataName ? dataName.replace( /-([a-z])/g, ( m, c ) => c.toUpperCase() ) : null;
+
+	return Object.values( elementsByMarkup ).filter( ( el ) => {
+		if ( classes.some( ( cls ) => !el.classList.contains( cls ) ) ) {
+			return false;
+		}
+		if ( dataKey && el.dataset[ dataKey ] !== dataValue ) {
+			return false;
+		}
+		return true;
+	} );
+}
+
 function makeJQueryWrapper( selectorOrElements ) {
 	let elements;
 	if ( Array.isArray( selectorOrElements ) ) {
 		elements = selectorOrElements;
 	} else if ( selectorOrElements && typeof selectorOrElements === 'object' ) {
 		elements = [ selectorOrElements ];
+	} else if ( typeof selectorOrElements === 'string' && /^\s*</.test( selectorOrElements ) ) {
+		if ( !elementsByMarkup[ selectorOrElements ] ) {
+			const el = parseSingleElementMarkup( selectorOrElements );
+			if ( el ) {
+				elementsByMarkup[ selectorOrElements ] = el;
+			}
+		}
+		elements = elementsByMarkup[ selectorOrElements ] ? [ elementsByMarkup[ selectorOrElements ] ] : [];
+	} else if ( typeof selectorOrElements === 'string' ) {
+		elements = findByCssLikeSelector( selectorOrElements );
 	} else {
 		elements = [];
 	}
@@ -240,7 +309,24 @@ function makeJQueryWrapper( selectorOrElements ) {
 			elements.forEach( ( el, i ) => fn.call( el, i, el ) );
 			return wrapper;
 		},
-		append() {
+		// Appends real (fake) elements to each wrapped element's .children, so a
+		// later `.find()` on the wrapper can see them -- needed by
+		// KnowledgeGraph.js's attachContextMenuListener(), which builds each menu
+		// <li> via document.createElement() and `$menu.append( li )`. Plain
+		// strings (e.g. `.append( '<p></p>' )`, `.append( mw.msg( ... ) )`, as used
+		// by KnowledgeGraphNonModalDialog.js) are not fake elements and carry no
+		// observable child-tracking behaviour worth modeling here, so they are
+		// dropped rather than passed into a fake element's own append(), which
+		// expects to set properties (e.g. .parentNode) on each argument.
+		append( ...nodes ) {
+			const rawNodes = nodes
+				.map( ( n ) => ( n && n.get ? n.get() : n ) )
+				.filter( ( n ) => n && typeof n === 'object' );
+			elements.forEach( ( el ) => {
+				if ( el && el.append ) {
+					el.append( ...rawNodes );
+				}
+			} );
 			return wrapper;
 		},
 		appendTo() {
@@ -249,7 +335,15 @@ function makeJQueryWrapper( selectorOrElements ) {
 		prepend() {
 			return wrapper;
 		},
+		// Removes every tracked child from each wrapped element -- needed so a
+		// re-opened context menu (`$menu.empty()`) doesn't accumulate stale <li>s
+		// across `oncontext` invocations.
 		empty() {
+			elements.forEach( ( el ) => {
+				if ( el && el.children ) {
+					el.children.slice().forEach( ( child ) => child.remove && child.remove() );
+				}
+			} );
 			return wrapper;
 		},
 		remove() {
@@ -261,8 +355,21 @@ function makeJQueryWrapper( selectorOrElements ) {
 		clone() {
 			return makeJQueryWrapper( elements );
 		},
-		find() {
-			return makeJQueryWrapper( [] );
+		// Supports simple `tag.class` / `.class` selectors against each wrapped
+		// element's tracked .children -- needed by KnowledgeGraph.js's
+		// `$menu.find( 'li.kg-node-properties-menu-property-entry' )`.
+		find( selector ) {
+			const classMatch = /^[a-z]*\.(.+)$/i.exec( selector || '' );
+			const wantedClass = classMatch ? classMatch[ 1 ] : null;
+			const found = [];
+			elements.forEach( ( el ) => {
+				( el && el.children || [] ).forEach( ( child ) => {
+					if ( !wantedClass || ( child.classList && child.classList.contains( wantedClass ) ) ) {
+						found.push( child );
+					}
+				} );
+			} );
+			return makeJQueryWrapper( found );
 		},
 		not() {
 			return wrapper;
@@ -271,18 +378,26 @@ function makeJQueryWrapper( selectorOrElements ) {
 			elements.forEach( ( el ) => getOnHandlers( el, event ).push( handler ) );
 			return wrapper;
 		},
-		off() {
+		// Clears previously-.on()-registered handlers for the given event on each
+		// wrapped element -- needed by `$menu.find( ... ).off( 'click' ).on( 'click', fn )`,
+		// which would otherwise stack a duplicate handler on every re-opened menu.
+		off( event ) {
+			elements.forEach( ( el ) => {
+				getOnHandlers( el, event ).length = 0;
+			} );
 			return wrapper;
 		},
 		one() {
 			return wrapper;
 		},
 		// Fires handlers registered via .on( event, fn ) on each wrapped element,
-		// invoking them with `this` bound to the element (mirrors jQuery so
-		// `$( this ).val()` inside the handler reads back the same element).
+		// invoking them with `this` bound to the element and a jQuery-style event
+		// object (`currentTarget: el`) as the first argument -- needed by
+		// KnowledgeGraph.js's property-entry click handler, which reads
+		// `ev.currentTarget` to recover the clicked <li>.
 		trigger( event ) {
 			elements.forEach( ( el ) => {
-				getOnHandlers( el, event ).forEach( ( handler ) => handler.call( el ) );
+				getOnHandlers( el, event ).forEach( ( handler ) => handler.call( el, { currentTarget: el } ) );
 			} );
 			return wrapper;
 		},
@@ -337,16 +452,34 @@ function makeJQueryWrapper( selectorOrElements ) {
 		toggle() {
 			return wrapper;
 		},
+		// Reads a wrapped element's `.dataset` (mirrors jQuery's camelCase
+		// `data-*` -> key convention) -- needed by KnowledgeGraph.js's
+		// `$li.data( 'action' )` / `$li.data( 'direction' )` reads, backed by
+		// `li.dataset.action = ...` / `li.dataset.direction = ...` writes.
+		data( key ) {
+			return elements.length ? elements[ 0 ].dataset[ key ] : undefined;
+		},
+		// Delegates to the wrapped element's real classList -- needed by
+		// KnowledgeGraph.js's `$li.hasClass( '...-selected' )` check.
+		hasClass( cls ) {
+			return elements.some( ( el ) => el.classList && el.classList.contains( cls ) );
+		},
 		// Clears the (never-simulated) jQuery animation queue -- needed by
 		// KnowledgeGraph.js's attachContextMenuListener(), which calls
 		// `$menu.finish().toggle( 100 ).css( {...} )` before showing the menu.
 		finish() {
 			return wrapper;
 		},
-		addClass() {
+		// Delegates to the wrapped element's real classList -- needed so a
+		// later `.hasClass()` (or a direct `el.classList.contains()` check)
+		// observes the toggle KnowledgeGraph.js's property-entry click handler
+		// applies to the clicked `<li>`.
+		addClass( cls ) {
+			elements.forEach( ( el ) => el.classList && el.classList.add( cls ) );
 			return wrapper;
 		},
-		removeClass() {
+		removeClass( cls ) {
+			elements.forEach( ( el ) => el.classList && el.classList.remove( cls ) );
 			return wrapper;
 		},
 		outerHeight() {
@@ -361,9 +494,11 @@ function makeJQueryWrapper( selectorOrElements ) {
 }
 
 function installJQueryStub() {
-	// Reset click-handler bindings so a previous test/installStubs() call
-	// doesn't leak handlers into this one.
+	// Reset click-handler bindings and any HTML-string-created elements so a
+	// previous test/installStubs() call doesn't leak state into this one.
 	clickHandlersByTarget.clear();
+	onHandlersByElement.clear();
+	Object.keys( elementsByMarkup ).forEach( ( key ) => delete elementsByMarkup[ key ] );
 
 	function $( selector ) {
 		return makeJQueryWrapper( selector );
@@ -748,6 +883,15 @@ function installMwStub() {
 		return makeResolvedThenable( {} );
 	};
 	mw.Api.prototype.post = function () {
+		return makeResolvedThenable( {} );
+	};
+	// Default for loadNodes()'s postWithToken() call site (e.g. the
+	// context-menu property-toggle handler, invoked on every node right-click) --
+	// resolves with an empty body so loadNodes() cleanly rejects (missing
+	// `data` key) instead of throwing, for tests that right-click a node
+	// without caring about its properties. Tests that DO care override this
+	// via their own mw.Api stub.
+	mw.Api.prototype.postWithToken = function () {
 		return makeResolvedThenable( {} );
 	};
 
