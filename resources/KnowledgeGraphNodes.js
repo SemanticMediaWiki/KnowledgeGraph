@@ -334,16 +334,26 @@ KnowledgeGraphNodes = ( function () {
 						self.addLegendEntry( property.canonicalLabel, legendLabel, self.PropColors[ property.canonicalLabel ] );
 					}
 
+					// Persisted separately from `hidden` (which HideNodesRec's
+					// collapse/expand toggling later flips back and forth): this
+					// records whether the wizard/#knowledgegraph call itself asked
+					// for this property to be shown, so a later expand can restore
+					// exactly that original selection instead of showing every
+					// property depth-recursion happened to load along the way.
+					const wanted = !hidden;
+
 					switch ( property.typeId ) {
 						case '_wpg':
 							for ( const ii in property.values ) {
-								const built = buildNodeAndEdgeFromValue( label, property, property.values[ ii ], options, hidden );
+								const built = buildNodeAndEdgeFromValue(
+									label, property, property.values[ ii ], options, hidden
+								);
 								self.PropIdPropLabelMap[ legendLabel ].push( built.targetLabel );
 
 								const edgeConfig = jQuery.extend(
 									JSON.parse( JSON.stringify( self.Config.graphOptions.edges ) ),
 									built.edgeConfig,
-									{ label: propLabel }
+									{ label: propLabel, wanted }
 								);
 
 								self.graphModel.addEdge( edgeConfig );
@@ -353,7 +363,10 @@ KnowledgeGraphNodes = ( function () {
 									options.image = property.values[ ii ].src;
 								}
 
-								addArticleNode( data, built.targetLabel, jQuery.extend( {}, options, { hidden } ), 9 );
+								const nodeOptions = jQuery.extend(
+									{}, options, { hidden, wanted }
+								);
+								addArticleNode( data, built.targetLabel, nodeOptions, 9 );
 							}
 							break;
 
@@ -369,10 +382,16 @@ KnowledgeGraphNodes = ( function () {
 								const built = buildNodeAndEdgeFromValue( label, property, value, options, hidden );
 								self.PropIdPropLabelMap[ legendLabel ].push( built.targetId );
 
-								self.Edges.add( jQuery.extend( {}, built.edgeConfig, { label: propLabel } ) );
+								const edgeConfig = jQuery.extend(
+									{}, built.edgeConfig, { label: propLabel, wanted }
+								);
+								self.Edges.add( edgeConfig );
 
 								if ( !self.Nodes.get( built.targetId ) ) {
-									self.Nodes.add( built.nodeConfig );
+									const nodeConfig = jQuery.extend(
+										{}, built.nodeConfig, { wanted }
+									);
+									self.Nodes.add( nodeConfig );
 								}
 							}
 						}

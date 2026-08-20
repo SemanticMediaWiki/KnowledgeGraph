@@ -175,17 +175,45 @@ KnowledgeGraphLegend = ( function () {
 		}
 
 		function HideNodesRec( nodeId ) {
-			const children = self.Network.getConnectedNodes( nodeId );
-			const updateNodes = [];
+			// Only toggle neighbors the wizard/#knowledgegraph call originally
+			// selected for display (`wanted: true`, set once in createNodes() and
+			// never touched again) -- not every neighbor depth-recursion happened
+			// to load along the way. Otherwise a single click would reveal a pile
+			// of never-selected properties the user has no way to have "expected"
+			// back, since collapsing them first makes them indistinguishable
+			// (by `hidden` alone) from the ones actually chosen.
+			const children = self.Network.getConnectedNodes( nodeId )
+				.filter( ( childNodeId ) => !( childNodeId in self.Data ) && self.Nodes.get( childNodeId ).wanted );
+
+			if ( !children.length ) {
+				return;
+			}
+
+			// A single click should collapse whatever is currently shown, or
+			// (only once nothing is left showing) expand every wanted neighbor
+			// back -- not flip each neighbor's hidden flag independently, which
+			// would simultaneously hide the ones the user had shown while also
+			// revealing the rest.
+			const newHidden = children.some(
+				( childNodeId ) => !self.Nodes.get( childNodeId ).hidden
+			);
+
+			const updateNodes = children.map( ( childNodeId ) => ( { id: childNodeId, hidden: newHidden } ) );
+
+			const updateEdges = [];
 			for ( const childNodeId of children ) {
-				if ( !( childNodeId in self.Data ) ) {
-					updateNodes.push( {
-						id: childNodeId,
-						hidden: !self.Nodes.get( childNodeId ).hidden
-					} );
+				// keep the edge(s) directly connecting nodeId <-> childNodeId in
+				// sync with the node -- otherwise a node can end up shown with
+				// no visible edge to it (or vice versa).
+				const connectedEdgeIds = self.Network.getConnectedEdges( childNodeId );
+				for ( const edge of self.Edges.get( connectedEdgeIds ) ) {
+					if ( edge.from === nodeId || edge.to === nodeId ) {
+						updateEdges.push( { id: edge.id, hidden: newHidden } );
+					}
 				}
 			}
 			self.Nodes.update( updateNodes );
+			self.Edges.update( updateEdges );
 		}
 
 		function recursiveDeleteAllChildren( nodeId ) {

@@ -271,36 +271,123 @@ QUnit.module( 'ext.knowledgegraph.legend', ( hooks ) => {
 
 	QUnit.module( 'HideNodesRec', () => {
 
-		QUnit.test( 'builds updateNodes only for connected nodes not present in self.Data, toggling their hidden state', ( assert ) => {
+		QUnit.test( 'when any wanted connected node is visible, collapses (hides) only the currently-visible wanted ones', ( assert ) => {
 			graph.self.Data = { NodeInData: {} };
 			graph.self.Nodes = new vis.DataSet( [
-				{ id: 'NodeInData' },
-				{ id: 'NodeNotInData', hidden: false },
-				{ id: 'NodeAlreadyHidden', hidden: true }
+				{ id: 'NodeInData', wanted: true },
+				{ id: 'NodeVisible', hidden: false, wanted: true },
+				{ id: 'NodeAlreadyHidden', hidden: true, wanted: true },
+				{ id: 'NodeNeverWanted', hidden: false, wanted: false }
 			] );
+			graph.self.Edges = new vis.DataSet( [] );
 			graph.self.Network = {
-				getConnectedNodes: () => [ 'NodeInData', 'NodeNotInData', 'NodeAlreadyHidden' ]
+				getConnectedNodes: () => [ 'NodeInData', 'NodeVisible', 'NodeAlreadyHidden', 'NodeNeverWanted' ],
+				getConnectedEdges: () => []
 			};
 
 			graph.HideNodesRec( 'Root' );
 
 			assert.strictEqual( graph.self.Nodes.get( 'NodeInData' ).hidden, undefined, 'a node present in self.Data is skipped' );
-			assert.strictEqual( graph.self.Nodes.get( 'NodeNotInData' ).hidden, true, 'a visible node not in self.Data is hidden' );
-			assert.strictEqual( graph.self.Nodes.get( 'NodeAlreadyHidden' ).hidden, false, 'a hidden node not in self.Data is un-hidden' );
+			assert.strictEqual( graph.self.Nodes.get( 'NodeVisible' ).hidden, true, 'the visible wanted node is hidden (collapsed)' );
+			assert.strictEqual(
+				graph.self.Nodes.get( 'NodeAlreadyHidden' ).hidden, true,
+				'an already-hidden wanted node is left hidden, not revealed'
+			);
+			assert.strictEqual(
+				graph.self.Nodes.get( 'NodeNeverWanted' ).hidden, false,
+				'a node never selected for display (wanted: false) is left completely untouched'
+			);
+		} );
+
+		QUnit.test( 'when every wanted connected node is already hidden, expands (shows) only the wanted ones', ( assert ) => {
+			graph.self.Data = {};
+			graph.self.Nodes = new vis.DataSet( [
+				{ id: 'NodeA', hidden: true, wanted: true },
+				{ id: 'NodeB', hidden: true, wanted: true },
+				{ id: 'NodeNeverWanted', hidden: true, wanted: false }
+			] );
+			graph.self.Edges = new vis.DataSet( [] );
+			graph.self.Network = {
+				getConnectedNodes: () => [ 'NodeA', 'NodeB', 'NodeNeverWanted' ],
+				getConnectedEdges: () => []
+			};
+
+			graph.HideNodesRec( 'Root' );
+
+			assert.strictEqual( graph.self.Nodes.get( 'NodeA' ).hidden, false, 'NodeA is shown' );
+			assert.strictEqual( graph.self.Nodes.get( 'NodeB' ).hidden, false, 'NodeB is shown' );
+			assert.strictEqual(
+				graph.self.Nodes.get( 'NodeNeverWanted' ).hidden, true,
+				'a node never selected for display stays hidden even though every wanted neighbor was expanded'
+			);
+		} );
+
+		QUnit.test( 'no-ops (does not call self.Nodes.update/self.Edges.update) when no connected node is wanted', ( assert ) => {
+			graph.self.Data = {};
+			graph.self.Nodes = new vis.DataSet( [ { id: 'A', hidden: false, wanted: false } ] );
+			graph.self.Edges = new vis.DataSet( [] );
+			let nodesUpdateCalled = false;
+			let edgesUpdateCalled = false;
+			graph.self.Nodes.update = () => {
+				nodesUpdateCalled = true;
+			};
+			graph.self.Edges.update = () => {
+				edgesUpdateCalled = true;
+			};
+			graph.self.Network = { getConnectedNodes: () => [ 'A' ], getConnectedEdges: () => [] };
+
+			graph.HideNodesRec( 'Root' );
+
+			assert.false( nodesUpdateCalled, 'self.Nodes.update is not called' );
+			assert.false( edgesUpdateCalled, 'self.Edges.update is not called' );
 		} );
 
 		QUnit.test( 'calls self.Nodes.update with the expected payload', ( assert ) => {
 			graph.self.Data = {};
-			graph.self.Nodes = new vis.DataSet( [ { id: 'A', hidden: false } ] );
+			graph.self.Nodes = new vis.DataSet( [ { id: 'A', hidden: false, wanted: true } ] );
+			graph.self.Edges = new vis.DataSet( [] );
 			let updatePayload;
 			graph.self.Nodes.update = ( payload ) => {
 				updatePayload = payload;
 			};
-			graph.self.Network = { getConnectedNodes: () => [ 'A' ] };
+			graph.self.Network = { getConnectedNodes: () => [ 'A' ], getConnectedEdges: () => [] };
 
 			graph.HideNodesRec( 'Root' );
 
 			assert.deepEqual( updatePayload, [ { id: 'A', hidden: true } ], 'update is called with the computed toggle list' );
+		} );
+
+		QUnit.test( 'toggles the hidden state of the edge directly connecting nodeId <-> childNodeId, matching the node', ( assert ) => {
+			graph.self.Data = {};
+			graph.self.Nodes = new vis.DataSet( [ { id: 'A', hidden: false, wanted: true } ] );
+			graph.self.Edges = new vis.DataSet( [
+				{ id: 'edge1', from: 'Root', to: 'A', hidden: false }
+			] );
+			graph.self.Network = {
+				getConnectedNodes: () => [ 'A' ],
+				getConnectedEdges: () => [ 'edge1' ]
+			};
+
+			graph.HideNodesRec( 'Root' );
+
+			assert.strictEqual( graph.self.Nodes.get( 'A' ).hidden, true, 'the node is hidden' );
+			assert.strictEqual( graph.self.Edges.get( 'edge1' ).hidden, true, 'its connecting edge is hidden in sync with the node' );
+		} );
+
+		QUnit.test( 'does not touch an edge unrelated to nodeId even if returned by getConnectedEdges', ( assert ) => {
+			graph.self.Data = {};
+			graph.self.Nodes = new vis.DataSet( [ { id: 'A', hidden: false, wanted: true } ] );
+			graph.self.Edges = new vis.DataSet( [
+				{ id: 'edge1', from: 'SomeOtherNode', to: 'A', hidden: false }
+			] );
+			graph.self.Network = {
+				getConnectedNodes: () => [ 'A' ],
+				getConnectedEdges: () => [ 'edge1' ]
+			};
+
+			graph.HideNodesRec( 'Root' );
+
+			assert.strictEqual( graph.self.Edges.get( 'edge1' ).hidden, false, 'the unrelated edge is left untouched' );
 		} );
 
 	} );

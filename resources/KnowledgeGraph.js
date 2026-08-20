@@ -664,6 +664,9 @@ ${ propertyOptions }|show-property-type=true
 							}
 
 							// toggle-ON: build node+edge exactly as createNodes() would have.
+							// wanted: true marks this as an explicit user selection, same as
+							// a wizard-selected property, so a later left-click collapse/expand
+							// (HideNodesRec) treats it consistently.
 							if ( built.nodeConfig && !self.Nodes.get( built.targetId ) ) {
 								let fontColor = KnowledgeGraphFunctions.getContrastColor( nodeColor );
 								if ( !fontColor ) {
@@ -675,13 +678,14 @@ ${ propertyOptions }|show-property-type=true
 									font: jQuery.extend( {}, self.Config.graphOptions.nodes.font, {
 										size: self.Config.graphOptions.nodes.font.size || 30,
 										color: fontColor
-									} )
+									} ),
+									wanted: true
 								} ) );
 							} else if ( property.typeId === '_wpg' ) {
-								self.addArticleNode( self.Data, built.targetId, {}, 9 );
+								self.addArticleNode( self.Data, built.targetId, { wanted: true }, 9 );
 							}
 
-							self.graphModel.addEdge( jQuery.extend( {}, built.edgeConfig, { label: legendLabel } ) );
+							self.graphModel.addEdge( jQuery.extend( {}, built.edgeConfig, { label: legendLabel, wanted: true } ) );
 
 							if ( !( legendLabel in self.PropIdPropLabelMap ) ) {
 								self.PropIdPropLabelMap[ legendLabel ] = [];
