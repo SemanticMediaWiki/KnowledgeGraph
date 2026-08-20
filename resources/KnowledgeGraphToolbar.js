@@ -78,6 +78,8 @@ KnowledgeGraphToolbar = ( function () {
 			}
 		};
 
+		Tool.prototype.onUpdateState = function () {};
+
 		for ( const i in obj ) {
 			Tool.static[ i ] = obj[ i ];
 		}
