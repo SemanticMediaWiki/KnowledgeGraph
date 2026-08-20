@@ -18,6 +18,10 @@
     {
       "from": "node_modules/vis-network/dist/vis-network.min.js.map",
       "to": "resources/visNetwork/vis-network.min.js.map"
+    },
+    {
+      "from": "node_modules/vis-network/styles/vis-network.min.css",
+      "to": "resources/visNetwork/vis-network.min.css"
     }
   ],
   "copyFilesSettings": {

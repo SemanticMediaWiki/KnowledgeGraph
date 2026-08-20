@@ -44,6 +44,7 @@
 			"localBasePath":"resources",
 			"remoteExtPath":"KnowledgeGraph/resources",
 			"styles":[
+				"visNetwork/vis-network.min.css",
 				"KnowledgeGraph.css"
 			],
 			"scripts":[
