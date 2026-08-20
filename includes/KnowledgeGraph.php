@@ -317,11 +317,26 @@ nodes=TestPage
 		$params['show-toolbar'] = false;
 
 		$propertyOptions = [];
+		$propertyAttributes = [];
 		// property-related options
 		foreach ( $values as $val ) {
 			if ( preg_match( '/^property-options(\?(.+))?=(.+)/', $val, $match ) ) {
-				$title_ = Title::makeTitleSafe( \SMW_NS_PROPERTY, $match[2] );
-				if ( $title_ ) {
+				// support an inline attribute path after "#", e.g.
+				// property-options?Prop_a#color.background=#ccc
+				[ $propertyName, $attributePath ] = array_pad( explode( '#', $match[2], 2 ), 2, null );
+
+				$title_ = Title::makeTitleSafe( \SMW_NS_PROPERTY, $propertyName );
+				if ( !$title_ ) {
+					continue;
+				}
+
+				if ( $attributePath !== null ) {
+					$propertyAttributes[$title_->getText()] = self::setNestedValue(
+						$propertyAttributes[$title_->getText()] ?? [],
+						$attributePath,
+						$match[3]
+					);
+				} else {
 					$propertyOptions[$title_->getText()] = $match[3];
 				}
 			}
@@ -355,6 +370,15 @@ nodes=TestPage
 			} else {
 				unset( $propertyOptions[$property] );
 			}
+		}
+
+		// Inline attributes (property-options?Prop#path=value) resolve to a plain
+		// options array, while a page-based reference resolves to a client-side JS
+		// module string (see getWikipageContent() above); the two cannot be merged
+		// server-side without executing the module, so inline attributes take
+		// precedence and replace any page-based reference for the same property.
+		foreach ( $propertyAttributes as $property => $attributes ) {
+			$propertyOptions[$property] = $attributes;
 		}
 
 		$params['data'] = self::$data;
@@ -970,6 +994,33 @@ nodes=TestPage
 		$sorted = [ $a, $b ];
 		sort( $sorted, SORT_STRING );
 		return $sorted[0] . '::' . $prop . '::' . $sorted[1];
+	}
+
+	/**
+	 * Sets $value at a dot-separated $path inside $array, creating any missing
+	 * intermediate arrays, and returns the result. Existing sibling keys are
+	 * preserved; only the leaf at $path is added or overwritten.
+	 *
+	 * @see https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/99
+	 * @param array $array
+	 * @param string $path e.g. "color.background"
+	 * @param mixed $value
+	 * @return array
+	 */
+	private static function setNestedValue( array $array, string $path, $value ): array {
+		$segments = explode( '.', $path );
+		$leaf = array_pop( $segments );
+
+		$cursor = &$array;
+		foreach ( $segments as $segment ) {
+			if ( !isset( $cursor[$segment] ) || !is_array( $cursor[$segment] ) ) {
+				$cursor[$segment] = [];
+			}
+			$cursor = &$cursor[$segment];
+		}
+		$cursor[$leaf] = $value;
+
+		return $array;
 	}
 
 	public static function resetSeenRelations(): void {

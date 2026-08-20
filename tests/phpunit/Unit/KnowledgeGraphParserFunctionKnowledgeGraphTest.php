@@ -116,6 +116,59 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		$this->assertArrayNotHasKey( 'HasProperty1', KnowledgeGraph::$graphs[0]['propertyOptions'] );
 	}
 
+	/**
+	 * @see https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/99
+	 */
+	public function testInlinePropertyOptionAttributeSetsNestedValueWithoutAnOptionsPage() {
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionInlineAttrPage' );
+
+		$this->callParserFunction( $title, [
+			'property-options?HasProperty1#color.background=#ccc',
+		] );
+
+		$propertyOptions = KnowledgeGraph::$graphs[0]['propertyOptions'];
+
+		$this->assertSame( [ 'color' => [ 'background' => '#ccc' ] ], $propertyOptions['HasProperty1'] );
+	}
+
+	public function testMultipleInlinePropertyOptionAttributesAccumulateOnTheSameProperty() {
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionInlineAttrAccumulatePage' );
+
+		$this->callParserFunction( $title, [
+			'property-options?HasProperty1#color.background=#ccc',
+			'property-options?HasProperty1#color.border=#0000FF',
+		] );
+
+		$propertyOptions = KnowledgeGraph::$graphs[0]['propertyOptions'];
+
+		$this->assertSame(
+			[ 'color' => [ 'background' => '#ccc', 'border' => '#0000FF' ] ],
+			$propertyOptions['HasProperty1']
+		);
+	}
+
+	/**
+	 * A page-based property-options reference resolves to a client-side JS module
+	 * string (see getWikipageContent()); inline attributes resolve to a plain
+	 * options array instead. The two cannot be merged server-side without
+	 * executing the module, so when both are present for the same property the
+	 * inline attributes win and replace the page-based reference entirely.
+	 */
+	public function testInlineAttributeTakesPrecedenceOverPageBasedOptionsForTheSameProperty() {
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionInlineAttrPrecedencePage' );
+		$optionsTitle = Title::makeTitleSafe( NS_MEDIAWIKI, 'KGParserFunctionInlineAttrPrecedenceOptions' );
+		$this->insertPage( $optionsTitle, 'module content' );
+
+		$this->callParserFunction( $title, [
+			'property-options?HasProperty1=Mediawiki:KGParserFunctionInlineAttrPrecedenceOptions',
+			'property-options?HasProperty1#color.background=#ccc',
+		] );
+
+		$propertyOptions = KnowledgeGraph::$graphs[0]['propertyOptions'];
+
+		$this->assertSame( [ 'color' => [ 'background' => '#ccc' ] ], $propertyOptions['HasProperty1'] );
+	}
+
 	public function testGraphOptionsResolvesContentForKnownMediawikiTitle() {
 		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionGraphOptionsKnownPage' );
 		$optionsTitle = Title::makeTitleSafe( NS_MEDIAWIKI, 'KGParserFunctionGraphOptions' );
