@@ -620,12 +620,18 @@ nodes=TestPage
 
 				case 'number':
 					$val = filter_var( $val, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE );
+					if ( $val === null ) {
+						$val = filter_var( $defaultValue, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE );
+					}
 					settype( $val, "float" );
 					break;
 
 				case 'int':
 				case 'integer':
 					$val = filter_var( $val, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE );
+					if ( $val === null ) {
+						$val = filter_var( $defaultValue, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE );
+					}
 					settype( $val, "integer" );
 					break;
 
