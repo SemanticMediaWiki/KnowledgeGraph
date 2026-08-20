@@ -1135,6 +1135,43 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			} ).finally( clipboard.restore );
 		} );
 
+		QUnit.test( "'export-graph' falls back to legacyCopy and alerts the localized failure message when execCommand throws", ( assert ) => {
+			const ExportGraphTool = toolbarTools[ 'export-graph' ];
+
+			Object.defineProperty( global, 'navigator', {
+				value: {},
+				configurable: true,
+				writable: true
+			} );
+			const originalAlert = global.alert;
+			const originalExecCommand = document.execCommand;
+			let alertedWith;
+			global.alert = ( msg ) => {
+				alertedWith = msg;
+			};
+			document.execCommand = () => {
+				throw new Error( 'copy command is disabled' );
+			};
+
+			graph.self.Data = {
+				NodeA: { properties: {} }
+			};
+
+			try {
+				const instance = new ExportGraphTool( {} );
+				instance.onSelect();
+
+				assert.strictEqual(
+					alertedWith,
+					'knowledgegraph-copy-failed',
+					'alert() is called with the copy-failed message when execCommand throws'
+				);
+			} finally {
+				global.alert = originalAlert;
+				document.execCommand = originalExecCommand;
+			}
+		} );
+
 		QUnit.test( "'export-graph' uses self.Config.depth when no node has been loaded yet", ( assert ) => {
 			const ExportGraphTool = toolbarTools[ 'export-graph' ];
 			const clipboard = stubClipboardExport();
@@ -1496,6 +1533,33 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 					return $menu.find( 'li.kg-node-properties-menu-property-entry' ).get();
 				} );
 			}
+
+			QUnit.test( 'a node with no available properties shows the localized no-properties message', ( assert ) => {
+				api = stubLoadNodesApi( 'Site', {} );
+
+				graph.self.Nodes.add( { id: 'Site', typeID: 9 } );
+				graph.self.Network.getNodeAt = () => 'Site';
+				graph.self.Network.getEdgeAt = () => undefined;
+
+				getContextHandler()( {
+					event: { pageX: 1, pageY: 1, preventDefault() {} },
+					pointer: { DOM: { x: 0, y: 0 } }
+				} );
+
+				return new Promise( ( resolve ) => {
+					setTimeout( resolve, 0 );
+				} ).then( () => {
+					const $menu = $( `.kg-node-properties-menu[data-instance-id="${ graph.self.id }"]` );
+					const items = $menu.find( 'li' ).get()
+						.filter( ( li ) => !li.classList.contains( 'kg-node-properties-menu-link-entry' ) );
+					assert.strictEqual( items.length, 1, 'exactly one placeholder entry is rendered' );
+					assert.strictEqual(
+						items[ 0 ].textContent,
+						mw.msg( 'knowledgegraph-menu-no-properties' ),
+						'the placeholder text comes from the localized message, not a hardcoded string'
+					);
+				} );
+			} );
 
 			QUnit.test( 'a property whose canonical edge exists but is hidden is not marked selected', ( assert ) => {
 				const property = {

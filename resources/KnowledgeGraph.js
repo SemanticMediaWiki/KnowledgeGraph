@@ -388,7 +388,7 @@ ${ propertyOptions }|show-property-type=true
 							alert( mw.msg( 'knowledgegraph-copied-to-clipboard' ) );
 						} catch ( err ) {
 							// eslint-disable-next-line no-alert
-							alert( 'Copy failed' );
+							alert( mw.msg( 'knowledgegraph-copy-failed' ) );
 						}
 						document.body.removeChild( textarea );
 					};
@@ -577,7 +577,9 @@ ${ propertyOptions }|show-property-type=true
 					const propKeys = Object.keys( properties );
 
 					if ( propKeys.length === 0 ) {
-						$menu.append( '<li>(No available properties)</li>' );
+						const li = document.createElement( 'li' );
+						li.textContent = mw.msg( 'knowledgegraph-menu-no-properties' );
+						$menu.append( li );
 					} else {
 						propKeys.forEach( ( propKey ) => {
 							const property = properties[ propKey ];

@@ -83,6 +83,18 @@ function makeFakeElement( tagName ) {
 			}
 			return node;
 		},
+		// Needed by KnowledgeGraph.js's legacyCopy() clipboard fallback, which
+		// appends then removes a temporary textarea via document.body.
+		removeChild( node ) {
+			el.children = el.children.filter( ( child ) => child !== node );
+			if ( node && node.id && elementsById[ node.id ] === node ) {
+				delete elementsById[ node.id ];
+			}
+			if ( node ) {
+				node.parentNode = null;
+			}
+			return node;
+		},
 		// Only the 'afterend' position is modeled -- the one KnowledgeGraph.js's
 		// initialize() uses to insert the per-instance legend div right after
 		// the graph container. Falls back to a no-op (register-by-id only) when
@@ -117,6 +129,10 @@ function makeFakeElement( tagName ) {
 			el.listeners[ type ] = el.listeners[ type ] || [];
 			el.listeners[ type ].push( handler );
 		},
+		// No-ops -- needed by KnowledgeGraph.js's legacyCopy() clipboard fallback,
+		// which calls textarea.focus()/textarea.select() before document.execCommand().
+		focus() {},
+		select() {},
 		removeEventListener( type, handler ) {
 			if ( !el.listeners[ type ] ) {
 				return;
