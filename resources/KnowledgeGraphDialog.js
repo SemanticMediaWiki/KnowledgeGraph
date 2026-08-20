@@ -40,7 +40,15 @@ KnowledgeGraphDialog = ( function () {
 		{
 			flags: 'safe',
 			label: mw.msg( 'knowledgegraph-dialog-cancel' ),
-			modes: [ 'select', 'no-results', 'show-results', 'existing-node', 'edit' ]
+			// not shown in 'no-results'/'show-results'/'existing-node': those modes
+			// already have a 'back' action, and OO.ui.ProcessDialog only ever
+			// promotes the FIRST visible 'safe'-flagged action into the header --
+			// any further 'safe' action silently falls through to the footer
+			// (getSpecial()'s "first visible action widget with special flags"),
+			// which is exactly what made Cancel appear to render in the wrong
+			// place: it wasn't actually misplaced, 'back' was just winning the
+			// header's one safe-action slot every time both were visible together.
+			modes: [ 'select', 'edit' ]
 		},
 		{
 			action: 'delete',

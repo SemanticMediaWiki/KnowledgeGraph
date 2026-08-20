@@ -95,9 +95,12 @@ QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 			{
 				flags: 'safe',
 				label: 'knowledgegraph-dialog-cancel',
-				modes: [ 'select', 'no-results', 'show-results', 'existing-node', 'edit' ]
+				modes: [ 'select', 'edit' ]
 			},
-			'cancel action'
+			'cancel action -- not shown in modes that already have a competing "back" ' +
+				'action, since OO.ui.ProcessDialog only promotes the first visible ' +
+				'safe-flagged action into the header, leaving any other to fall through ' +
+				'to the footer'
 		);
 		assert.deepEqual(
 			actions[ 4 ],
