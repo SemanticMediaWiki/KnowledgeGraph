@@ -84,8 +84,8 @@
 	cursor: pointer;
 }
 
-.kg-node-properties-menu-property-entry-selected {
-	font-style: italic;
-	font-weight: bold;
-	color: #2B7CE9;
+.kg-node-properties-menu-property-entry-checkbox {
+	margin: 0 4px 0 0;
+	vertical-align: middle;
+	pointer-events: none;
 }

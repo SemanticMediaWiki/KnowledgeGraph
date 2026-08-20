@@ -129,17 +129,27 @@ function makeFakeElement( tagName ) {
 		getAttribute( name ) {
 			return el.attributes[ name ] === undefined ? null : el.attributes[ name ];
 		},
-		// Supports the `#id` selector form only, matched against direct
-		// children -- needed by KnowledgeGraph.js's legend entry lookups
-		// (addLegendEntry/removeLegendEntry/dispatchLegendClickEvent use
-		// `LegendDiv.querySelector( '#' + CSS.escape( id ) )`).
+		// Supports the `#id` form (matched against direct children -- needed
+		// by KnowledgeGraph.js's legend entry lookups, e.g.
+		// `LegendDiv.querySelector( '#' + CSS.escape( id ) )`) and the
+		// `tag[attr="value"]` form (matched against direct children -- needed
+		// by the context-menu property-entry tests to find the rendered
+		// `input[type="checkbox"]`).
 		querySelector( selector ) {
-			const match = /^#(.+)$/.exec( selector || '' );
-			if ( !match ) {
-				return null;
+			const idMatch = /^#(.+)$/.exec( selector || '' );
+			if ( idMatch ) {
+				const id = idMatch[ 1 ].replace( /\\(.)/g, '$1' );
+				return el.children.find( ( child ) => child && child.id === id ) || null;
 			}
-			const id = match[ 1 ].replace( /\\(.)/g, '$1' );
-			return el.children.find( ( child ) => child && child.id === id ) || null;
+			const tagAttrMatch = /^([a-zA-Z]+)\[([a-zA-Z-]+)="([^"]*)"\]$/.exec( selector || '' );
+			if ( tagAttrMatch ) {
+				const [ , tag, attr, value ] = tagAttrMatch;
+				return el.children.find( ( child ) => child &&
+					child.tagName === tag.toUpperCase() &&
+					( attr === 'type' ? child.type === value : child.attributes[ attr ] === value )
+				) || null;
+			}
+			return null;
 		},
 		querySelectorAll() {
 			return [];

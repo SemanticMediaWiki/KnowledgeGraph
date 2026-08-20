@@ -1497,7 +1497,7 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				} );
 			}
 
-			QUnit.test( 'a property whose canonical edge already exists (including hidden) is marked selected', ( assert ) => {
+			QUnit.test( 'a property whose canonical edge exists but is hidden is not marked selected', ( assert ) => {
 				const property = {
 					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',
 					typeId: '_wpg', inverse: false, values: [ { value: 'Category:Site' } ]
@@ -1509,9 +1509,28 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 
 				return openMenuFor( 'Site' ).then( ( entries ) => {
 					assert.strictEqual( entries.length, 1, 'exactly one property entry is rendered' );
+					assert.false(
+						entries[ 0 ].querySelector( 'input[type="checkbox"]' ).checked,
+						'a hidden edge (e.g. auto-created by a depth > 1 wizard load) does not check the entry’s checkbox'
+					);
+				} );
+			} );
+
+			QUnit.test( 'a property whose canonical edge exists and is visible is marked selected', ( assert ) => {
+				const property = {
+					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',
+					typeId: '_wpg', inverse: false, values: [ { value: 'Category:Site' } ]
+				};
+				api = stubLoadNodesApi( 'Site', { 'Main Category': property } );
+
+				const edgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', 'Category:Site', 'Main Category', 9, graph.self.Nodes );
+				graph.self.Edges.add( { id: edgeId, from: 'Site', to: 'Category:Site', label: 'Main Category', hidden: false } );
+
+				return openMenuFor( 'Site' ).then( ( entries ) => {
+					assert.strictEqual( entries.length, 1, 'exactly one property entry is rendered' );
 					assert.true(
-						entries[ 0 ].classList.contains( 'kg-node-properties-menu-property-entry-selected' ),
-						'the entry is marked selected even though its edge is currently hidden'
+						entries[ 0 ].querySelector( 'input[type="checkbox"]' ).checked,
+						'a visible edge checks the entry’s checkbox'
 					);
 				} );
 			} );
@@ -1525,8 +1544,8 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 
 				return openMenuFor( 'Site' ).then( ( entries ) => {
 					assert.false(
-						entries[ 0 ].classList.contains( 'kg-node-properties-menu-property-entry-selected' ),
-						'the entry is not selected when no matching edge exists'
+						entries[ 0 ].querySelector( 'input[type="checkbox"]' ).checked,
+						'the entry’s checkbox is unchecked when no matching edge exists'
 					);
 				} );
 			} );

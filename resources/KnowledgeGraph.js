@@ -589,17 +589,29 @@ ${ propertyOptions }|show-property-type=true
 
 							const displayName = legendLabel + ( property.inverse ? ' (inverse)' : '' );
 
-							// check if this property's canonical edge already exists in the graph
+							// check if this property's canonical edge is currently shown in the
+							// graph -- a depth > 1 wizard load pre-creates hidden edges for every
+							// reachable property along the way (see createNodes()), so merely
+							// existing in self.Edges does not mean the user selected it; only a
+							// visible (non-hidden) edge reflects that.
 							const existsInGraph = ( property.values || [] ).some( ( value ) => {
 								const built = self.buildNodeAndEdgeFromValue( title, property, value, {}, false );
-								return !!self.Edges.get( built.edgeId );
+								const edge = self.Edges.get( built.edgeId );
+								return !!edge && !edge.hidden;
 							} );
 
-							if ( existsInGraph ) {
-								li.classList.add( 'kg-node-properties-menu-property-entry-selected' );
-							}
+							const checkbox = document.createElement( 'input' );
+							checkbox.type = 'checkbox';
+							checkbox.checked = existsInGraph;
+							checkbox.tabIndex = -1;
+							checkbox.classList.add( 'kg-node-properties-menu-property-entry-checkbox' );
+							// the entry's own click handler drives the toggle; the checkbox
+							// itself only reflects state, so a direct click on it must not
+							// register as a second, conflicting toggle
+							checkbox.addEventListener( 'click', ( ev ) => ev.preventDefault() );
 
-							li.innerHTML = '● ' + displayName;
+							li.appendChild( checkbox );
+							li.appendChild( document.createTextNode( ' ' + displayName ) );
 							$menu.append( li );
 						} );
 					}
