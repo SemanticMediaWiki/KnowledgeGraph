@@ -32,6 +32,7 @@ KnowledgeGraph = function () {
 	self.PropIdPropLabelMap = {};
 	self.nodePropertiesCache = {};
 	self.id = null;
+	self.LastDepth = null;
 	self.colors = mw.config.get( 'wgKnowledgeGraphColorPalette' );
 
 	function addLegendEntry( id, label, color ) {
@@ -178,6 +179,8 @@ KnowledgeGraph = function () {
 	}
 
 	function loadNodes( obj ) {
+		self.LastDepth = obj.depth;
+
 		let payload;
 		if ( obj.title !== null && obj.properties === null ) {
 			payload = {
@@ -778,7 +781,7 @@ KnowledgeGraph = function () {
 					const text = `{{#knowledgegraph:
 nodes=${ nodes.join( ', ' ) }
 |properties=${ properties.join( ', ' ) }
-|depth=0
+|depth=${ self.LastDepth !== null ? self.LastDepth : self.Config.depth }
 |graph-options=
 ${ propertyOptions }|show-property-type=true
 |width=400px

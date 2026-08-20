@@ -43,6 +43,66 @@ function captureAddedWindows( fn ) {
 	return captured;
 }
 
+// Waits one macrotask tick, letting any already-queued microtasks (e.g. a
+// navigator.clipboard.writeText(...).then(...) continuation) run first.
+function waitOneTick() {
+	return new Promise( ( resolve ) => {
+		setTimeout( resolve, 0 );
+	} );
+}
+
+// Stubs navigator.clipboard.writeText()/global.alert() for the export-graph toolbar
+// action's clipboard-copy path, and returns { getCopiedText, waitForAlert, restore }.
+// The action's own writeText(...).then( () => alert(...) ) continuation is asynchronous,
+// so restoring these stubs must wait for that continuation to actually run first --
+// synchronous restoration right after onSelect() races it and lets alert() hit the
+// restored (possibly undefined) global.alert, throwing into legacyCopy() and corrupting
+// a later, unrelated test with an unhandled rejection.
+function stubClipboardExport() {
+	// global.navigator is absent in some Node versions and a read-only getter in
+	// others -- (re)define it as a plain writable object rather than assigning
+	// `global.navigator = ...` directly, which throws against a getter-only global.
+	Object.defineProperty( global, 'navigator', {
+		value: global.navigator || {},
+		configurable: true,
+		writable: true
+	} );
+	const originalClipboard = global.navigator.clipboard;
+	const originalAlert = global.alert;
+
+	let copiedText;
+	global.navigator.clipboard = {
+		writeText( text ) {
+			copiedText = text;
+			return Promise.resolve();
+		}
+	};
+
+	let alertCalled;
+	const alertedPromise = new Promise( ( resolve ) => {
+		alertCalled = resolve;
+	} );
+	let alertedWith;
+	global.alert = ( msg ) => {
+		alertedWith = msg;
+		alertCalled();
+	};
+
+	return {
+		getCopiedText: () => copiedText,
+		getAlertedWith: () => alertedWith,
+		waitForAlert: () => alertedPromise,
+		restore: () => {
+			global.navigator.clipboard = originalClipboard;
+			// The alert() continuation is the slower of the two (it chains off
+			// writeText()'s own promise), so wait a tick past it before restoring.
+			return waitOneTick().then( () => {
+				global.alert = originalAlert;
+			} );
+		}
+	};
+}
+
 // Registers each Tool class passed to OO.ui.ToolFactory.prototype.register() during
 // fn() into an array -- mirrors the pattern in ext.knowledgegraph.toolbar.test.js.
 function captureRegisteredTools( fn ) {
@@ -913,28 +973,7 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 
 		QUnit.test( "'export-graph' copies the generated wikitext via navigator.clipboard when available", ( assert ) => {
 			const ExportGraphTool = toolbarTools[ 'export-graph' ];
-			let copiedText;
-			let alertedWith;
-			// global.navigator is absent in some Node versions and a read-only
-			// getter in others -- (re)define it as a plain writable object rather
-			// than assigning `global.navigator = ...` directly, which throws
-			// against a getter-only global.
-			Object.defineProperty( global, 'navigator', {
-				value: global.navigator || {},
-				configurable: true,
-				writable: true
-			} );
-			const originalClipboard = global.navigator.clipboard;
-			const originalAlert = global.alert;
-			global.navigator.clipboard = {
-				writeText( text ) {
-					copiedText = text;
-					return Promise.resolve();
-				}
-			};
-			global.alert = ( msg ) => {
-				alertedWith = msg;
-			};
+			const clipboard = stubClipboardExport();
 
 			graph.self.Data = {
 				NodeA: { properties: { P1: { canonicalLabel: 'Has_Author' } } }
@@ -943,19 +982,65 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			const instance = new ExportGraphTool( {} );
 			instance.onSelect();
 
-			assert.true( copiedText.includes( 'nodes=NodeA' ), 'the generated wikitext includes the node list' );
-			assert.true( copiedText.includes( 'properties=Has_Author' ), 'the generated wikitext includes the property list' );
+			assert.true( clipboard.getCopiedText().includes( 'nodes=NodeA' ), 'the generated wikitext includes the node list' );
+			assert.true( clipboard.getCopiedText().includes( 'properties=Has_Author' ), 'the generated wikitext includes the property list' );
 
-			// navigator.clipboard.writeText(...).then(...) resolves asynchronously
-			// (even though the stub above resolves immediately) -- restoring the
-			// alert/clipboard stubs before that microtask runs would make its
-			// alert(...) call hit the real (undefined) global.alert instead.
-			return Promise.resolve().then( () => {
-				assert.strictEqual( alertedWith, 'knowledgegraph-copied-to-clipboard', 'alert() is called with the copied-to-clipboard message once the clipboard write resolves' );
-			} ).finally( () => {
-				global.navigator.clipboard = originalClipboard;
-				global.alert = originalAlert;
-			} );
+			return clipboard.waitForAlert().then( () => {
+				assert.strictEqual(
+					clipboard.getAlertedWith(),
+					'knowledgegraph-copied-to-clipboard',
+					'alert() is called with the copied-to-clipboard message once the clipboard write resolves'
+				);
+			} ).finally( clipboard.restore );
+		} );
+
+		QUnit.test( "'export-graph' uses self.Config.depth when no node has been loaded yet", ( assert ) => {
+			const ExportGraphTool = toolbarTools[ 'export-graph' ];
+			const clipboard = stubClipboardExport();
+			graph.self.Config.depth = 3;
+			graph.self.Data = {
+				NodeA: { properties: {} }
+			};
+
+			const instance = new ExportGraphTool( {} );
+			instance.onSelect();
+
+			assert.true( clipboard.getCopiedText().includes( 'depth=3' ), 'the generated wikitext falls back to self.Config.depth' );
+
+			return clipboard.restore();
+		} );
+
+		QUnit.test( "'export-graph' uses the depth from the last loadNodes() call, not self.Config.depth", ( assert ) => {
+			const ExportGraphTool = toolbarTools[ 'export-graph' ];
+			const clipboard = stubClipboardExport();
+			graph.self.Config.depth = 3;
+			graph.self.Data = {
+				NodeA: { properties: {} }
+			};
+
+			const OriginalApi = mw.Api;
+			mw.Api = function () {};
+			mw.Api.prototype.postWithToken = function () {
+				return {
+					done( fn ) {
+						fn( { 'knowledgegraph-load-nodes': { data: '{}' } } );
+						return this;
+					},
+					fail() {
+						return this;
+					}
+				};
+			};
+
+			return graph.loadNodes( { title: 'NodeA', properties: null, depth: 5 } ).then( () => {
+				mw.Api = OriginalApi;
+
+				const instance = new ExportGraphTool( {} );
+				instance.onSelect();
+
+				assert.true( clipboard.getCopiedText().includes( 'depth=5' ), 'the generated wikitext uses the last loadNodes() depth' );
+				assert.false( clipboard.getCopiedText().includes( 'depth=3' ), 'the generated wikitext does not fall back to self.Config.depth' );
+			} ).finally( clipboard.restore );
 		} );
 
 		QUnit.test( "'help-button' opens the help URL in a new window", ( assert ) => {
