@@ -31,6 +31,18 @@ class KnowledgeGraph {
 	private static $externalFormatterValues = [];
 
 	/**
+	 * Fallback node-color palette used when `$wgKnowledgeGraphColorPalettes` is
+	 * entirely unset (e.g. `extension.json`'s registered config default did not
+	 * load). Mirrors `extension.json`'s `KnowledgeGraphColorPalettes` default.
+	 *
+	 * @var string[]
+	 */
+	private const DEFAULT_COLOR_PALETTE = [
+		'#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+		'#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+	];
+
+	/**
 	 * Configuration options for Semantic MediaWiki.
 	 *
 	 * @var array|null
@@ -354,8 +366,8 @@ nodes=TestPage
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
 
 		$paletteName = $params['palette'] ?? 'default';
-		$colors = $GLOBALS['wgKnowledgeGraphColorPalettes'][$paletteName]
-				?? $GLOBALS['wgKnowledgeGraphColorPalettes']['default'];
+		$palettes = $GLOBALS['wgKnowledgeGraphColorPalettes'] ?? [ 'default' => self::DEFAULT_COLOR_PALETTE ];
+		$colors = $palettes[$paletteName] ?? $palettes['default'];
 
 		$out->setJsConfigVar( 'KnowledgeGraphShowImages', $GLOBALS['wgKnowledgeGraphShowImages'] );
 		$out->setJsConfigVar( 'KnowledgeGraphDisableCredits', $GLOBALS['wgKnowledgeGraphDisableCredits'] );

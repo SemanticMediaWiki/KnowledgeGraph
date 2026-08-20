@@ -180,6 +180,30 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		);
 	}
 
+	/**
+	 * Reproduces https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/98:
+	 * without this, an unset $wgKnowledgeGraphColorPalettes (e.g. a wiki that never
+	 * configured it, before extension.json declared a config default) raised a PHP
+	 * "Undefined global variable" error instead of falling back to a usable palette.
+	 */
+	public function testFallsBackToLiteralDefaultPaletteWhenGlobalIsEntirelyUnset() {
+		unset( $GLOBALS['wgKnowledgeGraphColorPalettes'] );
+
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionNoColorPalettesConfiguredPage' );
+		$parser = $this->newParserMock( $title );
+		KnowledgeGraph::parserFunctionKnowledgeGraph( $parser );
+
+		$jsConfigVars = $parser->getOutput()->getJsConfigVars();
+
+		$this->assertSame(
+			[
+				'#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+				'#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+			],
+			$jsConfigVars['wgKnowledgeGraphColorPalette']
+		);
+	}
+
 	public function testAddsExpectedJsConfigVars() {
 		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionJsConfigVarsPage' );
 
