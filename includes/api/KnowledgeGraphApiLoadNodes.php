@@ -11,71 +11,27 @@ use MediaWiki\Title\Title;
 
 class KnowledgeGraphApiLoadNodes extends ApiBase {
 
-	/**
-	 * Store instance for Semantic MediaWiki data.
-	 *
-	 * @var SMW\Store|null
-	 */
-	protected static $SMWStore = null;
-
-	/**
-	 * Factory instance for creating Semantic MediaWiki data values.
-	 *
-	 * @var SMW\DataValueFactory|null
-	 */
-	protected static $SMWDataValueFactory = null;
+	use KnowledgeGraphApiLoadTrait;
 
 	/**
 	 * @inheritDoc
 	 */
-	public function isWriteMode() {
-		return false;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function mustBePosted(): bool {
-		return true;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function execute() {
-		$result = $this->getResult();
-		$params = $this->extractRequestParams();
-		$context = $this->getContext();
-
-		\KnowledgeGraph::initSMW();
-		self::$SMWStore = \SMW\StoreFactory::getStore();
-		self::$SMWDataValueFactory = SMW\DataValueFactory::getInstance();
-
-		$data = [];
-		$relationsSeen = [];
-		$titles = explode( '|', $params['titles'] );
-		foreach ( $titles as $titleText ) {
+	protected function getTitlesToLoad( array $params ): iterable {
+		foreach ( explode( '|', $params['titles'] ) as $titleText ) {
 			$title_ = Title::newFromText( $titleText );
 			if ( !$title_ || !$title_->isKnown() ) {
 				continue;
 			}
 
-			$listOfProps = \KnowledgeGraph::getAllPropertiesForNode( $titleText );
-
-			if ( !isset( $data[$title_->getFullText()] ) ) {
-				\KnowledgeGraph::setSemanticDataFromApi(
-					$title_,
-					$listOfProps,
-					0,
-					$params['depth'],
-					$data,
-					$relationsSeen
-				);
-			}
+			yield $titleText => $title_;
 		}
+	}
 
-		$res = json_encode( $data );
-		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
+	/**
+	 * @inheritDoc
+	 */
+	protected function getPropertiesForTitle( array $params, Title $title_, string $titleText ): array {
+		return \KnowledgeGraph::getAllPropertiesForNode( $titleText );
 	}
 
 	/**
@@ -97,13 +53,6 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 			],
 
 		];
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function needsToken() {
-		return 'csrf';
 	}
 
 	/**

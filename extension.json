@@ -21,6 +21,7 @@
 	"AutoloadClasses": {
 		"KnowledgeGraph":"includes/KnowledgeGraph.php",
 		"SpecialKnowledgeGraphDesigner":"includes/specials/SpecialKnowledgeGraphDesigner.php",
+		"KnowledgeGraphApiLoadTrait": "includes/api/KnowledgeGraphApiLoadTrait.php",
 		"KnowledgeGraphApiLoadNodes": "includes/api/KnowledgeGraphApiLoadNodes.php",
 		"KnowledgeGraphApiLoadProperties": "includes/api/KnowledgeGraphApiLoadProperties.php",
 		"KnowledgeGraphApiLoadCategories": "includes/api/KnowledgeGraphApiLoadCategories.php"

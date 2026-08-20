@@ -11,6 +11,8 @@ use MediaWiki\Title\Title;
 
 class KnowledgeGraphApiLoadCategories extends ApiBase {
 
+	use KnowledgeGraphApiLoadTrait;
+
 	/**
 	 * Store instance for Semantic MediaWiki data.
 	 *
@@ -26,29 +28,28 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 	protected static $SMWDataValueFactory = null;
 
 	/**
-	 * @inheritDoc
+	 * Names (without namespace prefix) of all known Property: pages, used by
+	 * buildPropertiesList() to find properties for which a category member is
+	 * a target value. Populated once per execute() call.
+	 *
+	 * @var string[]
 	 */
-	public function isWriteMode() {
-		return false;
-	}
+	private $propertyNames = [];
+
+	/**
+	 * Running list of properties accumulated across category members already
+	 * processed in the current execute() call; each member's properties are
+	 * merged into this list, and the merged result is used for every
+	 * subsequent member. Reset at the start of getTitlesToLoad().
+	 *
+	 * @var array
+	 */
+	private $accumulatedProperties = [];
 
 	/**
 	 * @inheritDoc
 	 */
-	public function mustBePosted(): bool {
-		return true;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function execute() {
-		$result = $this->getResult();
-		$params = $this->extractRequestParams();
-		$context = $this->getContext();
-		$output = $context->getOutput();
-
-		\KnowledgeGraph::initSMW();
+	protected function getTitlesToLoad( array $params ): iterable {
 		self::$SMWStore = \SMW\StoreFactory::getStore();
 		self::$SMWDataValueFactory = SMW\DataValueFactory::getInstance();
 
@@ -60,66 +61,59 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 			'format' => 'json'
 		];
 
-		$api = new ApiMain( \KnowledgeGraph::newDerivativeApiContext( $context, $queryParams, false ) );
+		$api = new ApiMain(
+			\KnowledgeGraph::newDerivativeApiContext( $this->getContext(), $queryParams, false )
+		);
 		$api->execute();
-		$data = $api->getResult()->getResultData();
+		$allPagesData = $api->getResult()->getResultData();
 
-		$propertyTitles = $data['query']['allpages'] ?? [];
+		$propertyTitles = $allPagesData['query']['allpages'] ?? [];
 		$propertyTitles = array_column( $propertyTitles, 'title' );
-		$propertyNames = array_map( static function ( $title ) {
+		$this->propertyNames = array_map( static function ( $title ) {
 			return substr( $title, strrpos( $title, ':' ) + 1 );
 		}, $propertyTitles );
 
-		$params['properties'] = ( !empty( $params['properties'] ) ?
+		$this->accumulatedProperties = ( !empty( $params['properties'] ) ?
 			json_decode( $params['properties'], true ) : [] );
 
 		$categories = explode( '|', $params['categories'] );
 
-		$data = [];
-		$relationsSeen = [];
-		$titles = [];
 		foreach ( $categories as $categoryText ) {
 			$category_ = Title::makeTitleSafe( NS_CATEGORY, $categoryText );
 			// && $category_->isKnown()
-			if ( $category_ ) {
-				$titles_ = \KnowledgeGraph::articlesInCategories(
-					$categoryText,
-					$params['limit'],
-					$params['offset']
+			if ( !$category_ ) {
+				continue;
+			}
+
+			$titles_ = \KnowledgeGraph::articlesInCategories(
+				$categoryText,
+				$params['limit'],
+				$params['offset']
+			);
+
+			foreach ( $titles_ as $title_ ) {
+				$titleText = str_replace( '_', ' ', $title_->getDbKey() );
+
+				$this->accumulatedProperties = $this->buildPropertiesList(
+					$this->propertyNames,
+					$title_,
+					$titleText,
+					$this->accumulatedProperties,
+					$params['limit']
 				);
 
-				foreach ( $titles_ as $title_ ) {
-					$titles[$title_->getFullText()] = $title_;
-
-					$titleText = $title_->getDbKey();
-					$titleText = str_replace( '_', ' ', $titleText );
-
-					$params['properties'] = $this->buildPropertiesList(
-						$propertyNames,
-						$title_,
-						$titleText,
-						$params['properties'],
-						$params['limit']
-					);
-
-					if ( $title_ && $title_->isKnown() ) {
-						if ( !isset( $data[$title_->getFullText()] ) ) {
-							\KnowledgeGraph::setSemanticDataFromApi(
-								$title_,
-								$params['properties'],
-								0,
-								$params['depth'],
-								$data,
-								$relationsSeen
-							);
-						}
-					}
+				if ( $title_->isKnown() ) {
+					yield $titleText => $title_;
 				}
 			}
 		}
+	}
 
-		$res = json_encode( $data );
-		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
+	/**
+	 * @inheritDoc
+	 */
+	protected function getPropertiesForTitle( array $params, Title $title_, string $titleText ): array {
+		return $this->accumulatedProperties;
 	}
 
 	/**
@@ -207,13 +201,6 @@ class KnowledgeGraphApiLoadCategories extends ApiBase {
 			],
 
 		];
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function needsToken() {
-		return 'csrf';
 	}
 
 	/**

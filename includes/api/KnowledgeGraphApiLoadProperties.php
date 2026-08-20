@@ -11,54 +11,30 @@ use MediaWiki\Title\Title;
 
 class KnowledgeGraphApiLoadProperties extends ApiBase {
 
+	use KnowledgeGraphApiLoadTrait;
+
 	/**
 	 * @inheritDoc
 	 */
-	public function isWriteMode() {
-		return false;
+	protected function getTitlesToLoad( array $params ): iterable {
+		foreach ( explode( '|', $params['nodes'] ) as $titleText ) {
+			$title_ = Title::newFromText( $titleText );
+			if ( !$title_ || !$title_->isKnown() ) {
+				continue;
+			}
+
+			yield $titleText => $title_;
+		}
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public function mustBePosted(): bool {
-		return true;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function execute() {
-		$result = $this->getResult();
-		$params = $this->extractRequestParams();
-
-		\KnowledgeGraph::initSMW();
-		$params['properties'] = self::expandInverseProperties(
+	protected function getPropertiesForTitle( array $params, Title $title_, string $titleText ): array {
+		return self::expandInverseProperties(
 			explode( '|', $params['properties'] ),
 			(bool)$params['inversePropsIncluded']
 		);
-
-		$data = [];
-		$relationsSeen = [];
-		$params['nodes'] = explode( '|', $params['nodes'] );
-		foreach ( $params['nodes'] as $titleText ) {
-			$title_ = Title::newFromText( $titleText );
-			if ( $title_ && $title_->isKnown() ) {
-				if ( !isset( $data[$title_->getFullText()] ) ) {
-					\KnowledgeGraph::setSemanticDataFromApi(
-						$title_,
-						$params['properties'],
-						0,
-						$params['depth'],
-						$data,
-						$relationsSeen
-					);
-				}
-			}
-		}
-
-		$res = json_encode( $data );
-		$result->addValue( [ $this->getModuleName() ], 'data', $res, ApiResult::NO_VALIDATE );
 	}
 
 	/**
@@ -110,13 +86,6 @@ class KnowledgeGraphApiLoadProperties extends ApiBase {
 				ApiBase::PARAM_REQUIRED => false
 			]
 		];
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function needsToken() {
-		return 'csrf';
 	}
 
 	/**
