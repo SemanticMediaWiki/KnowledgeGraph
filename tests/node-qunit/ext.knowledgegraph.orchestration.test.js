@@ -637,6 +637,108 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				assert.deepEqual( graph.self.TmpData, {}, 'self.TmpData is reset to {} after execute()' );
 			} );
 
+			QUnit.test( "'done' hides only the edges/nodes for unchecked wantedPropertiesWidgets when self.LastSelectedTab is 'by-article', keeping all data in self.Data", ( assert ) => {
+				graph.self.LastSelectedTab = 'by-article';
+				graph.self.TmpData = {
+					Foo: {
+						properties: {
+							propA: { preferredLabel: 'A', canonicalLabel: 'PropA', typeLabel: 'Text', values: [ { value: 'ValA', type: 2 } ] },
+							propB: { preferredLabel: 'B', canonicalLabel: 'PropB', typeLabel: 'Text', values: [ { value: 'ValB', type: 2 } ] }
+						}
+					}
+				};
+				dialog.wantedPropertiesTitleFullText = 'Foo';
+				dialog.wantedPropertiesWidgets = {
+					propA: { isSelected: () => true },
+					propB: { isSelected: () => false }
+				};
+
+				const process = dialog.getActionProcess( 'done' );
+				process.execute();
+
+				assert.deepEqual(
+					Object.keys( graph.self.Data.Foo.properties ).sort(),
+					[ 'propA', 'propB' ],
+					'both properties are kept in self.Data -- nothing is discarded'
+				);
+				assert.false(
+					graph.self.Edges.get( 'Foo→PropA→ValA#2' ).hidden,
+					'the edge for the checked property is not hidden'
+				);
+				assert.true(
+					graph.self.Edges.get( 'Foo→PropB→ValB#2' ).hidden,
+					'the edge for the unchecked property is hidden'
+				);
+				assert.false( graph.self.Nodes.get( 'ValA#2' ).hidden, 'the value node for the checked property is not hidden' );
+				assert.true( graph.self.Nodes.get( 'ValB#2' ).hidden, 'the value node for the unchecked property is hidden' );
+				assert.strictEqual( dialog.wantedPropertiesWidgets, null, 'wantedPropertiesWidgets is cleared after done' );
+				assert.strictEqual( dialog.wantedPropertiesTitleFullText, null, 'wantedPropertiesTitleFullText is cleared after done' );
+			} );
+
+			QUnit.test( "'done' also hides recursively-loaded foreign nodes (depth>0) and their own properties, unless reached via a checked root property", ( assert ) => {
+				graph.self.LastSelectedTab = 'by-article';
+				graph.self.TmpData = {
+					Foo: {
+						properties: {
+							propA: { preferredLabel: 'A', canonicalLabel: 'PropA', typeLabel: 'Page', typeId: '_wpg', values: [ { value: 'Bar' } ] }
+						}
+					},
+					Bar: {
+						properties: {
+							propC: { preferredLabel: 'C', canonicalLabel: 'PropC', typeLabel: 'Text', values: [ { value: 'ValC', type: 2 } ] }
+						}
+					},
+					Baz: {
+						properties: {
+							propD: { preferredLabel: 'D', canonicalLabel: 'PropD', typeLabel: 'Text', values: [ { value: 'ValD', type: 2 } ] }
+						}
+					}
+				};
+				dialog.wantedPropertiesTitleFullText = 'Foo';
+				dialog.wantedPropertiesWidgets = {
+					propA: { isSelected: () => true }
+				};
+
+				const process = dialog.getActionProcess( 'done' );
+				process.execute();
+
+				assert.false( graph.self.Nodes.get( 'Foo' ).hidden, 'the root article node is always visible' );
+				assert.false( graph.self.Nodes.get( 'Bar' ).hidden, 'a foreign node reached via a checked root property is visible' );
+				assert.true( graph.self.Nodes.get( 'Baz' ).hidden, 'a foreign node not reached via any checked root property is hidden' );
+				assert.true(
+					graph.self.Edges.get( 'Bar→PropC→ValC#2' ).hidden,
+					"a foreign node's own properties stay hidden even though the foreign node itself is visible"
+				);
+				assert.true(
+					graph.self.Edges.get( 'Baz→PropD→ValD#2' ).hidden,
+					'properties of an entirely hidden foreign node are hidden too'
+				);
+			} );
+
+			QUnit.test( "'done' does not hide anything when self.LastSelectedTab is not 'by-article'", ( assert ) => {
+				graph.self.LastSelectedTab = 'by-properties';
+				graph.self.TmpData = {
+					Foo: {
+						properties: {
+							propA: { preferredLabel: 'A', canonicalLabel: 'PropA', typeLabel: 'Text', values: [ { value: 'ValA', type: 2 } ] },
+							propB: { preferredLabel: 'B', canonicalLabel: 'PropB', typeLabel: 'Text', values: [ { value: 'ValB', type: 2 } ] }
+						}
+					}
+				};
+				dialog.wantedPropertiesWidgets = null;
+
+				const process = dialog.getActionProcess( 'done' );
+				process.execute();
+
+				assert.deepEqual(
+					Object.keys( graph.self.Data.Foo.properties ).sort(),
+					[ 'propA', 'propB' ],
+					'all properties are passed through unfiltered for non-by-article tabs'
+				);
+				assert.false( graph.self.Edges.get( 'Foo→PropA→ValA#2' ).hidden, 'edges are not hidden outside the by-article flow' );
+				assert.false( graph.self.Edges.get( 'Foo→PropB→ValB#2' ).hidden, 'edges are not hidden outside the by-article flow' );
+			} );
+
 			QUnit.test( "'back' resets the stack to the first panel and sets mode to 'select'", ( assert ) => {
 				let modeSet;
 				dialog.actions.setMode = ( mode ) => {
@@ -773,7 +875,7 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				assert.true( msgCalls.includes( 'knowledgegraph-dialog-results-existing-node' ), 'the existing-node message key is requested' );
 			} );
 
-			QUnit.test( "mode 'show-results' for by-article appends a has-properties header and one <li> per property", ( assert ) => {
+			QUnit.test( "mode 'show-results' for by-article appends a has-properties header and a checkbox fieldset with one checked checkbox per property", ( assert ) => {
 				const data = {
 					Foo: {
 						properties: {
@@ -791,10 +893,49 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				dialog.initializeResultsPanel( 'show-results', 'by-article', data, 'Foo' );
 
 				assert.true( msgCalls.includes( 'knowledgegraph-dialog-results-has-properties' ), 'the has-properties header message key is requested' );
-				// 1: the "<h3>has-properties</h3>" header, appended directly by
-				// getDialogInitializeResultsPanel(); 2: the returned <ul> itself,
-				// appended by MyDialog.prototype.initializeResultsPanel() afterwards.
-				assert.strictEqual( appended.length, 2, 'the header and the returned <ul> are each appended to panelB once' );
+				assert.true( msgCalls.includes( 'knowledgegraph-dialog-results-select-properties-hint' ), 'the select-properties hint message key is requested' );
+				// 1: the "<h3>has-properties</h3>" header; 2: the "<p>hint</p>" line;
+				// both appended directly by getDialogInitializeResultsPanel(); 3: the
+				// returned fieldset $element, appended by
+				// MyDialog.prototype.initializeResultsPanel() afterwards.
+				assert.strictEqual( appended.length, 3, 'the header, the hint, and the returned fieldset are each appended to panelB once' );
+				assert.deepEqual(
+					Object.keys( dialog.wantedPropertiesWidgets ),
+					[ 'hasAuthor' ],
+					'one checkbox widget is stored per property key'
+				);
+				assert.false(
+					dialog.wantedPropertiesWidgets.hasAuthor.isSelected(),
+					'the checkbox for the property defaults to unchecked'
+				);
+				assert.strictEqual(
+					dialog.wantedPropertiesTitleFullText,
+					'Foo',
+					'the title the properties belong to is remembered for later filtering'
+				);
+			} );
+
+			QUnit.test( "mode 'show-results' for by-article stores one checkbox widget per property, keyed by property key", ( assert ) => {
+				const data = {
+					Foo: {
+						properties: {
+							hasAuthor: { preferredLabel: 'Author', canonicalLabel: 'Has_Author', typeLabel: 'Page' },
+							hasTitle: { preferredLabel: '', canonicalLabel: 'Has_Title', typeLabel: 'Text' }
+						}
+					}
+				};
+
+				dialog.initializeResultsPanel( 'show-results', 'by-article', data, 'Foo' );
+
+				assert.deepEqual(
+					Object.keys( dialog.wantedPropertiesWidgets ).sort(),
+					[ 'hasAuthor', 'hasTitle' ],
+					'a checkbox widget is stored for every property key'
+				);
+				assert.true(
+					Object.values( dialog.wantedPropertiesWidgets ).every( ( widget ) => !widget.isSelected() ),
+					'all checkboxes default to unchecked'
+				);
 			} );
 
 			QUnit.test( "mode 'show-results' for by-properties appends only genuinely-new nodes, skipping existing/null ones", ( assert ) => {

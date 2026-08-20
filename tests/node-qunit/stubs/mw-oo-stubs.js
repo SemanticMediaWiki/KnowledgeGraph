@@ -429,6 +429,13 @@ function makeWidgetBase( name ) {
 	Widget.prototype.isDisabled = function () {
 		return this.disabled;
 	};
+	Widget.prototype.setSelected = function ( selected ) {
+		this.config.selected = selected;
+		return this;
+	};
+	Widget.prototype.isSelected = function () {
+		return this.config.selected;
+	};
 	Widget.prototype.getValue = function () {
 		return this.config.value;
 	};

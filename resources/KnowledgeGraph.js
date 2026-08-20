@@ -33,6 +33,7 @@ KnowledgeGraph = function () {
 	self.nodePropertiesCache = {};
 	self.id = null;
 	self.LastDepth = null;
+	self.LastSelectedTab = null;
 	self.colors = mw.config.get( 'wgKnowledgeGraphColorPalette' );
 
 	function addLegendEntry( id, label, color ) {
@@ -304,13 +305,35 @@ KnowledgeGraph = function () {
 		self.Nodes.add( nodeConfig );
 	}
 
-	function createNodes( data ) {
+	function getVisibleTargetLabels( data, wantedProperties ) {
+		const visible = new Set();
+		if ( !wantedProperties || !data[ wantedProperties.titleFullText ] ) {
+			return visible;
+		}
+		const properties = data[ wantedProperties.titleFullText ].properties || {};
+		for ( const propKey in properties ) {
+			if ( !wantedProperties.wanted[ propKey ] ) {
+				continue;
+			}
+			for ( const value of properties[ propKey ].values || [] ) {
+				visible.add( value.value );
+			}
+		}
+		return visible;
+	}
+
+	function createNodes( data, wantedProperties ) {
+		const visibleTargetLabels = getVisibleTargetLabels( data, wantedProperties );
+
 		for ( const label in data ) {
 			if ( label in self.Data && self.Data[ label ] !== null ) {
 				continue;
 			}
 
-			addArticleNode( data, label );
+			const isRootArticle = !wantedProperties || label === wantedProperties.titleFullText;
+			addArticleNode( data, label, {
+				hidden: !isRootArticle && !visibleTargetLabels.has( label )
+			} );
 
 			if ( data[ label ] === null ) {
 				continue;
@@ -329,6 +352,12 @@ KnowledgeGraph = function () {
 
 			for ( const i in data[ label ].properties ) {
 				const property = data[ label ].properties[ i ];
+
+				const hidden = !!wantedProperties && (
+					label === wantedProperties.titleFullText ?
+						!wantedProperties.wanted[ i ] :
+						true
+				);
 
 				if ( !( property.canonicalLabel in self.PropColors ) ) {
 					if ( self.colors && self.colors.length > 0 ) {
@@ -420,7 +449,8 @@ KnowledgeGraph = function () {
 									to: to,
 									label: propLabel,
 									group: label,
-									arrows: { to: { enabled: true } }
+									arrows: { to: { enabled: true } },
+									hidden
 								}
 							);
 
@@ -431,7 +461,7 @@ KnowledgeGraph = function () {
 								options.image = property.values[ ii ].src;
 							}
 
-							addArticleNode( data, targetLabel, options, 9 );
+							addArticleNode( data, targetLabel, jQuery.extend( {}, options, { hidden } ), 9 );
 						}
 						break;
 
@@ -456,7 +486,8 @@ KnowledgeGraph = function () {
 								from: label,
 								to: valueId,
 								label: propLabel,
-								group: label
+								group: label,
+								hidden
 							} );
 
 							if ( !self.Nodes.get( valueId ) ) {
@@ -471,7 +502,8 @@ KnowledgeGraph = function () {
 										typeID: typeId,
 										formattedUrl: formattedUrl || null,
 										hasKeywordAskFormatter: property.linkFormatter && property.linkFormatter.kind === 'ask',
-										askPropertyLabel: property.canonicalLabel
+										askPropertyLabel: property.canonicalLabel,
+										hidden
 									} )
 								);
 							}
@@ -497,6 +529,20 @@ KnowledgeGraph = function () {
 		self.Nodes.update( updateNodes );
 	}
 
+	function getWantedProperties( thisDialog ) {
+		const widgets = thisDialog.wantedPropertiesWidgets;
+		if ( !widgets ) {
+			return null;
+		}
+		const wanted = {};
+		for ( const propKey in widgets ) {
+			if ( widgets[ propKey ].isSelected() ) {
+				wanted[ propKey ] = true;
+			}
+		}
+		return wanted;
+	}
+
 	function getDialogActionProcessCallback( thisDialog, getActionProcess, action ) {
 		switch ( action ) {
 			case 'delete':
@@ -513,8 +559,18 @@ KnowledgeGraph = function () {
 					thisDialog.close( { action: action } ).then( () => {
 						// createNodes(self.TmpData);
 					} );
-					createNodes( self.TmpData );
+					let wantedProperties = null;
+					if ( self.LastSelectedTab === 'by-article' && thisDialog.wantedPropertiesWidgets ) {
+						const titleFullText = thisDialog.wantedPropertiesTitleFullText;
+						const wanted = getWantedProperties( thisDialog );
+						if ( titleFullText && wanted ) {
+							wantedProperties = { titleFullText, wanted };
+						}
+					}
+					createNodes( self.TmpData, wantedProperties );
 					self.TmpData = {};
+					thisDialog.wantedPropertiesWidgets = null;
+					thisDialog.wantedPropertiesTitleFullText = null;
 				} );
 			case 'continue':
 				return getActionProcess
@@ -623,6 +679,7 @@ KnowledgeGraph = function () {
 						} )
 							.then( ( data ) => {
 								self.TmpData = data;
+								self.LastSelectedTab = selectedTab;
 								let mode;
 								if ( selectedTab === 'by-article' ) {
 									const ns = parseInt( thisDialog.namespaceDropdown.getValue() || 0, 10 );
@@ -670,19 +727,31 @@ KnowledgeGraph = function () {
 		} else if ( mode === 'existing-node' ) {
 			$el = $( '<span>' + mw.msg( 'knowledgegraph-dialog-results-existing-node' ) + '</span>' );
 		} else {
-			$el = $( '<ul>' );
 			switch ( selectedTab ) {
 				case 'by-article': {
 					thisDialog.panelB.$element.append( '<h3>' + mw.msg( 'knowledgegraph-dialog-results-has-properties' ) + '</h3>' );
+					thisDialog.panelB.$element.append( '<p>' + mw.msg( 'knowledgegraph-dialog-results-select-properties-hint' ) + '</p>' );
 					const properties = data[ titleFullText ].properties;
+					const fieldset = new OO.ui.FieldsetLayout();
+					thisDialog.wantedPropertiesWidgets = {};
+					thisDialog.wantedPropertiesTitleFullText = titleFullText;
 					for ( const i in properties ) {
-						const url = mw.config.get( 'wgArticlePath' ).replace( '$1', i );
-						$el.append( $( '<li><a target="_blank" href="' + url + '">' + ( properties[ i ].preferredLabel !== '' ? properties[ i ].preferredLabel : properties[ i ].canonicalLabel ) + '</a> (' + properties[ i ].typeLabel + ')</li>' ) );
+						const label = properties[ i ].preferredLabel !== '' ? properties[ i ].preferredLabel : properties[ i ].canonicalLabel;
+						const checkbox = new OO.ui.CheckboxInputWidget( { selected: false } );
+						thisDialog.wantedPropertiesWidgets[ i ] = checkbox;
+						fieldset.addItems( [
+							new OO.ui.FieldLayout( checkbox, {
+								label: label + ' (' + properties[ i ].typeLabel + ')',
+								align: 'inline'
+							} )
+						] );
 					}
+					$el = fieldset.$element;
 					break;
 				}
 
-				case 'by-properties':
+				case 'by-properties': {
+					$el = $( '<ul>' );
 					if ( Object.keys( data ).some( ( i ) => !( i in self.Data ) && data[ i ] !== null ) ) {
 						thisDialog.panelB.$element.append( '<h3>' + mw.msg( 'knowledgegraph-dialog-results-importing-nodes' ) + '</h3>' );
 
@@ -706,6 +775,7 @@ KnowledgeGraph = function () {
 						thisDialog.panelB.$element.append( $skippedList );
 					}
 					break;
+				}
 
 				case 'by-categories': {
 					thisDialog.panelB.$element.append( '<h3>' + mw.msg( 'knowledgegraph-dialog-results-importing-nodes' ) + '</h3>' );

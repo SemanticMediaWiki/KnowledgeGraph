@@ -44,6 +44,7 @@
 	"knowledgegraph-dialog-results-skipped-existing": "The following nodes already exist and were skipped:",
 	"knowledgegraph-dialog-results-no-new-nodes": "No new nodes to add.",
 	"knowledgegraph-dialog-results-has-properties": "Has properties:",
+	"knowledgegraph-dialog-results-select-properties-hint": "Check any property you want to be visible in the graph. All properties are loaded regardless; unchecked ones can still be shown later.",
 	"knowledgegraph-dialog-results-importing-nodes": "Importing nodes:",
 	"knowledgegraph-copied-to-clipboard": "copied to clipboard!",
 	"knowledgegraph-toolbar-reset-network": "reset",

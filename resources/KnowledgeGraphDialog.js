@@ -329,12 +329,6 @@ KnowledgeGraphDialog = ( function () {
 			expanded: false
 		} );
 
-		// this.fieldset = new OO.ui.FieldsetLayout({
-		// label:
-		// 'toggle the properties that you would like to display on the network',
-		// });
-		// panelB.$element.append(this.fieldset.$element);
-
 		this.panelB = panelB;
 
 		this.stackLayout = new OO.ui.StackLayout( {
@@ -376,23 +370,6 @@ KnowledgeGraphDialog = ( function () {
 		data,
 		titleFullText
 	) {
-		// ModelProperties = {};
-		// var items = [];
-		// for (var i in Properties) {
-		// var toggleInput = new OO.ui.ToggleSwitchWidget({
-		// value: true,
-		// });
-		// ModelProperties[i] = toggleInput;
-		// var field = new OO.ui.FieldLayout(toggleInput, {
-		// label: i,
-		// help: '',
-		// helpInline: true,
-		// align: 'top',
-		// });
-		// items.push(field);
-		// }
-		// this.fieldset.addItems(items);
-
 		this.panelB.$element.empty();
 
 		const $el = CallbackInitializeResultsPanel(
