@@ -74,13 +74,22 @@ KnowledgeGraphDialog = ( function () {
 			const fieldsetLayout = new OO.ui.FieldsetLayout();
 			const items = [];
 
+			// $wgExtraNamespaces registers both a custom namespace and its paired
+			// Talk namespace (id + 1, MediaWiki's even/odd convention), but a Talk
+			// namespace is never a meaningful target for "add node by page" -- so
+			// only even ids (id >= 0 guards against a future data-source switch to
+			// something that could include -1/-2 Special/Media) are offered, sorted
+			// alphabetically by label since the raw registration order (by id) is
+			// not a useful order to scan once there are more than a handful.
+			const extraNamespaceOptions = Object.entries( mw.config.get( 'wgExtraNamespaces' ) )
+				.map( ( [ id, label ] ) => ( { data: parseInt( id, 10 ), label } ) )
+				.filter( ( { data } ) => data >= 0 && data % 2 === 0 )
+				.sort( ( a, b ) => a.label.localeCompare( b.label ) );
+
 			self.namespaceDropdown = new OO.ui.DropdownInputWidget( {
 				options: [
 					{ data: 0, label: mw.msg( 'knowledgegraph-dialog-main-namespace' ) },
-					...Object.entries( mw.config.get( 'wgExtraNamespaces' ) ).map( ( [ id, label ] ) => ( {
-						data: parseInt( id, 10 ),
-						label: label
-					} ) )
+					...extraNamespaceOptions
 				]
 			} );
 

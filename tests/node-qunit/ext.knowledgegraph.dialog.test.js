@@ -139,6 +139,44 @@ QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 			);
 		} );
 
+		QUnit.test( 'namespace dropdown excludes odd-numbered (Talk) namespaces', ( assert ) => {
+			mw.config.set( 'wgExtraNamespaces', {
+				102: 'Property',
+				103: 'Property_talk',
+				14: 'Category',
+				15: 'Category_talk'
+			} );
+
+			const dialog = createInitializedDialog( { depth: 2 } );
+
+			assert.deepEqual(
+				dialog.namespaceDropdown.config.options,
+				[
+					{ data: 0, label: 'knowledgegraph-dialog-main-namespace' },
+					{ data: 14, label: 'Category' },
+					{ data: 102, label: 'Property' }
+				],
+				'the odd (Talk) counterpart of each extra namespace is filtered out'
+			);
+		} );
+
+		QUnit.test( 'namespace dropdown sorts extra namespaces alphabetically by label, not by id', ( assert ) => {
+			mw.config.set( 'wgExtraNamespaces', { 200: 'Zebra', 100: 'Alpha', 300: 'Middle' } );
+
+			const dialog = createInitializedDialog( { depth: 2 } );
+
+			assert.deepEqual(
+				dialog.namespaceDropdown.config.options,
+				[
+					{ data: 0, label: 'knowledgegraph-dialog-main-namespace' },
+					{ data: 100, label: 'Alpha' },
+					{ data: 300, label: 'Middle' },
+					{ data: 200, label: 'Zebra' }
+				],
+				'extra namespaces are ordered by label alphabetically, independent of their numeric id order'
+			);
+		} );
+
 		QUnit.test( 'depth field defaults to Config.depth', ( assert ) => {
 			const dialog = createInitializedDialog( { depth: 7 } );
 
