@@ -46,11 +46,11 @@
 	"knowledgegraph-menu-no-properties": "(keine Attribute verfügbar)",
 	"knowledgegraph-copied-to-clipboard": "In die Zwischenablage kopiert!",
 	"knowledgegraph-copy-failed": "Kopieren fehlgeschlagen",
-	"knowledgegraph-toolbar-reset-network": "zurücksetzen",
+	"knowledgegraph-toolbar-reset-network": "Graph zurücksetzen",
 	"knowledgegraph-toolbar-reset-network-confirm": "Bist du sicher, dass du den Graphen neu initialisieren willst?",
 	"knowledgegraph-toolbar-add-node": "Knoten hinzufügen",
-	"knowledgegraph-toolbar-toggle-config": "Konfiguration umschalten",
-	"knowledgegraph-toolbar-export-graph": "exportiere Wikitext",
+	"knowledgegraph-toolbar-toggle-config": "Konfiguration ändern",
+	"knowledgegraph-toolbar-export-graph": "Wikitext exportieren",
 	"knowledgegraph-credits": "Info:",
 	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }
