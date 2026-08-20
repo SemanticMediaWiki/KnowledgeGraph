@@ -7,6 +7,11 @@ use PHPUnit\Framework\TestCase;
  */
 class KnowledgeGraphApplyDefaultParamsTest extends TestCase {
 
+	protected function tearDown(): void {
+		unset( $GLOBALS['wgKnowledgeGraphListSeparator'] );
+		parent::tearDown();
+	}
+
 	public function testBooleanValidValueIsConvertedToBool() {
 		$result = KnowledgeGraph::applyDefaultParams(
 			[ 'flag' => [ false, 'bool' ] ],
@@ -32,6 +37,35 @@ class KnowledgeGraphApplyDefaultParamsTest extends TestCase {
 		);
 
 		$this->assertSame( [ 'a', 'b', 'c' ], array_values( $result['list'] ) );
+	}
+
+	/**
+	 * @see https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/33
+	 * @see https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/48
+	 */
+	public function testArrayUsesConfiguredSeparatorInsteadOfHardCodedComma() {
+		$GLOBALS['wgKnowledgeGraphListSeparator'] = ';';
+
+		$result = KnowledgeGraph::applyDefaultParams(
+			[ 'nodes' => [ [], 'array' ] ],
+			[ 'nodes' => 'Foo, Bar; Baz Inc., 1996 CanLII 153 (SCC)' ]
+		);
+
+		$this->assertSame(
+			[ 'Foo, Bar', 'Baz Inc., 1996 CanLII 153 (SCC)' ],
+			array_values( $result['nodes'] )
+		);
+	}
+
+	public function testArrayFallsBackToCommaWhenSeparatorNotConfigured() {
+		unset( $GLOBALS['wgKnowledgeGraphListSeparator'] );
+
+		$result = KnowledgeGraph::applyDefaultParams(
+			[ 'nodes' => [ [], 'array' ] ],
+			[ 'nodes' => 'Foo, Bar ,Baz' ]
+		);
+
+		$this->assertSame( [ 'Foo', 'Bar', 'Baz' ], array_values( $result['nodes'] ) );
 	}
 
 	public function testNumberValidValueIsConvertedToFloat() {

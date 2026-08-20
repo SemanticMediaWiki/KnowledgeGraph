@@ -565,8 +565,14 @@ nodes=TestPage
 					break;
 
 				case 'array':
+					$separator = $GLOBALS['wgKnowledgeGraphListSeparator'] ?? ',';
 					$val = array_filter(
-						preg_split( '/\s*,\s*/', $val, -1, PREG_SPLIT_NO_EMPTY ) );
+						preg_split(
+							'/\s*' . preg_quote( $separator, '/' ) . '\s*/',
+							$val,
+							-1,
+							PREG_SPLIT_NO_EMPTY
+						) );
 					break;
 
 				case 'number':

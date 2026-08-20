@@ -122,6 +122,9 @@
 		"KnowledgeGraphDisableCredits": {
 			"value": false
 		},
+		"KnowledgeGraphListSeparator": {
+			"value": ","
+		},
 		"KnowledgeGraphShowImages": {
 			"value": true
 		},

@@ -31,6 +31,12 @@ nodes=Page A, Page B
 }}
 ```
 
+`nodes=` and `properties=` are split on `,` by default. If your page titles or property names contain commas (e.g. legal citations, bibliographic entries), configure a different separator in `LocalSettings.php`:
+
+```php
+$wgKnowledgeGraphListSeparator = ';';
+```
+
 ## For Developers
 
 ### Updating `vis-network` Library
