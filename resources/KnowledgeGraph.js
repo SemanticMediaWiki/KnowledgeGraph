@@ -1050,9 +1050,10 @@ ${ propertyOptions }|show-property-type=true
 					resolveFormattedLink( currentNode, titleLabel );
 
 				if ( linkUrl ) {
+					const linkDisplayLabel = currentNode && currentNode.label ? currentNode.label.replace( /\n/g, ' ' ) : titleLabel;
 					const liLink = document.createElement( 'li' );
 					liLink.classList.add( 'kg-node-properties-menu-link-entry' );
-					liLink.innerHTML = '🔗 ' + titleLabel;
+					liLink.innerHTML = '🔗 ' + linkDisplayLabel;
 					liLink.addEventListener( 'click', () => window.open( linkUrl, '_blank' ) );
 					$menu.append( liLink );
 				}

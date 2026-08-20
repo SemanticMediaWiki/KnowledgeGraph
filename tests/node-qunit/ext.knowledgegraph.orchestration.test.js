@@ -1321,6 +1321,41 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			assert.strictEqual( linkEntries.length, 1, 'exactly one article-link entry is added for a typeID 9 node' );
 		} );
 
+		QUnit.test( 'a right-click on a node with a displayTitle-derived label uses that label text in the article-link entry, not the raw title', ( assert ) => {
+			graph.self.Nodes.add( { id: 'Site:8c85142f-fc42-4547-bfdc-717c3c2a6965', typeID: 9, label: 'ACME-US (ACME United\nStates)' } );
+			graph.self.Network.getNodeAt = () => 'Site:8c85142f-fc42-4547-bfdc-717c3c2a6965';
+			graph.self.Network.getEdgeAt = () => undefined;
+
+			const linkEntries = captureLinkEntries( () => {
+				getContextHandler()( {
+					event: { pageX: 1, pageY: 1, preventDefault() {} },
+					pointer: { DOM: { x: 0, y: 0 } }
+				} );
+			} );
+
+			assert.strictEqual( linkEntries.length, 1, 'exactly one article-link entry is added' );
+			assert.strictEqual(
+				linkEntries[ 0 ].innerHTML,
+				'🔗 ACME-US (ACME United States)',
+				'the link entry text uses the node label (displayTitle, newlines collapsed to spaces), not the raw title id'
+			);
+		} );
+
+		QUnit.test( 'a right-click on a node without a label falls back to the raw title id in the article-link entry', ( assert ) => {
+			graph.self.Nodes.add( { id: 'Foo', typeID: 9 } );
+			graph.self.Network.getNodeAt = () => 'Foo';
+			graph.self.Network.getEdgeAt = () => undefined;
+
+			const linkEntries = captureLinkEntries( () => {
+				getContextHandler()( {
+					event: { pageX: 1, pageY: 1, preventDefault() {} },
+					pointer: { DOM: { x: 0, y: 0 } }
+				} );
+			} );
+
+			assert.strictEqual( linkEntries[ 0 ].innerHTML, '🔗 Foo', 'falls back to the raw title id when the node has no label' );
+		} );
+
 		QUnit.test( 'a right-click on a typeID !== 9 node with no formatter omits the article link entry', ( assert ) => {
 			graph.self.Nodes.add( { id: 'Foo', typeID: 2 } );
 			graph.self.Network.getNodeAt = () => 'Foo';
