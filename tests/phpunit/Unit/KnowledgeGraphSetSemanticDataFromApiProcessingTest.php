@@ -337,6 +337,35 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 	 */
 
 	/**
+	 * A wiki template composing a compound Text value (e.g. a postal
+	 * address) may embed a literal HTML entity like `&nbsp;` as a
+	 * plain-text separator, intended only for its own HTML-rendered
+	 * display -- but SMW stores/transports the raw wikitext-parser
+	 * output, not browser-rendered HTML, so the entity string survives
+	 * verbatim into the stored property value. Decoded here so it
+	 * doesn't show up as a literal `&nbsp;` in a vis-network node label,
+	 * which renders plain canvas text with no HTML entity interpreter.
+	 */
+	public function testTextPropertyValueWithHtmlEntityIsDecoded() {
+		$this->insertPage( 'Property:KGProcAddressNbsp', '[[Has type::Text]]' );
+		$source = 'KGProcAddressNbspSource';
+		$this->insertPage( $source, '[[KGProcAddressNbsp::NJ 07004&nbsp;Fairfield]]' );
+		\DeferredUpdates::doUpdates();
+
+		$sourceTitle = Title::newFromText( $source );
+		$this->skipIfFixtureDidNotTakeEffect( $sourceTitle );
+
+		$this->call( $sourceTitle, [], 0, 5 );
+
+		$data = $this->getData( $source );
+		$this->assertArrayHasKey( 'KGProcAddressNbsp', $data['properties'] );
+		$this->assertSame(
+			[ [ 'value' => "NJ 07004\u{00A0}Fairfield", 'type' => 2 ] ],
+			$data['properties']['KGProcAddressNbsp']['values']
+		);
+	}
+
+	/**
 	 * A property with no `_FORMAT_SCHEMA`/`_PEFU` specification configured
 	 * (the common case, e.g. a plain Number property) gets no linkFormatter.
 	 */

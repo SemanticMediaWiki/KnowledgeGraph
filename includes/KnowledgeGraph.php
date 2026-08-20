@@ -924,8 +924,14 @@ nodes=TestPage
 						$pendingRecursiveTitles[$linkedTitle] = true;
 					}
 				} else {
+					// Text-typed SMW values can carry literal HTML entities (e.g. a wiki
+					// template composing a compound property with `&nbsp;` as a plain-text
+					// separator, intended only for its own HTML-rendered display) -- decode
+					// them here so a raw entity string like "&nbsp;" doesn't show up as-is
+					// in a vis-network node label, which renders plain canvas text with no
+					// HTML entity interpreter of its own.
 					$value = [
-						'value' => $item['item'],
+						'value' => html_entity_decode( $item['item'], ENT_QUOTES ),
 						'type' => $item['type'],
 					];
 
