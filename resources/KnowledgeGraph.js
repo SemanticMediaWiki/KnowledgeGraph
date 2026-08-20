@@ -35,526 +35,14 @@ KnowledgeGraph = function () {
 	self.LastSelectedTab = null;
 	self.colors = mw.config.get( 'wgKnowledgeGraphColorPalette' );
 
-	function addLegendEntry( id, label, color ) {
-		if ( !self.LegendDiv ) {
-			return;
-		}
-
-		const safeId = id.replace( / /g, '_' );
-		const uniqueId = `${ self.id }-${ safeId }`;
-
-		if ( self.LegendDiv.querySelector( `#${ CSS.escape( uniqueId ) }` ) ) {
-			return;
-		}
-
-		let fontColor = KnowledgeGraphFunctions.getContrastColor( color );
-		if ( !fontColor ) {
-			fontColor = '#000000';
-		}
-
-		const container = document.createElement( 'button' );
-		container.className = 'legend-element-container btn btn-outline-light';
-		container.id = uniqueId;
-		container.style.color = fontColor;
-		container.style.background = color;
-		container.innerHTML = label;
-
-		container.dataset.active = true;
-		container.dataset.activeColor = color;
-
-		self.LegendDiv.append( container );
-	}
-
-	function removeLegendEntry( property ) {
-		if ( !this.LegendDiv ) {
-			return;
-		}
-		// use instance-specific ID
-		const safeId = `${ this.id }-${ property.replace( / /g, '_' ) }`;
-		const entry = this.LegendDiv.querySelector( `#${ CSS.escape( safeId ) }` );
-
-		if ( entry ) {
-			entry.remove();
-			// eslint-disable-next-line no-console
-			console.debug( `Legend entry removed for ${ property } in ${ this.id }` );
-		}
-	}
-
-	function checkAndToogleId( id ) {
-		return id.trim().replace( /_/g, ' ' ).replace( /#.*$/, '' );
-	}
-
-	function dispatchLegendClickEvent( event, id ) {
-		if ( !this.LegendDiv ) {
-			return;
-		}
-
-		const safeId = `${ this.id }-${ id.replace( / /g, '_' ) }`;
-		const container = this.LegendDiv.querySelector( `#${ CSS.escape( safeId ) }` );
-		if ( !container ) {
-			return;
-		}
-
-		const isActive = container.dataset.active === 'true';
-		container.dataset.active = ( !isActive ).toString();
-
-		if ( isActive ) {
-			container.style.background = '#FFFFFF';
-			const fontColor = KnowledgeGraphFunctions.getContrastColor( container.style.background ) || '#000000';
-			container.style.color = fontColor;
-		} else {
-			container.style.background = container.dataset.activeColor;
-			const fontColor = KnowledgeGraphFunctions.getContrastColor( container.style.background ) || '#000000';
-			container.style.color = fontColor;
-		}
-
-		const updateNodes = [];
-		const visited = [];
-		const instance = this;
-
-		function toggleConnectedNodes( nodeId ) {
-			if ( visited.includes( nodeId ) ) {
-				return;
-			}
-			visited.push( nodeId );
-
-			const connectedNodes = instance.Network.getConnectedNodes( nodeId );
-			for ( const connectedNodeId of connectedNodes ) {
-				const connectedEdgesIds = instance.Network.getConnectedEdges( connectedNodeId );
-				const connectedEdges = instance.Edges.get( connectedEdgesIds );
-
-				let found = false;
-				for ( const edge of connectedEdges ) {
-					if ( edge.to === nodeId || edge.from === nodeId ) {
-						found = true;
-						break;
-					}
-				}
-
-				if ( !found ) {
-					updateNodes.push( {
-						id: connectedNodeId,
-						hidden: container.dataset.active !== 'true'
-					} );
-					toggleConnectedNodes( connectedNodeId );
-				}
-			}
-		}
-
-		this.Nodes.forEach( ( node ) => {
-			const idValue = checkAndToogleId( node.id );
-
-			if ( this.PropIdPropLabelMap[ id ] === undefined ) {
-				this.PropIdPropLabelMap[ id ] = [];
-			}
-
-			if (
-				this.PropIdPropLabelMap[ id ].includes( idValue ) ||
-				this.PropIdPropLabelMap[ id ].includes( node.id )
-			) {
-				updateNodes.push( {
-					id: node.id,
-					hidden: container.dataset.active !== 'true'
-				} );
-				toggleConnectedNodes( node.id );
-			}
-		} );
-
-		this.Nodes.update( updateNodes );
-	}
-
-	function deleteNode( nodeId ) {
-		const children = self.Network.getConnectedNodes( nodeId ).filter(
-			( x ) => !( x in self.Data ) || self.Network.getConnectedNodes( x ).length === 1
-		);
-		children.push( nodeId );
-
-		for ( const nid of children ) {
-			self.Edges.remove( self.Network.getConnectedEdges( nid ) );
-		}
-		self.Nodes.remove( children );
-		for ( const nid of children ) {
-			delete self.Data[ nid ];
-		}
-	}
-
-	function loadNodes( obj ) {
-		self.LastDepth = obj.depth;
-
-		let payload;
-		if ( obj.title !== null && obj.properties === null ) {
-			payload = {
-				action: 'knowledgegraph-load-nodes',
-				titles: obj.title,
-				depth: obj.depth,
-				properties: JSON.stringify( self.Config.properties )
-			};
-		} else if ( obj.properties !== null ) {
-			if ( obj.properties === undefined ) {
-				obj.properties = [];
-			}
-			payload = {
-				action: 'knowledgegraph-load-properties',
-				properties: obj.properties.join( '|' ),
-				nodes: obj.titles,
-				depth: obj.depth,
-				limit: obj.limit,
-				offset: obj.offset,
-				inversePropsIncluded: obj.inversePropsIncluded
-			};
-		} else if ( obj.categories !== null ) {
-			payload = {
-				action: 'knowledgegraph-load-categories',
-				categories: obj.categories.join( '|' ),
-				depth: obj.depth,
-				limit: obj.limit,
-				offset: obj.offset
-			};
-		}
-
-		return new Promise( ( resolve, reject ) => {
-			mw.loader.using( 'mediawiki.api', () => {
-				new mw.Api()
-					.postWithToken( 'csrf', payload )
-					.done( ( thisRes ) => {
-						if ( 'data' in thisRes[ payload.action ] ) {
-							const parsedData = JSON.parse( thisRes[ payload.action ].data );
-							resolve( parsedData );
-						} else {
-							reject();
-						}
-					} )
-					.fail( ( thisRes ) => {
-						// eslint-disable-next-line no-console
-						console.error( payload.action, thisRes );
-						reject( thisRes );
-					} );
-			} );
-		} );
-	}
-
-	function wrapLabel( text, maxLength ) {
-		const words = text.split( ' ' );
-		let wrapped = '';
-		let line = '';
-
-		for ( const word of words ) {
-			if ( ( line + word ).length > maxLength ) {
-				if ( line ) {
-					wrapped += line.trim() + '\n';
-				}
-				line = word + ' ';
-			} else {
-				line += word + ' ';
-			}
-		}
-		wrapped += line.trim();
-		return wrapped;
-	}
-
-	function addArticleNode( data, label, options, typeID ) {
-		if ( self.Nodes.get( label ) !== null ) {
-			return;
-		}
-
-		const displayTitle = data[ label ] && data[ label ].displayTitle;
-		const baseLabel = displayTitle || label.split( '#' )[ 0 ];
-
-		const nodeConfig = jQuery.extend(
-			JSON.parse( JSON.stringify( self.Config.graphOptions.nodes ) ),
-			label in self.Config.propertyOptions ? self.Config.propertyOptions[ label ] : {},
-			{
-				id: label,
-				label:
-					baseLabel.length <= self.maxPropValueLength ?
-						baseLabel :
-						wrapLabel( baseLabel, 20 ),
-				shape: 'box',
-				font: jQuery.extend( {}, self.Config.graphOptions.nodes.font, {
-					size: self.Config.graphOptions.nodes.font.size || 30
-				} ),
-				typeID: typeID || 9
-
-				// https://visjs.github.io/vis-network/examples/network/other/popups.html
-				// title: createHTMLTitle(label),
-			},
-			options || {}
-		);
-
-		if ( !( label in data ) ) {
-			nodeConfig.color.border = 'red';
-			nodeConfig.font.color = 'red';
-			nodeConfig.color.background = 'white';
-		}
-
-		if ( data[ label ] === null ) {
-			nodeConfig.opacity = 0.5;
-			nodeConfig.shapeProperties = nodeConfig.shapeProperties || {};
-			nodeConfig.shapeProperties.borderDashes = [ 5, 5 ];
-		}
-
-		if (
-			data[ label ] &&
-			data[ label ].src &&
-			mw.config.get( 'KnowledgeGraphShowImages' ) === true
-		) {
-			nodeConfig.shape = 'image';
-			nodeConfig.image = data[ label ].src;
-		}
-
-		self.Nodes.add( nodeConfig );
-	}
-
-	function getVisibleTargetLabels( data, wantedProperties ) {
-		const visible = new Set();
-		if ( !wantedProperties || !data[ wantedProperties.titleFullText ] ) {
-			return visible;
-		}
-		const properties = data[ wantedProperties.titleFullText ].properties || {};
-		for ( const propKey in properties ) {
-			if ( !wantedProperties.wanted[ propKey ] ) {
-				continue;
-			}
-			for ( const value of properties[ propKey ].values || [] ) {
-				visible.add( value.value );
-			}
-		}
-		return visible;
-	}
-
-	// Builds the node/edge identity and vis.DataSet configs for a single
-	// server-canonical property value, following the same _wpg/default
-	// branching createNodes() uses for the initial graph load -- shared so the
-	// context-menu property-toggle handler creates nodes/edges with the exact
-	// same ids createNodes() would have used for the same value, instead of
-	// re-deriving them independently (see issue #100).
-	function buildNodeAndEdgeFromValue( label, property, value, options, hidden ) {
-		if ( property.typeId === '_wpg' ) {
-			const wpgTargetLabel = value.value;
-			const from = property.inverse ? wpgTargetLabel : label;
-			const to = property.inverse ? label : wpgTargetLabel;
-			const wpgEdgeId = KnowledgeGraphFunctions.makeEdgeId(
-				from, to, property.canonicalLabel, 9, self.Nodes
-			);
-
-			return {
-				targetId: wpgTargetLabel,
-				edgeId: wpgEdgeId,
-				edgeConfig: {
-					id: wpgEdgeId,
-					from,
-					to,
-					group: label,
-					arrows: { to: { enabled: true } },
-					hidden
-				},
-				nodeConfig: null, // caller uses addArticleNode() for _wpg targets
-				targetLabel: wpgTargetLabel
-			};
-		}
-
-		const targetLabel = value.value;
-		const typeId = value.type !== undefined ? value.type : 2;
-		const valueId = KnowledgeGraphFunctions.makeNodeId( targetLabel, typeId );
-		const edgeLabel = property.canonicalLabel;
-		const edgeId = KnowledgeGraphFunctions.makeEdgeId( label, valueId, edgeLabel );
-
-		const displayLabel = targetLabel.length <= self.maxPropValueLength ?
-			targetLabel :
-			wrapLabel( targetLabel, 20 );
-
-		return {
-			targetId: valueId,
-			edgeId,
-			edgeConfig: {
-				id: edgeId,
-				from: label,
-				to: valueId,
-				group: label,
-				hidden
-			},
-			nodeConfig: jQuery.extend( {}, options, {
-				id: valueId,
-				label: displayLabel,
-				typeID: typeId,
-				formattedUrl: value.formattedUrl || null,
-				hasKeywordAskFormatter: property.linkFormatter && property.linkFormatter.kind === 'ask',
-				askPropertyLabel: property.canonicalLabel,
-				hidden
-			} ),
-			targetLabel
-		};
-	}
-
-	function createNodes( data, wantedProperties ) {
-		const visibleTargetLabels = getVisibleTargetLabels( data, wantedProperties );
-
-		for ( const label in data ) {
-			if ( label in self.Data && self.Data[ label ] !== null ) {
-				continue;
-			}
-
-			const isRootArticle = !wantedProperties || label === wantedProperties.titleFullText;
-			addArticleNode( data, label, {
-				hidden: !isRootArticle && !visibleTargetLabels.has( label )
-			} );
-
-			if ( data[ label ] === null ) {
-				continue;
-			}
-
-			if ( !( label in self.Categories ) ) {
-				self.Categories[ label ] = [];
-			}
-
-			for ( const i in data[ label ].categories ) {
-				const category = data[ label ].categories[ i ];
-				if ( !self.Categories[ label ].includes( category ) ) {
-					self.Categories[ label ].push( category );
-				}
-			}
-
-			for ( const i in data[ label ].properties ) {
-				const property = data[ label ].properties[ i ];
-
-				const hidden = !!wantedProperties && (
-					label === wantedProperties.titleFullText ?
-						!wantedProperties.wanted[ i ] :
-						true
-				);
-
-				if ( !( property.canonicalLabel in self.PropColors ) ) {
-					if ( self.colors && self.colors.length > 0 ) {
-						// use d3 palette colors defined in wgKnowledgeGraphColorPalette
-						self.PropColors[ property.canonicalLabel ] = KnowledgeGraphFunctions.colorForPropertyLabel(
-							property.canonicalLabel,
-							self.colors,
-							self.PropColors
-						);
-					} else {
-						// use random HSL colors if no palette defined
-						let randomColor;
-						const colorExists = () => {
-							for ( const j in self.PropColors ) {
-								if ( self.PropColors[ j ] === randomColor ) {
-									return true;
-								}
-							}
-							return false;
-						};
-						do {
-							randomColor = KnowledgeGraphFunctions.randomHSL();
-						} while ( colorExists() );
-						self.PropColors[ property.canonicalLabel ] = randomColor;
-					}
-				}
-
-				let options =
-					property.preferredLabel in self.Config.propertyOptions ?
-						self.Config.propertyOptions[ property.preferredLabel ] :
-						property.canonicalLabel in self.Config.propertyOptions ?
-							self.Config.propertyOptions[ property.canonicalLabel ] :
-							{};
-
-				if ( 'nodes' in options ) {
-					options = options.nodes;
-				}
-				if ( !( 'color' in options ) ) {
-					const nodeColor = self.PropColors[ property.canonicalLabel ];
-					const textColor = KnowledgeGraphFunctions.getContrastColor( nodeColor );
-
-					options.color = {
-						background: nodeColor,
-						border: '#333',
-						highlight: {
-							background: nodeColor,
-							border: '#000'
-						}
-					};
-
-					// readable font color when background dark
-					options.font = Object.assign( {}, options.font, {
-						color: textColor
-					} );
-				}
-
-				const legendLabel =
-					property.preferredLabel !== '' ?
-						property.preferredLabel :
-						property.canonicalLabel;
-
-				if ( !( legendLabel in self.PropIdPropLabelMap ) ) {
-					self.PropIdPropLabelMap[ legendLabel ] = [];
-				}
-
-				const propLabel =
-					legendLabel + ( !self.Config[ 'show-property-type' ] ? '' : ' (' + property.typeLabel + ')' );
-
-				if ( self.Config[ 'properties-panel' ] ) {
-					addLegendEntry( property.canonicalLabel, legendLabel, self.PropColors[ property.canonicalLabel ] );
-				}
-
-				switch ( property.typeId ) {
-					case '_wpg':
-						for ( const ii in property.values ) {
-							const built = buildNodeAndEdgeFromValue( label, property, property.values[ ii ], options, hidden );
-							self.PropIdPropLabelMap[ legendLabel ].push( built.targetLabel );
-
-							const edgeConfig = jQuery.extend(
-								JSON.parse( JSON.stringify( self.Config.graphOptions.edges ) ),
-								built.edgeConfig,
-								{ label: propLabel }
-							);
-
-							self.graphModel.addEdge( edgeConfig );
-
-							if ( property.values[ ii ].src && mw.config.get( 'KnowledgeGraphShowImages' ) === true ) {
-								options.shape = 'image';
-								options.image = property.values[ ii ].src;
-							}
-
-							addArticleNode( data, built.targetLabel, jQuery.extend( {}, options, { hidden } ), 9 );
-						}
-						break;
-
-					default:
-					{
-						const seen = new Set();
-						for ( const value of property.values ) {
-							if ( seen.has( value.value ) ) {
-								continue;
-							}
-							seen.add( value.value );
-
-							const built = buildNodeAndEdgeFromValue( label, property, value, options, hidden );
-							self.PropIdPropLabelMap[ legendLabel ].push( built.targetId );
-
-							self.Edges.add( jQuery.extend( {}, built.edgeConfig, { label: propLabel } ) );
-
-							if ( !self.Nodes.get( built.targetId ) ) {
-								self.Nodes.add( built.nodeConfig );
-							}
-						}
-					}
-				}
-			}
-		}
-		self.Data = jQuery.extend( self.Data, data );
-	}
-
-	function HideNodesRec( nodeId ) {
-		const children = self.Network.getConnectedNodes( nodeId );
-		const updateNodes = [];
-		for ( const childNodeId of children ) {
-			if ( !( childNodeId in self.Data ) ) {
-				updateNodes.push( {
-					id: childNodeId,
-					hidden: !self.Nodes.get( childNodeId ).hidden
-				} );
-			}
-		}
-		self.Nodes.update( updateNodes );
-	}
+	// mix in the label/ID/legend-state helpers (addLegendEntry, removeLegendEntry,
+	// dispatchLegendClickEvent, HideNodesRec, recursiveDeleteAllChildren) and the
+	// node/edge/data-building helpers (loadNodes, addArticleNode, createNodes,
+	// deleteNode, buildNodeAndEdgeFromValue, getVisibleTargetLabels) onto `self`.
+	// KnowledgeGraphNodes.create() must run after KnowledgeGraphLegend.create(),
+	// since createNodes() calls self.addLegendEntry().
+	Object.assign( self, KnowledgeGraphLegend.create( self ) );
+	Object.assign( self, KnowledgeGraphNodes.create( self ) );
 
 	function getWantedProperties( thisDialog ) {
 		const widgets = thisDialog.wantedPropertiesWidgets;
@@ -575,7 +63,7 @@ KnowledgeGraph = function () {
 			case 'delete':
 				// eslint-disable-next-line no-alert
 				if ( confirm( mw.msg( 'knowledgegraph-delete-node-confirm' ) ) ) {
-					deleteNode( self.SelectedNode );
+					self.deleteNode( self.SelectedNode );
 					return new OO.ui.Process( () => {
 						thisDialog.close( { action: action } );
 					} );
@@ -594,7 +82,7 @@ KnowledgeGraph = function () {
 							wantedProperties = { titleFullText, wanted };
 						}
 					}
-					createNodes( self.TmpData, wantedProperties );
+					self.createNodes( self.TmpData, wantedProperties );
 					self.TmpData = {};
 					thisDialog.wantedPropertiesWidgets = null;
 					thisDialog.wantedPropertiesTitleFullText = null;
@@ -694,7 +182,7 @@ KnowledgeGraph = function () {
 							}
 						}
 
-						loadNodes( {
+						self.loadNodes( {
 							title: titleValue,
 							properties,
 							categories,
@@ -956,7 +444,7 @@ ${ propertyOptions }|show-property-type=true
 
 					self.Network = new vis.Network( self.Container, { nodes: self.Nodes, edges: self.Edges }, self.Config.graphOptions );
 
-					createNodes( self.InitialData );
+					self.createNodes( self.InitialData );
 					attachContextMenuListener();
 				}
 				break;
@@ -1062,7 +550,7 @@ ${ propertyOptions }|show-property-type=true
 
 				const linkUrl = nodeTypeId === 9 ?
 					mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel ) :
-					resolveFormattedLink( currentNode, titleLabel );
+					KnowledgeGraphNodes.resolveFormattedLink( currentNode, titleLabel );
 
 				if ( linkUrl ) {
 					const linkDisplayLabel = currentNode && currentNode.label ? currentNode.label.replace( /\n/g, ' ' ) : titleLabel;
@@ -1084,7 +572,7 @@ ${ propertyOptions }|show-property-type=true
 				// its linked pages' properties (those recursive calls hit depth>=maxDepth
 				// and return immediately, so they cost a cheap Title::isKnown() check
 				// each but no additional API calls).
-				loadNodes( { title, properties: null, depth: 1 } ).then( ( data ) => {
+				self.loadNodes( { title, properties: null, depth: 1 } ).then( ( data ) => {
 					const properties = ( data[ title ] && data[ title ].properties ) || {};
 					const propKeys = Object.keys( properties );
 
@@ -1103,7 +591,7 @@ ${ propertyOptions }|show-property-type=true
 
 							// check if this property's canonical edge already exists in the graph
 							const existsInGraph = ( property.values || [] ).some( ( value ) => {
-								const built = buildNodeAndEdgeFromValue( title, property, value, {}, false );
+								const built = self.buildNodeAndEdgeFromValue( title, property, value, {}, false );
 								return !!self.Edges.get( built.edgeId );
 							} );
 
@@ -1145,7 +633,7 @@ ${ propertyOptions }|show-property-type=true
 						const nodeColor = self.PropColors[ property.canonicalLabel ];
 
 						( property.values || [] ).forEach( ( value ) => {
-							const built = buildNodeAndEdgeFromValue( title, property, value, {}, false );
+							const built = self.buildNodeAndEdgeFromValue( title, property, value, {}, false );
 							const existingEdge = self.Edges.get( built.edgeId );
 
 							if ( existingEdge ) {
@@ -1168,7 +656,7 @@ ${ propertyOptions }|show-property-type=true
 									fontColor = '#000000';
 								}
 								self.graphModel.addNode( jQuery.extend( {}, built.nodeConfig, {
-									label: wrapLabel( built.nodeConfig.label, 20 ),
+									label: KnowledgeGraphLegend.wrapLabel( built.nodeConfig.label, 20 ),
 									color: nodeColor,
 									font: jQuery.extend( {}, self.Config.graphOptions.nodes.font, {
 										size: self.Config.graphOptions.nodes.font.size || 30,
@@ -1176,7 +664,7 @@ ${ propertyOptions }|show-property-type=true
 									} )
 								} ) );
 							} else if ( property.typeId === '_wpg' ) {
-								addArticleNode( self.Data, built.targetId, {}, 9 );
+								self.addArticleNode( self.Data, built.targetId, {}, 9 );
 							}
 
 							self.graphModel.addEdge( jQuery.extend( {}, built.edgeConfig, { label: legendLabel } ) );
@@ -1186,7 +674,7 @@ ${ propertyOptions }|show-property-type=true
 							}
 							self.PropIdPropLabelMap[ legendLabel ].push( built.targetId );
 
-							addLegendEntry( property.canonicalLabel, legendLabel, nodeColor );
+							self.addLegendEntry( property.canonicalLabel, legendLabel, nodeColor );
 						} );
 					} );
 				} ).catch( ( err ) => {
@@ -1200,7 +688,7 @@ ${ propertyOptions }|show-property-type=true
 				if ( !edge || !edge.label ) {
 					return;
 				}
-				const cleanedLabel = cleanLabel( edge.label );
+				const cleanedLabel = KnowledgeGraphLegend.cleanLabel( edge.label );
 				const propertyTitle = 'Property:' + cleanedLabel.split( ' ' ).join( '_' );
 
 				const li = document.createElement( 'li' );
@@ -1226,48 +714,6 @@ ${ propertyOptions }|show-property-type=true
 				$menu.hide();
 			} );
 		} );
-	}
-
-	function recursiveDeleteAllChildren( nodeId ) {
-		const edges = self.Edges.get().filter( ( e ) => e.from === nodeId );
-		edges.forEach( ( edge ) => {
-			const childId = edge.to;
-			recursiveDeleteAllChildren.call( self, childId );
-			self.graphModel.removeEdge( edge.id );
-			self.graphModel.removeNode( childId );
-		} );
-		self.graphModel.removeNode( nodeId );
-	}
-
-	// Resolves the link a non-wikipage node should open (double-click/context-menu),
-	// based on the link-formatter metadata KnowledgeGraph.php attached to the node:
-	// an already-substituted External Identifier (_eid/_PEFU) URL, or a Keyword
-	// (_keyw/_FORMAT_SCHEMA) node built client-side as a Special:Ask query. Returns
-	// null when no formatter is configured, i.e. the value has nothing to link to.
-	function resolveFormattedLink( node, valueLabel ) {
-		if ( !node ) {
-			return null;
-		}
-
-		if ( node.formattedUrl ) {
-			return node.formattedUrl;
-		}
-
-		if ( node.hasKeywordAskFormatter && node.askPropertyLabel ) {
-			const condition = `[[${ node.askPropertyLabel }::${ valueLabel }]]`;
-			return mw.util.getUrl( 'Special:Ask', { q: condition } );
-		}
-
-		return null;
-	}
-
-	function cleanLabel( label ) {
-		label = label.trim();
-		if ( label.startsWith( '-' ) ) {
-			label = label.slice( 1 );
-		}
-		label = label.replace( /\s*\([^)]*\)$/, '' );
-		return label.trim();
 	}
 
 	// Exposed so tests can exercise functions that read self.Config (e.g. loadNodes)
@@ -1377,9 +823,7 @@ ${ propertyOptions }|show-property-type=true
 						.replace( /^knowledgegraph-wrapper-\d+-/, '' )
 						.replace( /_/g, ' ' );
 
-					if ( typeof dispatchLegendClickEvent === 'function' ) {
-						dispatchLegendClickEvent.call( self, e, id );
-					} else if ( self.dispatchLegendClickEvent ) {
+					if ( typeof self.dispatchLegendClickEvent === 'function' ) {
 						self.dispatchLegendClickEvent( e, id );
 					}
 				}
@@ -1389,7 +833,7 @@ ${ propertyOptions }|show-property-type=true
 		}
 
 		// create nodes from config data
-		createNodes( self.Config.data || {} );
+		self.createNodes( self.Config.data || {} );
 		// attach context menu (per-instance)
 		attachContextMenuListener();
 
@@ -1398,7 +842,7 @@ ${ propertyOptions }|show-property-type=true
 			if ( !params.nodes.length ) {
 				return;
 			}
-			HideNodesRec( params.nodes[ 0 ] );
+			self.HideNodesRec( params.nodes[ 0 ] );
 		} );
 
 		self.Network.on( 'hoverNode', ( params ) => {
@@ -1438,7 +882,7 @@ ${ propertyOptions }|show-property-type=true
 
 				const url = nodeTypeId === 9 ?
 					mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel ) :
-					resolveFormattedLink( node, titleLabel );
+					KnowledgeGraphNodes.resolveFormattedLink( node, titleLabel );
 
 				if ( url ) {
 					window.open( url, '_blank' );
@@ -1450,16 +894,16 @@ ${ propertyOptions }|show-property-type=true
 	return {
 		initialize,
 		setConfig,
-		checkAndToogleId,
-		wrapLabel,
-		cleanLabel,
-		resolveFormattedLink,
-		loadNodes,
-		addLegendEntry,
-		removeLegendEntry,
-		dispatchLegendClickEvent,
-		HideNodesRec,
-		recursiveDeleteAllChildren,
+		checkAndToogleId: KnowledgeGraphLegend.checkAndToogleId,
+		wrapLabel: KnowledgeGraphLegend.wrapLabel,
+		cleanLabel: KnowledgeGraphLegend.cleanLabel,
+		resolveFormattedLink: KnowledgeGraphNodes.resolveFormattedLink,
+		loadNodes: self.loadNodes,
+		addLegendEntry: self.addLegendEntry,
+		removeLegendEntry: self.removeLegendEntry,
+		dispatchLegendClickEvent: self.dispatchLegendClickEvent,
+		HideNodesRec: self.HideNodesRec,
+		recursiveDeleteAllChildren: self.recursiveDeleteAllChildren,
 		self
 	};
 };

@@ -16,9 +16,12 @@
 		"KnowledgeGraphOptions": "writable",
 		"KnowledgeGraphDialog": "writable",
 		"KnowledgeGraphNonModalDialog": "writable",
+		"KnowledgeGraphToolbarFactory": "writable",
 		"KnowledgeGraphToolbar": "writable",
 		"KnowledgeGraphActionToolbar": "writable",
-		"KnowledgeGraphNonContextMenu": "writable"
+		"KnowledgeGraphNonContextMenu": "writable",
+		"KnowledgeGraphLegend": "writable",
+		"KnowledgeGraphNodes": "writable"
 	},
 	"env": {
 		"browser": true

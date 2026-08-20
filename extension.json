@@ -54,9 +54,12 @@
 				"KnowledgeGraphOptions.js",
 				"KnowledgeGraphNonModalDialog.js",
 				"KnowledgeGraphDialog.js",
+				"KnowledgeGraphToolbarFactory.js",
 				"KnowledgeGraphToolbar.js",
 				"KnowledgeGraphActionToolbar.js",
 				"KnowledgeGraphContextMenu.js",
+				"KnowledgeGraphLegend.js",
+				"KnowledgeGraphNodes.js",
 				"KnowledgeGraph.js"
 			],
 			"dependencies": [

@@ -51,46 +51,9 @@ KnowledgeGraphActionToolbar = ( function () {
 			}
 		] );
 
-		createToolGroup( toolFactory, 'selectSwitch', toolGroup );
+		KnowledgeGraphToolbarFactory.createToolGroup( toolFactory, 'selectSwitch', toolGroup );
 
 		return toolbar;
-	}
-
-	function createTool( obj ) {
-		const Tool = function () {
-			Tool.super.call( this, arguments[ 0 ] );
-
-			this.toggled = false;
-		};
-
-		OO.inheritClass( Tool, OO.ui.Tool );
-
-		Tool.prototype.onSelect = function () {
-			if ( obj.onSelect ) {
-				obj.onSelect.call( this );
-			} else {
-				this.toggled = !this.toggled;
-				this.setActive( this.toggled );
-			}
-		};
-
-		Tool.prototype.onUpdateState = function () {};
-
-		for ( const i in obj ) {
-			Tool.static[ i ] = obj[ i ];
-		}
-
-		Tool.static.displayBothIconAndLabel = true;
-
-		return Tool;
-	}
-
-	function createToolGroup( toolFactory, groupName, tools ) {
-		tools.forEach( ( tool ) => {
-			const obj = jQuery.extend( {}, tool );
-			obj.group = groupName;
-			toolFactory.register( createTool( obj ) );
-		} );
 	}
 
 	return {

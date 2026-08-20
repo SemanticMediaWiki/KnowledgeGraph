@@ -9,8 +9,11 @@ QUnit.module( 'ext.knowledgegraph.stubs', () => {
 			'KnowledgeGraphContextMenu.js': () => require( '../../resources/KnowledgeGraphContextMenu.js' ),
 			'KnowledgeGraphDialog.js': () => require( '../../resources/KnowledgeGraphDialog.js' ),
 			'KnowledgeGraphNonModalDialog.js': () => require( '../../resources/KnowledgeGraphNonModalDialog.js' ),
+			'KnowledgeGraphToolbarFactory.js': () => require( '../../resources/KnowledgeGraphToolbarFactory.js' ),
 			'KnowledgeGraphActionToolbar.js': () => require( '../../resources/KnowledgeGraphActionToolbar.js' ),
 			'KnowledgeGraphToolbar.js': () => require( '../../resources/KnowledgeGraphToolbar.js' ),
+			'KnowledgeGraphLegend.js': () => require( '../../resources/KnowledgeGraphLegend.js' ),
+			'KnowledgeGraphNodes.js': () => require( '../../resources/KnowledgeGraphNodes.js' ),
 			'KnowledgeGraph.js': () => require( '../../resources/KnowledgeGraph.js' )
 		};
 
