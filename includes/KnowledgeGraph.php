@@ -730,6 +730,20 @@ nodes=TestPage
 	}
 
 	/**
+	 * Returns the page's MediaWiki core DISPLAYTITLE value (e.g. set via the
+	 * {{DISPLAYTITLE:...}} magic word), with any HTML markup stripped since
+	 * it is used as a plain-text vis-network node label, or null if none is set.
+	 *
+	 * @param Title $title
+	 * @return string|null
+	 */
+	private static function getDisplayTitle( Title $title ) {
+		$displayTitle = MediaWikiServices::getInstance()->getPageProps()->getProperties( $title, 'displaytitle' );
+		$value = $displayTitle[$title->getArticleID()] ?? null;
+		return $value !== null ? trim( Sanitizer::stripAllTags( $value ) ) : null;
+	}
+
+	/**
 	 * Populates self::$data[$title->getFullText()] as a side effect; callers
 	 * read the result from that static property rather than a return value.
 	 *
@@ -752,6 +766,7 @@ nodes=TestPage
 			self::$data[$titleText] = [
 				'properties' => [],
 				'categories' => [],
+				'displayTitle' => self::getDisplayTitle( $title ),
 			];
 			return;
 		}
@@ -763,6 +778,7 @@ nodes=TestPage
 		self::$data[$titleText] = [
 			'properties' => [],
 			'categories' => [],
+			'displayTitle' => self::getDisplayTitle( $title ),
 		];
 
 		$apiParams = [

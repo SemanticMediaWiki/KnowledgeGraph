@@ -258,7 +258,8 @@ KnowledgeGraph = function () {
 			return;
 		}
 
-		const baseLabel = label.split( '#' )[ 0 ];
+		const displayTitle = data[ label ] && data[ label ].displayTitle;
+		const baseLabel = displayTitle || label.split( '#' )[ 0 ];
 
 		const nodeConfig = jQuery.extend(
 			JSON.parse( JSON.stringify( self.Config.graphOptions.nodes ) ),

@@ -33,7 +33,7 @@ class KnowledgeGraphSetSemanticDataFromApiTest extends TestCase {
 
 		$this->assertNull( $result );
 		$this->assertSame(
-			[ 'properties' => [], 'categories' => [] ],
+			[ 'properties' => [], 'categories' => [], 'displayTitle' => null ],
 			KnowledgeGraph::$data[ $title->getFullText() ]
 		);
 	}
