@@ -9,16 +9,6 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 	 */
 	protected $specialPage;
 
-	/**
-	 * @var specialKnowledgeGraphDesigner SpecialKnowledgeGraphDesigner mock object for testing.
-	 */
-	protected $specialKnowledgeGraphDesigner;
-
-	/**
-	 * @var outputPage OutputPage mock object for testing.
-	 */
-	protected $outputPage;
-
 	protected function setUp(): void {
 		parent::setUp();
 		$this->specialPage = new SpecialKnowledgeGraphDesigner();
@@ -27,14 +17,6 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 			'default' => [ '#1f77b4', '#ff7f0e', '#2ca02c' ],
 			'pastel'  => [ '#aec7e8', '#ffbb78', '#98df8a' ],
 		];
-
-		$this->outputPage = $this->getMockBuilder( '\OutputPage' )
-			->disableOriginalConstructor()
-			->getMock();
-
-		$this->specialKnowledgeGraphDesigner = $this->getMockBuilder( 'SpecialKnowledgeGraphDesigner' )
-			->onlyMethods( [ 'getOutput' ] )
-			->getMock();
 	}
 
 	/**
@@ -48,38 +30,23 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 	 * @covers SpecialKnowledgeGraphDesigner::execute
 	 */
 	public function testExecuteSetsHeadersAndOutput() {
-		$this->specialKnowledgeGraphDesigner->expects( $this->any() )
-									  ->method( 'getOutput' )
-									  ->willReturn( $this->outputPage );
+		$specialPage = new SpecialKnowledgeGraphDesigner();
+		$specialPage->execute( '' );
 
-		$output = $this->specialKnowledgeGraphDesigner->getOutput();
+		$output = $specialPage->getOutput();
 
 		$this->assertInstanceOf( OutputPage::class, $output );
-		$this->assertNotNull( $output );
+		$this->assertSame( $specialPage->getDescription()->text(), $output->getPageTitle() );
 	}
 
 	/**
 	 * @covers SpecialKnowledgeGraphDesigner::execute
 	 */
 	public function testExecuteAddsModules() {
-		$this->specialKnowledgeGraphDesigner->expects( $this->any() )
-									  ->method( 'getOutput' )
-									  ->willReturn( $this->outputPage );
+		$specialPage = new SpecialKnowledgeGraphDesigner();
+		$specialPage->execute( '' );
 
-		$output = $this->specialKnowledgeGraphDesigner->getOutput();
-
-		// Set up the mock to expect addModules to be called with 'ext.KnowledgeGraph'
-		$value = $this->equalTo( [ 'ext.KnowledgeGraph' ] );
-		$this->outputPage->expects( $this->once() )
-						 ->method( 'addModules' )
-						 ->with( $value );
-
-		// Execute the special page
-		$this->specialKnowledgeGraphDesigner->execute( '' );
-
-		// Assertions
-		$this->assertTrue( true );
-		$this->assertNotNull( $output );
+		$this->assertContains( 'ext.KnowledgeGraph', $specialPage->getOutput()->getModules() );
 	}
 
 	/**
