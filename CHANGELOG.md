@@ -6,6 +6,10 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-21
+
+Adds per-article property visibility control and DISPLAYTITLE-aware node labels, plus a large batch of graph-interaction, localization, and permission-check fixes.
+
 ### Added
 - Article/page nodes now show the page's MediaWiki `{{DISPLAYTITLE:...}}` value as their vis-network label when one is set, instead of always showing the raw page title; `KnowledgeGraph::setSemanticDataFromApi()` resolves it server-side via `PageProps::getProperties()` (HTML-stripped, since it renders as a plain-text label) and includes it as a new `displayTitle` field alongside `properties`/`categories` for each title entry, which `addArticleNode()` in `KnowledgeGraph.js` uses in place of the title string when present; the internal node `id` (used for edges/links) is unaffected, only the rendered label changes
 - `KnowledgeGraph.js`'s Designer dialog, "By article" tab: the results panel's "Has properties:" list previously only displayed the article's properties as a plain, non-interactive bullet list, with no way to control which properties render as visible on import. It now renders one unchecked `OO.ui.CheckboxInputWidget` per property (via a `FieldsetLayout`, matching the dialog's existing OOUI form controls); every property is still loaded into the graph's underlying node/edge data on "Done" (so nothing has to be re-fetched later), but only the checked properties' nodes/edges start out visible -- unchecked ones are added with `hidden: true` and can be revealed later the same way any other hidden node already can be (e.g. via the existing property legend or by clicking a connected node). The "By properties"/"By categories" tabs are unaffected ([#16](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/16))
