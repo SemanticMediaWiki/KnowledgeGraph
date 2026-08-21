@@ -422,18 +422,46 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 	 */
 	public function testSkipsEntirelyWhenActingUserCannotReadThePage() {
 		$this->setGroupPermissions( '*', 'read', false );
+		RequestContext::getMain()->setUser( User::newFromName( '127.0.0.1', false ) );
 
 		$this->insertPage( 'KGParserFunctionNoReadNode' );
 		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionNoReadCallerPage' );
-		$anonUser = User::newFromName( '127.0.0.1', false );
 
 		$result = $this->callParserFunction(
 			$title,
-			[ 'nodes=KGParserFunctionNoReadNode', 'depth=0' ],
-			$anonUser
+			[ 'nodes=KGParserFunctionNoReadNode', 'depth=0' ]
 		);
 
 		$this->assertSame( '', $result );
 		$this->assertSame( [], KnowledgeGraph::$graphs );
+	}
+
+	/**
+	 * Reproduces https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/102:
+	 * MediaWiki's "canonical" parse (the one whose ParserOutput is shareable
+	 * across readers, which a save triggers via
+	 * ParserOptions::newCanonical('canonical')) always carries an anonymous
+	 * UserIdentity for that parse - regardless of who is actually saving. On a
+	 * wiki with anonymous read disabled, checking that anonymous identity
+	 * (i.e. $parser->getUserIdentity()) meant the read-permission check failed
+	 * for every save from every user, logged in or not. The check must use the
+	 * real requesting user (the main request context's user) instead.
+	 */
+	public function testDoesNotSkipWhenParserUserIsAnonymousButRealRequestUserCanRead() {
+		$this->setGroupPermissions( '*', 'read', false );
+		RequestContext::getMain()->setUser( $this->getTestSysop()->getUser() );
+
+		$this->insertPage( 'KGParserFunctionCanonicalParseNode' );
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionCanonicalParseCallerPage' );
+		$anonParserUser = User::newFromName( '127.0.0.1', false );
+
+		$result = $this->callParserFunction(
+			$title,
+			[ 'nodes=KGParserFunctionCanonicalParseNode', 'depth=0' ],
+			$anonParserUser
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertSame( [ 'KGParserFunctionCanonicalParseNode' ], KnowledgeGraph::$graphs[0]['nodes'] );
 	}
 }

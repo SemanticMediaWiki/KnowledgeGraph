@@ -274,12 +274,19 @@ class KnowledgeGraph {
 		// only reads and renders SMW data (it records no page annotations of its
 		// own), it's safe to skip it entirely whenever the acting user can't read
 		// the page being parsed.
+		//
+		// Deliberately check the *real* requesting user (the main request context's
+		// user) rather than $parser->getUserIdentity(): MediaWiki's "canonical" parse
+		// - the one whose ParserOutput is shareable across readers and is what a save
+		// triggers via ParserOptions::newCanonical('canonical') - always uses an
+		// anonymous UserIdentity for that parse, regardless of who is actually saving.
+		// On a wiki with anonymous read disabled (the common case for the wikis this
+		// extension is used on), checking that anonymous identity meant this check
+		// failed for every save from every user, logged in or not - not just for the
+		// closed-wiki-anonymous-maintenance-script case it was written for.
+		$requestUser = self::getMainRequestContext()->getUser();
 		if (
-			!MediaWikiServices::getInstance()->getPermissionManager()->userCan(
-				'read',
-				User::newFromIdentity( $parser->getUserIdentity() ),
-				$title
-			)
+			!MediaWikiServices::getInstance()->getPermissionManager()->userCan( 'read', $requestUser, $title )
 		) {
 			return '';
 		}
