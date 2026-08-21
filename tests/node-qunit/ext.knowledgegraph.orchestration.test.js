@@ -1671,6 +1671,70 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				} );
 			} );
 
+			// Regression test: two distinct properties (e.g. "Address" and "Main
+			// Address") can annotate the same composed string value, which
+			// buildNodeAndEdgeFromValue() resolves to the same targetId via
+			// makeNodeId() -- the node is shared, but each property still gets its
+			// own edge/edgeId (makeEdgeId() includes the property's canonical
+			// label). Toggling one property off must not hide the shared target
+			// node while the other property's edge into it is still visible, or
+			// vis-network silently stops rendering that still-visible edge (it
+			// never draws an edge whose target node is hidden).
+			QUnit.test(
+				'clicking a visible property entry does not hide the shared target node when another visible property still points to it',
+				( assert ) => {
+					const sharedValue = 'Hollywood Ave, NJ 07004 Fairfield United States';
+					const addressProperty = {
+						key: 'Address', canonicalLabel: 'Address', preferredLabel: '',
+						typeId: '_txt', inverse: false, values: [ { value: sharedValue, type: 2 } ]
+					};
+					const mainAddressProperty = {
+						key: 'Main Address', canonicalLabel: 'Main Address', preferredLabel: '',
+						typeId: '_txt', inverse: false, values: [ { value: sharedValue, type: 2 } ]
+					};
+					api = stubLoadNodesApi( 'Site', {
+						Address: addressProperty,
+						'Main Address': mainAddressProperty
+					} );
+
+					const targetId = KnowledgeGraphFunctions.makeNodeId( sharedValue, 2 );
+					const addressEdgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', targetId, 'Address' );
+					const mainAddressEdgeId = KnowledgeGraphFunctions.makeEdgeId( 'Site', targetId, 'Main Address' );
+
+					// "Address" is already selected/visible (as if chosen in the
+					// add-node wizard); "Main Address" is not yet shown.
+					graph.self.Edges.add( { id: addressEdgeId, from: 'Site', to: targetId, label: 'Address', hidden: false } );
+					graph.self.Edges.add( { id: mainAddressEdgeId, from: 'Site', to: targetId, label: 'Main Address', hidden: true } );
+					graph.self.Nodes.add( { id: targetId, typeID: 2, hidden: false } );
+
+					// getConnectedEdges() is stubbed to always return [] (see
+					// stubs/mw-oo-stubs.js); override it here to reflect that both
+					// edges actually connect to the shared target node, exactly as
+					// the real vis.Network would report.
+					graph.self.Network.getConnectedEdges = ( nodeId ) => (
+						nodeId === targetId ? [ addressEdgeId, mainAddressEdgeId ] : []
+					);
+
+					return openMenuFor( 'Site' ).then( ( entries ) => {
+						const mainAddressEntry = entries.find( ( li ) => li.dataset.propKey === 'Main Address' );
+
+						// toggle Main Address ON
+						$( mainAddressEntry ).trigger( 'click' );
+						assert.false( graph.self.Edges.get( mainAddressEdgeId ).hidden, 'Main Address edge is now visible' );
+						assert.false( graph.self.Nodes.get( targetId ).hidden, 'shared target node is (still) visible' );
+
+						// toggle Main Address OFF again
+						$( mainAddressEntry ).trigger( 'click' );
+						assert.true( graph.self.Edges.get( mainAddressEdgeId ).hidden, 'Main Address edge is hidden again' );
+						assert.false( graph.self.Edges.get( addressEdgeId ).hidden, 'Address edge is untouched and still visible' );
+						assert.false(
+							graph.self.Nodes.get( targetId ).hidden,
+							'shared target node stays visible because the Address edge into it is still visible'
+						);
+					} );
+				}
+			);
+
 			QUnit.test( 'clicking a brand-new _wpg property creates a node and edge using the canonical namespace prefix', ( assert ) => {
 				const property = {
 					key: 'Main Category', canonicalLabel: 'Main Category', preferredLabel: '',

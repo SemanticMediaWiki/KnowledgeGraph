@@ -657,10 +657,28 @@ ${ propertyOptions }|show-property-type=true
 								// flip its visibility, and that of its target node, rather
 								// than removing/recreating it (matches the hidden-flag
 								// visibility model used elsewhere, e.g. createNodes()).
+								//
+								// Two distinct properties can resolve to the same targetId
+								// (e.g. "Address" and "Main Address" annotating the same
+								// composed string value, see issue with shared makeNodeId()) --
+								// the target node must only be hidden once every edge into it
+								// is hidden too, or toggling one property off would yank a
+								// still-visible sibling property's edge into a hidden node
+								// (vis-network never renders an edge whose target is hidden).
 								const newHidden = !existingEdge.hidden;
 								self.Edges.update( { id: built.edgeId, hidden: newHidden } );
 								if ( self.Nodes.get( built.targetId ) ) {
-									self.Nodes.update( { id: built.targetId, hidden: newHidden } );
+									const otherVisibleEdgeExists = self.Network.getConnectedEdges( built.targetId )
+										.some( ( connectedEdgeId ) => {
+											if ( connectedEdgeId === built.edgeId ) {
+												return false;
+											}
+											const connectedEdge = self.Edges.get( connectedEdgeId );
+											return connectedEdge && !connectedEdge.hidden;
+										} );
+									if ( !newHidden || !otherVisibleEdgeExists ) {
+										self.Nodes.update( { id: built.targetId, hidden: newHidden } );
+									}
 								}
 								return;
 							}
