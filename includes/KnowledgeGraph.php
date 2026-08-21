@@ -346,18 +346,23 @@ nodes=TestPage
 			}
 		}
 
-		$data = [];
-		$relationsSeen = [];
+		// Resolve only title existence here -- not the semantic data itself. Recursively
+		// resolving each root node's data via setSemanticDataFromApi() (a nested, synchronous
+		// ApiMain call per node) used to happen inline during the parse, which made this
+		// parser function's output only as reliable as that SMW round-trip: any timing issue
+		// affecting the parse (see #102) froze an empty/partial result into the ParserOutput
+		// until a manual purge. The client now fetches the actual data asynchronously after
+		// the page loads (see ext.KnowledgeGraph's loadInitialGraph()), via the same
+		// setSemanticDataFromApi() call, so a parse only ever needs to survive a handful of
+		// cheap, in-process Title lookups to produce a fully self-healing render.
+		$rootNodes = [];
 		foreach ( $params['nodes'] as $titleText ) {
 			$title_ = Title::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
-				if ( !isset( $data[$title_->getFullText()] ) ) {
-					self::setSemanticDataFromApi(
-						$title_, $params['properties'], 0, $params['depth'], $data, $relationsSeen
-					);
-				}
+				$rootNodes[] = $title_->getFullText();
 			}
 		}
+		$params['nodes'] = $rootNodes;
 
 		$graphOptions = [];
 		if ( !empty( $params['graph-options'] ) ) {
@@ -389,7 +394,9 @@ nodes=TestPage
 			$propertyOptions[$property] = $attributes;
 		}
 
-		$params['data'] = $data;
+		// Phase 2 (client-side, see resources/KnowledgeGraphNodes.js's loadInitialGraph())
+		// populates this asynchronously after the page loads; deliberately empty here.
+		$params['data'] = [];
 		$params['graphOptions'] = $graphOptions;
 		$params['propertyOptions'] = $propertyOptions;
 

@@ -9,7 +9,12 @@
 	"apihelp-knowledgegraph-load-nodes-summary": "retrieve semantic properties of given articles",
 	"apihelp-knowledgegraph-load-nodes-example-1": "",
 	"apihelp-knowledgegraph-load-nodes-param-pageids": "",
-	
+
+	"apihelp-knowledgegraph-load-graph-summary": "retrieve the semantic data for a {{#knowledgegraph:}} call's root nodes, recursively",
+	"apihelp-knowledgegraph-load-graph-example-1": "",
+
+	"knowledgegraph-load-error": "Failed to load the graph data.",
+
 	"specialpages-group-knowledgegraph": "KnowledgeGraph",
 	"knowledgegraphdesigner": "KnowledgeGraph Designer",
 	

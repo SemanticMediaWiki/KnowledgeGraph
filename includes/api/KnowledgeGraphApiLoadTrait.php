@@ -88,6 +88,27 @@ trait KnowledgeGraphApiLoadTrait {
 	abstract protected function getTitlesToLoad( array $params ): iterable;
 
 	/**
+	 * Shared implementation for the common "titles" param shape (a `|`-separated
+	 * list of title texts, yielded only if known), used by every getTitlesToLoad()
+	 * that loads a fixed list of titles rather than deriving one from another
+	 * source (e.g. category membership). Kept as one concrete method rather than
+	 * duplicated per subclass so the two never drift apart.
+	 *
+	 * @param string $pipeList
+	 * @return iterable<string, Title>
+	 */
+	final protected function resolveKnownTitles( string $pipeList ): iterable {
+		foreach ( explode( '|', $pipeList ) as $titleText ) {
+			$title_ = Title::newFromText( $titleText );
+			if ( !$title_ || !$title_->isKnown() ) {
+				continue;
+			}
+
+			yield $titleText => $title_;
+		}
+	}
+
+	/**
 	 * Returns the list of properties to load for the given title.
 	 *
 	 * @param array $params

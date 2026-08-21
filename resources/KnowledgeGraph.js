@@ -33,6 +33,7 @@ KnowledgeGraph = function () {
 	self.id = null;
 	self.LastDepth = null;
 	self.LastSelectedTab = null;
+	self.StatusOverlay = null;
 	self.colors = mw.config.get( 'wgKnowledgeGraphColorPalette' );
 
 	// mix in the label/ID/legend-state helpers (addLegendEntry, removeLegendEntry,
@@ -746,6 +747,42 @@ ${ propertyOptions }|show-property-type=true
 		self.Config = config;
 	}
 
+	// new vis.Network() below takes over `container` and renders its own canvas into
+	// it, discarding the server-rendered "Graph is loading..." placeholder immediately
+	// -- so the busy/error state while Phase 2's data fetch is pending has to be a
+	// separate overlay on top of the (now-empty) network, not that original text.
+	function showBusyState() {
+		if ( self.StatusOverlay || !self.Container ) {
+			return;
+		}
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'KnowledgeGraph-status KnowledgeGraph-status-loading';
+		overlay.textContent = mw.msg( 'knowledge-graph-wrapper-loading' );
+		self.Container.style.position = self.Container.style.position || 'relative';
+		self.Container.appendChild( overlay );
+		self.StatusOverlay = overlay;
+	}
+
+	function hideBusyState() {
+		if ( self.StatusOverlay ) {
+			self.StatusOverlay.remove();
+			self.StatusOverlay = null;
+		}
+	}
+
+	function showErrorState() {
+		hideBusyState();
+		if ( !self.Container ) {
+			return;
+		}
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'KnowledgeGraph-status KnowledgeGraph-status-error';
+		overlay.textContent = mw.msg( 'knowledgegraph-load-error' );
+		self.Container.style.position = self.Container.style.position || 'relative';
+		self.Container.appendChild( overlay );
+		self.StatusOverlay = overlay;
+	}
+
 	function initialize( container, containerToolbar, containerOptions, config ) {
 		// set instance id from container (or generate)
 		self.id = container && container.id ? container.id : 'knowledgegraph-' + Date.now() + '-' + Math.random().toString( 36 ).slice( 2, 7 );
@@ -856,8 +893,22 @@ ${ propertyOptions }|show-property-type=true
 			self.LegendDiv = LegendDiv;
 		}
 
-		// create nodes from config data
-		self.createNodes( self.Config.data || {} );
+		// create nodes from config data -- config.data arrives already populated only for
+		// a page still served from a pre-migration ParserCache entry (see #102); otherwise
+		// it's fetched asynchronously here. Either way createNodes() receives the same
+		// data shape and is the single code path that turns it into rendered nodes/edges.
+		if ( config.data && Object.keys( config.data ).length > 0 ) {
+			self.createNodes( config.data );
+		} else {
+			showBusyState();
+			self.loadInitialGraph( config ).then( ( data ) => {
+				hideBusyState();
+				self.InitialData = JSON.parse( JSON.stringify( data ) );
+				self.createNodes( data );
+			} ).catch( () => {
+				showErrorState();
+			} );
+		}
 		// attach context menu (per-instance)
 		attachContextMenuListener();
 
@@ -923,6 +974,7 @@ ${ propertyOptions }|show-property-type=true
 		cleanLabel: KnowledgeGraphLegend.cleanLabel,
 		resolveFormattedLink: KnowledgeGraphNodes.resolveFormattedLink,
 		loadNodes: self.loadNodes,
+		loadInitialGraph: self.loadInitialGraph,
 		addLegendEntry: self.addLegendEntry,
 		removeLegendEntry: self.removeLegendEntry,
 		dispatchLegendClickEvent: self.dispatchLegendClickEvent,

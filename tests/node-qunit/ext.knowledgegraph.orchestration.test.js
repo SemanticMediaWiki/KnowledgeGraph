@@ -540,6 +540,139 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			assert.strictEqual( graphWithout.self.LegendDiv, null, 'self.LegendDiv stays null when properties-panel is disabled' );
 		} );
 
+		QUnit.module( 'initialize async load (see #102)', ( asyncHooks ) => {
+
+			let api;
+
+			// Stubs mw.Api().get() so loadInitialGraph() (called internally by
+			// initialize() whenever config.data is empty) resolves/rejects with a
+			// given response, in the same server-canonical shape
+			// KnowledgeGraphApiLoadGraph.php returns. Mirrors stubLoadNodesApi()
+			// below, adapted for get() instead of postWithToken().
+			function stubLoadInitialGraphApi( data ) {
+				const OriginalApi = mw.Api;
+				const getCalls = [];
+				const postWithTokenCalls = [];
+				mw.Api = function () {};
+				mw.Api.prototype.get = function ( payload ) {
+					getCalls.push( payload );
+					return {
+						done( fn ) {
+							if ( data !== null ) {
+								fn( { 'knowledgegraph-load-graph': { data: JSON.stringify( data ) } } );
+							}
+							return this;
+						},
+						fail( fn ) {
+							if ( data === null ) {
+								fn( {} );
+							}
+							return this;
+						}
+					};
+				};
+				mw.Api.prototype.postWithToken = function ( tokenType, payload ) {
+					postWithTokenCalls.push( payload );
+					return {
+						done() {
+							return this;
+						},
+						fail() {
+							return this;
+						}
+					};
+				};
+				return {
+					getCalls,
+					postWithTokenCalls,
+					restore() {
+						mw.Api = OriginalApi;
+					}
+				};
+			}
+
+			asyncHooks.afterEach( () => {
+				if ( api ) {
+					api.restore();
+					api = null;
+				}
+			} );
+
+			QUnit.test( 'renders the fetched data and clears the busy overlay once the fetch resolves', async ( assert ) => {
+				const container = document.createElement( 'div' );
+				api = stubLoadInitialGraphApi( { Foo: { properties: {}, categories: [] } } );
+
+				graph.initialize( container, null, null, makeConfig( {
+					data: {},
+					nodes: [ 'Foo' ]
+				} ) );
+
+				await waitOneTick();
+
+				assert.true( !!graph.self.Nodes.get( 'Foo' ), 'createNodes() was called with the fetched data' );
+				assert.strictEqual( graph.self.StatusOverlay, null, 'the busy overlay is cleared once data arrives' );
+			} );
+
+			QUnit.test( 'shows an error overlay when the fetch is rejected', async ( assert ) => {
+				const container = document.createElement( 'div' );
+				api = stubLoadInitialGraphApi( null );
+
+				graph.initialize( container, null, null, makeConfig( {
+					data: {},
+					nodes: [ 'Foo' ]
+				} ) );
+
+				await waitOneTick();
+
+				assert.true( !!graph.self.StatusOverlay, 'an overlay is shown when the fetch rejects' );
+				assert.true(
+					graph.self.StatusOverlay.classList.contains( 'KnowledgeGraph-status-error' ),
+					'the overlay carries the error class'
+				);
+			} );
+
+			QUnit.test( 'does not fetch when config.data already carries embedded data (pre-migration cached page)', ( assert ) => {
+				const container = document.createElement( 'div' );
+				api = stubLoadInitialGraphApi( { ShouldNotBeUsed: { properties: {}, categories: [] } } );
+
+				graph.initialize( container, null, null, makeConfig( {
+					data: { Foo: { properties: {}, categories: [] } }
+				} ) );
+
+				assert.strictEqual( api.getCalls.length, 0, 'loadInitialGraph()/mw.Api().get() is never called' );
+				assert.true( !!graph.self.Nodes.get( 'Foo' ), 'createNodes() ran synchronously with the embedded data' );
+				assert.strictEqual(
+					graph.self.StatusOverlay,
+					null,
+					'no busy overlay is shown for the synchronous, already-populated path'
+				);
+			} );
+
+			QUnit.test( 'loadInitialGraph() requests via a plain GET, never postWithToken (no CSRF round-trip)', async ( assert ) => {
+				const container = document.createElement( 'div' );
+				api = stubLoadInitialGraphApi( { Foo: { properties: {}, categories: [] } } );
+
+				graph.initialize( container, null, null, makeConfig( {
+					data: {},
+					nodes: [ 'Foo', 'Bar' ],
+					properties: [ 'HasProperty1' ],
+					depth: 2
+				} ) );
+
+				await waitOneTick();
+
+				assert.strictEqual( api.postWithTokenCalls.length, 0, 'postWithToken() is never invoked for the initial load' );
+				assert.strictEqual( api.getCalls.length, 1, 'get() is invoked exactly once' );
+				assert.deepEqual( api.getCalls[ 0 ], {
+					action: 'knowledgegraph-load-graph',
+					titles: 'Foo|Bar',
+					properties: 'HasProperty1',
+					depth: 2
+				}, 'the payload carries the root titles/properties/depth from config' );
+			} );
+
+		} );
+
 	} );
 
 	QUnit.module( 'dialog callbacks (via a real MyDialog captured from openDialog)', ( moduleHooks ) => {

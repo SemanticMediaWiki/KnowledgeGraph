@@ -296,7 +296,7 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		$this->assertTrue( $resultA['isHTML'] );
 	}
 
-	public function testDataIsNotCarriedOverToSubsequentCalls() {
+	public function testNodesAreNotCarriedOverToSubsequentCalls() {
 		$this->insertPage( 'KGParserFunctionResetNode' );
 
 		$titleA = Title::makeTitle( NS_MAIN, 'KGParserFunctionResetPageA' );
@@ -304,14 +304,11 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 
 		$this->callParserFunction( $titleA, [ 'nodes=KGParserFunctionResetNode', 'depth=0' ] );
 
-		$this->assertArrayHasKey(
-			'KGParserFunctionResetNode',
-			KnowledgeGraph::$graphs[0]['data']
-		);
+		$this->assertSame( [ 'KGParserFunctionResetNode' ], KnowledgeGraph::$graphs[0]['nodes'] );
 
 		$this->callParserFunction( $titleB, [] );
 
-		$this->assertArrayNotHasKey( 'KGParserFunctionResetNode', KnowledgeGraph::$graphs[0]['data'] );
+		$this->assertSame( [], KnowledgeGraph::$graphs[0]['nodes'] );
 	}
 
 	/**
@@ -325,6 +322,9 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 	 * JS config array built from getExtensionData() in onOutputPageParserOutput().
 	 */
 	public function testGraphIndexAndDataDoNotLeakBetweenParserOutputs() {
+		$this->insertPage( 'KGParserFunctionLeakNodeA' );
+		$this->insertPage( 'KGParserFunctionLeakNodeB' );
+
 		$titleA = Title::makeTitle( NS_MAIN, 'KGParserFunctionLeakPageA' );
 		$titleB = Title::makeTitle( NS_MAIN, 'KGParserFunctionLeakPageB' );
 
@@ -346,19 +346,47 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		$this->assertSame( [ 'KGParserFunctionLeakNodeB' ], $graphsB[0]['nodes'] );
 	}
 
-	public function testKnownNodeTriggersSetSemanticDataFromApi() {
+	/**
+	 * Reproduces https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/102:
+	 * the parser function used to resolve each root node's semantic data
+	 * synchronously via setSemanticDataFromApi() during the parse itself, which
+	 * tied the rendered graph's correctness to the parse's timing (e.g. a save's
+	 * redirect race could freeze an empty result into the ParserOutput). It now
+	 * only resolves title existence at parse time; the client fetches the actual
+	 * data asynchronously afterwards (see ext.KnowledgeGraph's loadInitialGraph()).
+	 */
+	public function testKnownNodeIsResolvedIntoNodesWithoutCallingSetSemanticDataFromApi() {
 		$this->insertPage( 'KGParserFunctionKnownNode' );
 		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionKnownNodeCallerPage' );
 
 		$this->callParserFunction( $title, [ 'nodes=KGParserFunctionKnownNode', 'depth=0' ] );
 
-		$this->assertArrayHasKey( 'KGParserFunctionKnownNode', KnowledgeGraph::$graphs[0]['data'] );
+		$this->assertSame( [ 'KGParserFunctionKnownNode' ], KnowledgeGraph::$graphs[0]['nodes'] );
+		$this->assertSame( [], KnowledgeGraph::$graphs[0]['data'] );
 	}
 
 	public function testUnknownNodeIsSkipped() {
 		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionUnknownNodeCallerPage' );
 
 		$this->callParserFunction( $title, [ 'nodes=KGParserFunctionNodeDoesNotExistAnywhere', 'depth=0' ] );
+
+		$this->assertSame( [], KnowledgeGraph::$graphs[0]['nodes'] );
+	}
+
+	/**
+	 * Locks in that the parser function never resolves semantic data itself
+	 * (see #102), regardless of the params given -- guards against regressing
+	 * back to synchronous setSemanticDataFromApi() resolution during the parse.
+	 */
+	public function testDataIsAlwaysEmptyRegardlessOfParams() {
+		$this->insertPage( 'KGParserFunctionAlwaysEmptyDataNode' );
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionAlwaysEmptyDataCallerPage' );
+
+		$this->callParserFunction( $title, [
+			'nodes=KGParserFunctionAlwaysEmptyDataNode',
+			'properties=HasProperty1',
+			'depth=3',
+		] );
 
 		$this->assertSame( [], KnowledgeGraph::$graphs[0]['data'] );
 	}

@@ -173,6 +173,29 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 	}
 
 	/**
+	 * Regression test: getPropertiesForTitle() previously ignored the `properties`
+	 * param entirely and always loaded every discoverable property via
+	 * KnowledgeGraph::getAllPropertiesForNode(), silently dropping an explicit
+	 * allow-list if this endpoint were ever reused for a full graph load (see
+	 * KnowledgeGraphApiLoadGraph). It now honors `properties` when given.
+	 */
+	public function testPropertiesParamFiltersLoadedProperties() {
+		$this->insertPage( 'KGTestPropsFilterNode' );
+		\DeferredUpdates::doUpdates();
+
+		$storeMock = $this->injectStoreMock();
+		$this->stubEmptySemanticDataAndPropertySubjects( $storeMock );
+
+		$data = $this->runLoadNodes( [
+			'titles' => 'KGTestPropsFilterNode',
+			'properties' => 'HasProperty1',
+			'depth' => 1,
+		] );
+
+		$this->assertSame( [], $data['KGTestPropsFilterNode']['properties'] );
+	}
+
+	/**
 	 * A title listed twice in the same request's `titles` list must not be
 	 * reprocessed the second time: setSemanticDataFromApi() must not be
 	 * invoked again once the accumulated $data already holds the entry from

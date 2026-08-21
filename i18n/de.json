@@ -8,6 +8,8 @@
 	"knowledge-graph-desc": "Stellt den Wissensgraph in Semantic MediaWiki mittels VisNetwork.js dar.",
 	"knowledge-graph-wrapper-loading": "Wissensgraph lädt...",
 	"apihelp-knowledgegraph-load-nodes-summary": "rufe Attribute der angegebenen Seiten ab",
+	"apihelp-knowledgegraph-load-graph-summary": "rufe rekursiv die semantischen Daten der Wurzelknoten eines {{#knowledgegraph:}}-Aufrufs ab",
+	"knowledgegraph-load-error": "Die Graphdaten konnten nicht geladen werden.",
 	"specialpages-group-knowledgegraph": "KnowledgeGraph",
 	"knowledgegraphdesigner": "KnowledgeGraph Designer",
 	"knowledgegraph-knowledgegraphdesigner-label": "KnowledgeGraph Designer",

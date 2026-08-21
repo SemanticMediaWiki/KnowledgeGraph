@@ -2,6 +2,26 @@
 	border: 1px solid #ccc;
 }
 
+.KnowledgeGraph-status {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba( 255, 255, 255, 0.85 );
+	font-style: italic;
+	color: #54595d;
+	z-index: 1;
+}
+
+.KnowledgeGraph-status-error {
+	color: #d33;
+	font-style: normal;
+}
+
 .KnowledgeGraphPopupMenu {
 	position: absolute;
 	top: 0px;

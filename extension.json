@@ -24,12 +24,14 @@
 		"KnowledgeGraphApiLoadTrait": "includes/api/KnowledgeGraphApiLoadTrait.php",
 		"KnowledgeGraphApiLoadNodes": "includes/api/KnowledgeGraphApiLoadNodes.php",
 		"KnowledgeGraphApiLoadProperties": "includes/api/KnowledgeGraphApiLoadProperties.php",
-		"KnowledgeGraphApiLoadCategories": "includes/api/KnowledgeGraphApiLoadCategories.php"
+		"KnowledgeGraphApiLoadCategories": "includes/api/KnowledgeGraphApiLoadCategories.php",
+		"KnowledgeGraphApiLoadGraph": "includes/api/KnowledgeGraphApiLoadGraph.php"
 	},
 	"APIModules": {
 		"knowledgegraph-load-nodes": "KnowledgeGraphApiLoadNodes",
 		"knowledgegraph-load-properties": "KnowledgeGraphApiLoadProperties",
-		"knowledgegraph-load-categories": "KnowledgeGraphApiLoadCategories"
+		"knowledgegraph-load-categories": "KnowledgeGraphApiLoadCategories",
+		"knowledgegraph-load-graph": "KnowledgeGraphApiLoadGraph"
 	},
 	"SpecialPages": {
 		"KnowledgeGraphDesigner": "SpecialKnowledgeGraphDesigner"
@@ -83,6 +85,7 @@
 			],
 			"position":"top",
 			"messages": [
+				"knowledge-graph-wrapper-loading",
 				"knowledgegraph-toolbar-info",
 				"knowledgegraph-toolbar-help",
 				"knowledgegraph-graph-options-message",
@@ -116,6 +119,7 @@
 				"knowledgegraph-dialog-results-select-properties-hint",
 				"knowledgegraph-dialog-results-importing-nodes",
 				"knowledgegraph-menu-no-properties",
+				"knowledgegraph-load-error",
 				"knowledgegraph-copied-to-clipboard",
 				"knowledgegraph-copy-failed",
 				"knowledgegraph-toolbar-reset-network",
