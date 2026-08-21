@@ -392,6 +392,14 @@ nodes=TestPage
 		$params['data'] = $data;
 		$params['graphOptions'] = $graphOptions;
 		$params['propertyOptions'] = $propertyOptions;
+
+		// Accumulate on the ParserOutput itself (not a static class property):
+		// a static array persists for the lifetime of the PHP worker process
+		// and is shared by any concurrent or subsequent parse handled by that
+		// worker, so a page's graphs could pick up stale entries from an
+		// unrelated ParserOutput - or the graphs for this page could leak into
+		// one for a later parse - depending on request interleaving.
+		self::$graphs = $out->getExtensionData( 'knowledgegraphs' ) ?? [];
 		self::$graphs[] = $params;
 
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
@@ -579,6 +587,33 @@ nodes=TestPage
 
 			// add the required JavaScript module if graphs are present
 			$out->addModules( 'ext.KnowledgeGraph' );
+		}
+	}
+
+	/**
+	 * The AJAX edit-stash (triggered by the classic wikitext editor as soon as the
+	 * summary field gets focus, i.e. before Save is clicked) speculatively parses
+	 * whatever the textarea holds at that moment and may later be reused verbatim
+	 * as the canonical ParserOutput for the real save, if MediaWiki considers its
+	 * content hash a match. Since this parser function's output additionally
+	 * depends on live external SMW API data resolved during that speculative
+	 * parse, letting a stashed run be promoted as canonical risks serving a
+	 * mistimed or otherwise inconsistent render until the next manual purge.
+	 * Marking it uncacheable here (checked via ParserOutput::getCacheExpiry() in
+	 * PageEditStash::storeStashValue()) makes MediaWiki skip stashing it, so a
+	 * real save always triggers a real, current parse instead.
+	 *
+	 * @see https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/102
+	 * @param WikiPage $page
+	 * @param Content $content
+	 * @param ParserOutput $output
+	 * @param string $summary
+	 * @param User $user
+	 * @return void
+	 */
+	public static function onParserOutputStashForEdit( $page, $content, $output, $summary, $user ) {
+		if ( $output->getExtensionData( 'knowledgegraphs' ) !== null ) {
+			$output->updateCacheExpiry( 0 );
 		}
 	}
 

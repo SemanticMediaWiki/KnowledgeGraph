@@ -38,6 +38,7 @@
 		"BeforePageDisplay":"KnowledgeGraph::onBeforePageDisplay",
 		"ParserFirstCallInit": "KnowledgeGraph::onParserFirstCallInit",
 		"OutputPageParserOutput": "KnowledgeGraph::onOutputPageParserOutput",
+		"ParserOutputStashForEdit": "KnowledgeGraph::onParserOutputStashForEdit",
 		"SidebarBeforeOutput": "KnowledgeGraph::onSidebarBeforeOutput"
 	},
 	"ResourceModules":{

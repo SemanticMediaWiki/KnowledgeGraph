@@ -17,6 +17,9 @@ use MediaWiki\Title\Title;
  */
 class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegrationTestCase {
 
+	/** @var ParserOutput|null set by newParserMock() to the ParserOutput of the most recently created Parser mock */
+	private static $lastParserOutput;
+
 	protected function setUp(): void {
 		parent::setUp();
 
@@ -48,6 +51,7 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 
 	private function newParserMock( Title $title, ?\MediaWiki\User\UserIdentity $user = null ): Parser {
 		$parserOutput = new ParserOutput();
+		self::$lastParserOutput = $parserOutput;
 
 		$parser = $this->createMock( Parser::class );
 		$parser->method( 'getOutput' )->willReturn( $parserOutput );
@@ -280,11 +284,11 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 	}
 
 	public function testReturnsHtmlWrapperWithRunningIndexAcrossMultipleCalls() {
-		$titleA = Title::makeTitle( NS_MAIN, 'KGParserFunctionWrapperPageA' );
-		$titleB = Title::makeTitle( NS_MAIN, 'KGParserFunctionWrapperPageB' );
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionWrapperPage' );
+		$parser = $this->newParserMock( $title );
 
-		$resultA = $this->callParserFunction( $titleA, [] );
-		$resultB = $this->callParserFunction( $titleB, [] );
+		$resultA = KnowledgeGraph::parserFunctionKnowledgeGraph( $parser );
+		$resultB = KnowledgeGraph::parserFunctionKnowledgeGraph( $parser );
 
 		$this->assertStringContainsString( 'knowledgegraph-wrapper-0', $resultA[0] );
 		$this->assertStringContainsString( 'knowledgegraph-wrapper-1', $resultB[0] );
@@ -307,7 +311,39 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 
 		$this->callParserFunction( $titleB, [] );
 
-		$this->assertArrayNotHasKey( 'KGParserFunctionResetNode', KnowledgeGraph::$graphs[1]['data'] );
+		$this->assertArrayNotHasKey( 'KGParserFunctionResetNode', KnowledgeGraph::$graphs[0]['data'] );
+	}
+
+	/**
+	 * Reproduces https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/102:
+	 * self::$graphs previously was a static class property that accumulated
+	 * across every parse handled by the same PHP worker process, instead of
+	 * being scoped to the specific ParserOutput being built. A page with no
+	 * {{#knowledgegraph:}} calls of its own could inherit another page's
+	 * graphs, and a page's own graphs could be numbered starting above 0,
+	 * desyncing the "knowledge-graph-wrapper-N" divs from the "knowledgegraphs"
+	 * JS config array built from getExtensionData() in onOutputPageParserOutput().
+	 */
+	public function testGraphIndexAndDataDoNotLeakBetweenParserOutputs() {
+		$titleA = Title::makeTitle( NS_MAIN, 'KGParserFunctionLeakPageA' );
+		$titleB = Title::makeTitle( NS_MAIN, 'KGParserFunctionLeakPageB' );
+
+		$resultA = $this->callParserFunction( $titleA, [ 'nodes=KGParserFunctionLeakNodeA' ] );
+		$parserOutputA = self::$lastParserOutput;
+
+		$resultB = $this->callParserFunction( $titleB, [ 'nodes=KGParserFunctionLeakNodeB' ] );
+		$parserOutputB = self::$lastParserOutput;
+
+		$this->assertStringContainsString( 'knowledgegraph-wrapper-0', $resultA[0] );
+		$this->assertStringContainsString( 'knowledgegraph-wrapper-0', $resultB[0] );
+
+		$graphsA = $parserOutputA->getExtensionData( 'knowledgegraphs' );
+		$graphsB = $parserOutputB->getExtensionData( 'knowledgegraphs' );
+
+		$this->assertCount( 1, $graphsA );
+		$this->assertCount( 1, $graphsB );
+		$this->assertSame( [ 'KGParserFunctionLeakNodeA' ], $graphsA[0]['nodes'] );
+		$this->assertSame( [ 'KGParserFunctionLeakNodeB' ], $graphsB[0]['nodes'] );
 	}
 
 	public function testKnownNodeTriggersSetSemanticDataFromApi() {
