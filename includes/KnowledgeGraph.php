@@ -411,6 +411,23 @@ nodes=TestPage
 
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
 
+		// A page carrying a graph is never written to the ParserCache at all (see
+		// #102): MediaWiki's own save-time decision on whether to write the
+		// ParserCache synchronously (before the post-save redirect) or defer it
+		// until after the redirect (DerivedPageDataUpdater::triggerParserCacheUpdate(),
+		// taken whenever the saving user's ParserOptions don't match the
+		// canonical/reader ones) can let the redirect-follow GET's own,
+		// independently-parsed ParserOutput win the race and persist as the
+		// cached version - even one containing this graph, since that race is
+		// about which parse's *output* gets written, not about this parser
+		// function running at all. There is no way for this extension to
+		// influence that core decision from inside the parse. Making the page
+		// entirely uncacheable sidesteps it instead: since Phase 1 (above) no
+		// longer does any SMW/API work, a full reparse on every view is cheap,
+		// and "always fresh" is strictly stronger than "usually fresh, silently
+		// empty on an unlucky save".
+		$out->updateCacheExpiry( 0 );
+
 		$paletteName = $params['palette'] ?? 'default';
 		$palettes = $GLOBALS['wgKnowledgeGraphColorPalettes'] ?? [ 'default' => self::DEFAULT_COLOR_PALETTE ];
 		$colors = $palettes[$paletteName] ?? $palettes['default'];

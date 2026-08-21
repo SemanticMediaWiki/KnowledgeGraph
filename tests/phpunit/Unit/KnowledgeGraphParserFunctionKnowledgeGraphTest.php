@@ -283,6 +283,25 @@ class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegratio
 		$this->assertFalse( $jsConfigVars['KnowledgeGraphDisableCredits'] );
 	}
 
+	/**
+	 * Reproduces https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/102:
+	 * even after Phase 1 was slimmed down to only resolve title existence (no
+	 * more SMW/API calls during the parse), a page carrying a graph could still
+	 * be written to the ParserCache with an empty ParserOutput, if a save's
+	 * redirect-follow GET raced ahead and its own, independently-parsed output
+	 * won the write. Making the page fully uncacheable sidesteps that race
+	 * entirely: MediaWiki never persists it, so a stale/empty version can never
+	 * be served from cache in the first place. See KnowledgeGraph.php's
+	 * updateCacheExpiry(0) call for the full rationale.
+	 */
+	public function testGraphPageIsMarkedUncacheable() {
+		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionUncacheablePage' );
+
+		$this->callParserFunction( $title, [] );
+
+		$this->assertSame( 0, self::$lastParserOutput->getCacheExpiry() );
+	}
+
 	public function testReturnsHtmlWrapperWithRunningIndexAcrossMultipleCalls() {
 		$title = Title::makeTitle( NS_MAIN, 'KGParserFunctionWrapperPage' );
 		$parser = $this->newParserMock( $title );
