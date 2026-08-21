@@ -176,8 +176,9 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 	 * Regression test: getPropertiesForTitle() previously ignored the `properties`
 	 * param entirely and always loaded every discoverable property via
 	 * KnowledgeGraph::getAllPropertiesForNode(), silently dropping an explicit
-	 * allow-list if this endpoint were ever reused for a full graph load (see
-	 * KnowledgeGraphApiLoadGraph). It now honors `properties` when given.
+	 * allow-list. getAllowedParams() already declared `properties` as an accepted
+	 * param, but it was dead code before this fix. It now honors `properties`
+	 * when given.
 	 */
 	public function testPropertiesParamFiltersLoadedProperties() {
 		$this->insertPage( 'KGTestPropsFilterNode' );

@@ -17,7 +17,14 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 	 * @inheritDoc
 	 */
 	protected function getTitlesToLoad( array $params ): iterable {
-		return $this->resolveKnownTitles( $params['titles'] );
+		foreach ( explode( '|', $params['titles'] ) as $titleText ) {
+			$title_ = Title::newFromText( $titleText );
+			if ( !$title_ || !$title_->isKnown() ) {
+				continue;
+			}
+
+			yield $titleText => $title_;
+		}
 	}
 
 	/**

@@ -353,23 +353,18 @@ nodes=TestPage
 			}
 		}
 
-		// Resolve only title existence here -- not the semantic data itself. Recursively
-		// resolving each root node's data via setSemanticDataFromApi() (a nested, synchronous
-		// ApiMain call per node) used to happen inline during the parse, which made this
-		// parser function's output only as reliable as that SMW round-trip: any timing issue
-		// affecting the parse (see #102) froze an empty/partial result into the ParserOutput
-		// until a manual purge. The client now fetches the actual data asynchronously after
-		// the page loads (see ext.KnowledgeGraph's loadInitialGraph()), via the same
-		// setSemanticDataFromApi() call, so a parse only ever needs to survive a handful of
-		// cheap, in-process Title lookups to produce a fully self-healing render.
-		$rootNodes = [];
+		$data = [];
+		$relationsSeen = [];
 		foreach ( $params['nodes'] as $titleText ) {
 			$title_ = Title::newFromText( $titleText );
 			if ( $title_ && $title_->isKnown() ) {
-				$rootNodes[] = $title_->getFullText();
+				if ( !isset( $data[$title_->getFullText()] ) ) {
+					self::setSemanticDataFromApi(
+						$title_, $params['properties'], 0, $params['depth'], $data, $relationsSeen
+					);
+				}
 			}
 		}
-		$params['nodes'] = $rootNodes;
 
 		$graphOptions = [];
 		if ( !empty( $params['graph-options'] ) ) {
@@ -401,9 +396,7 @@ nodes=TestPage
 			$propertyOptions[$property] = $attributes;
 		}
 
-		// Phase 2 (client-side, see resources/KnowledgeGraphNodes.js's loadInitialGraph())
-		// populates this asynchronously after the page loads; deliberately empty here.
-		$params['data'] = [];
+		$params['data'] = $data;
 		$params['graphOptions'] = $graphOptions;
 		$params['propertyOptions'] = $propertyOptions;
 
@@ -417,23 +410,6 @@ nodes=TestPage
 		self::$graphs[] = $params;
 
 		$out->setExtensionData( 'knowledgegraphs', self::$graphs );
-
-		// A page carrying a graph is never written to the ParserCache at all (see
-		// #102): MediaWiki's own save-time decision on whether to write the
-		// ParserCache synchronously (before the post-save redirect) or defer it
-		// until after the redirect (DerivedPageDataUpdater::triggerParserCacheUpdate(),
-		// taken whenever the saving user's ParserOptions don't match the
-		// canonical/reader ones) can let the redirect-follow GET's own,
-		// independently-parsed ParserOutput win the race and persist as the
-		// cached version - even one containing this graph, since that race is
-		// about which parse's *output* gets written, not about this parser
-		// function running at all. There is no way for this extension to
-		// influence that core decision from inside the parse. Making the page
-		// entirely uncacheable sidesteps it instead: since Phase 1 (above) no
-		// longer does any SMW/API work, a full reparse on every view is cheap,
-		// and "always fresh" is strictly stronger than "usually fresh, silently
-		// empty on an unlucky save".
-		$out->updateCacheExpiry( 0 );
 
 		$paletteName = $params['palette'] ?? 'default';
 		$palettes = $GLOBALS['wgKnowledgeGraphColorPalettes'] ?? [ 'default' => self::DEFAULT_COLOR_PALETTE ];

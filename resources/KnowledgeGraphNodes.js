@@ -92,41 +92,6 @@ KnowledgeGraphNodes = ( function () {
 			} );
 		}
 
-		// Fetches the semantic data for a {{#knowledgegraph:}} call's root nodes,
-		// recursively, via the read-only knowledgegraph-load-graph endpoint -- the
-		// initial-render counterpart to loadNodes()'s interactive, authenticated
-		// on-demand loads. Uses a plain GET (no CSRF token) since it's read-only and
-		// must also work for anonymous/logged-out page views (see #102: the parser
-		// function itself no longer resolves this data synchronously during the parse).
-		function loadInitialGraph( config ) {
-			const payload = {
-				action: 'knowledgegraph-load-graph',
-				titles: ( config.nodes || [] ).join( '|' ),
-				properties: ( config.properties || [] ).join( '|' ),
-				depth: config.depth
-			};
-
-			return new Promise( ( resolve, reject ) => {
-				mw.loader.using( 'mediawiki.api', () => {
-					new mw.Api()
-						.get( payload )
-						.done( ( thisRes ) => {
-							const moduleRes = thisRes && thisRes[ payload.action ];
-							if ( moduleRes && 'data' in moduleRes ) {
-								resolve( JSON.parse( moduleRes.data ) );
-							} else {
-								reject();
-							}
-						} )
-						.fail( ( thisRes ) => {
-							// eslint-disable-next-line no-console
-							console.error( payload.action, thisRes );
-							reject( thisRes );
-						} );
-				} );
-			} );
-		}
-
 		function addArticleNode( data, label, options, typeID ) {
 			if ( self.Nodes.get( label ) !== null ) {
 				return;
@@ -454,7 +419,6 @@ KnowledgeGraphNodes = ( function () {
 
 		return {
 			loadNodes,
-			loadInitialGraph,
 			addArticleNode,
 			getVisibleTargetLabels,
 			buildNodeAndEdgeFromValue,
