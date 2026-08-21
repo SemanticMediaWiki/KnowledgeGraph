@@ -48,10 +48,11 @@ function createInitializedDialog( config, callbacks ) {
 QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 
 	hooks.beforeEach( () => {
-		// TabPanelOneLayout.initialize() reads Object.entries() over this --
-		// it throws if left undefined, so every test that calls initialize()
-		// needs a default.
+		// TabPanelOneLayout.initialize() reads Object.keys()/wgFormattedNamespaces
+		// lookups over these -- they throw if left undefined, so every test that
+		// calls initialize() needs a default.
 		mw.config.set( 'wgExtraNamespaces', {} );
+		mw.config.set( 'wgFormattedNamespaces', {} );
 	} );
 
 	QUnit.test( 'static.actions has the expected 5 entries', ( assert ) => {
@@ -126,8 +127,12 @@ QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 
 	QUnit.module( 'TabPanelOneLayout (by-article)', () => {
 
-		QUnit.test( 'namespace dropdown includes the main-namespace entry plus one per wgExtraNamespaces entry', ( assert ) => {
+		QUnit.test( 'namespace dropdown includes the main-namespace entry plus one per wgExtraNamespaces entry, labeled from wgFormattedNamespaces', ( assert ) => {
 			mw.config.set( 'wgExtraNamespaces', { 102: 'Property', 14: 'Category' } );
+			// wgFormattedNamespaces is MediaWiki core's display-oriented map -- here
+			// it differs from the canonical wgExtraNamespaces label to prove the
+			// dropdown label is sourced from it, not from wgExtraNamespaces.
+			mw.config.set( 'wgFormattedNamespaces', { 102: 'Eigenschaft', 14: 'Kategorie' } );
 
 			const dialog = createInitializedDialog( { depth: 2 } );
 
@@ -135,10 +140,10 @@ QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 				dialog.namespaceDropdown.config.options,
 				[
 					{ data: 0, label: 'knowledgegraph-dialog-main-namespace' },
-					{ data: 14, label: 'Category' },
-					{ data: 102, label: 'Property' }
+					{ data: 102, label: 'Eigenschaft' },
+					{ data: 14, label: 'Kategorie' }
 				],
-				'options include main namespace plus each extra namespace, with data parsed as an int'
+				'options include main namespace plus each extra namespace, labeled via wgFormattedNamespaces and with data parsed as an int'
 			);
 		} );
 
@@ -148,6 +153,12 @@ QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 				103: 'Property_talk',
 				14: 'Category',
 				15: 'Category_talk'
+			} );
+			mw.config.set( 'wgFormattedNamespaces', {
+				102: 'Property',
+				103: 'Property talk',
+				14: 'Category',
+				15: 'Category talk'
 			} );
 
 			const dialog = createInitializedDialog( { depth: 2 } );
@@ -165,6 +176,7 @@ QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 
 		QUnit.test( 'namespace dropdown sorts extra namespaces alphabetically by label, not by id', ( assert ) => {
 			mw.config.set( 'wgExtraNamespaces', { 200: 'Zebra', 100: 'Alpha', 300: 'Middle' } );
+			mw.config.set( 'wgFormattedNamespaces', { 200: 'Zebra', 100: 'Alpha', 300: 'Middle' } );
 
 			const dialog = createInitializedDialog( { depth: 2 } );
 
@@ -177,6 +189,22 @@ QUnit.module( 'ext.knowledgegraph.dialog', ( hooks ) => {
 					{ data: 200, label: 'Zebra' }
 				],
 				'extra namespaces are ordered by label alphabetically, independent of their numeric id order'
+			);
+		} );
+
+		QUnit.test( 'namespace dropdown label falls back to the raw wgExtraNamespaces name when wgFormattedNamespaces has no entry for it', ( assert ) => {
+			mw.config.set( 'wgExtraNamespaces', { 102: 'Property_Name' } );
+			mw.config.set( 'wgFormattedNamespaces', {} );
+
+			const dialog = createInitializedDialog( { depth: 2 } );
+
+			assert.deepEqual(
+				dialog.namespaceDropdown.config.options,
+				[
+					{ data: 0, label: 'knowledgegraph-dialog-main-namespace' },
+					{ data: 102, label: 'Property_Name' }
+				],
+				'without a wgFormattedNamespaces entry, the option label falls back to the raw wgExtraNamespaces name'
 			);
 		} );
 

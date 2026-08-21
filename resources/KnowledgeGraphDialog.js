@@ -89,9 +89,21 @@ KnowledgeGraphDialog = ( function () {
 			// something that could include -1/-2 Special/Media) are offered, sorted
 			// alphabetically by label since the raw registration order (by id) is
 			// not a useful order to scan once there are more than a handful.
-			const extraNamespaceOptions = Object.entries( mw.config.get( 'wgExtraNamespaces' ) )
-				.map( ( [ id, label ] ) => ( { data: parseInt( id, 10 ), label } ) )
-				.filter( ( { data } ) => data >= 0 && data % 2 === 0 )
+			//
+			// wgExtraNamespaces itself only carries the canonical registration name
+			// (English, "_" instead of spaces) -- wgFormattedNamespaces is MediaWiki
+			// core's display-oriented map, converting "_" to spaces and applying any
+			// interface-language translation actually registered for that namespace
+			// (falls back to the canonical name otherwise). Only the id set is taken
+			// from wgExtraNamespaces; the label comes from wgFormattedNamespaces so
+			// the dropdown matches what interface language / namespace localization
+			// would otherwise show, e.g. in the sidebar namespace selector.
+			const formattedNamespaces = mw.config.get( 'wgFormattedNamespaces' ) || {};
+			const extraNamespaces = mw.config.get( 'wgExtraNamespaces' );
+			const extraNamespaceOptions = Object.keys( extraNamespaces )
+				.map( ( id ) => parseInt( id, 10 ) )
+				.filter( ( id ) => id >= 0 && id % 2 === 0 )
+				.map( ( id ) => ( { data: id, label: formattedNamespaces[ id ] || extraNamespaces[ id ] } ) )
 				.sort( ( a, b ) => a.label.localeCompare( b.label ) );
 
 			self.namespaceDropdown = new OO.ui.DropdownInputWidget( {
