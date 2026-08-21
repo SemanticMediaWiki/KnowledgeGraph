@@ -178,7 +178,8 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 	 * KnowledgeGraph::getAllPropertiesForNode(), silently dropping an explicit
 	 * allow-list. getAllowedParams() already declared `properties` as an accepted
 	 * param, but it was dead code before this fix. It now honors `properties`
-	 * when given.
+	 * when given. The client (KnowledgeGraphNodes.js) sends this param as a
+	 * JSON-encoded array, not a pipe-delimited string.
 	 */
 	public function testPropertiesParamFiltersLoadedProperties() {
 		$this->insertPage( 'KGTestPropsFilterNode' );
@@ -189,11 +190,34 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 
 		$data = $this->runLoadNodes( [
 			'titles' => 'KGTestPropsFilterNode',
-			'properties' => 'HasProperty1',
+			'properties' => json_encode( [ 'HasProperty1' ] ),
 			'depth' => 1,
 		] );
 
 		$this->assertSame( [], $data['KGTestPropsFilterNode']['properties'] );
+	}
+
+	/**
+	 * Regression test for the empty-selection wire format: the client sends
+	 * `properties=[]` (JSON.stringify() of an empty array) to mean "no filter,
+	 * load every discoverable property" -- not "filter to zero properties".
+	 * A naive `!empty($params['properties'])` check treats the non-empty
+	 * string "[]" as a real filter and silently drops every property.
+	 */
+	public function testEmptyPropertiesParamLoadsAllProperties() {
+		$this->insertPage( 'KGTestPropsEmptyFilterNode' );
+		\DeferredUpdates::doUpdates();
+
+		$storeMock = $this->injectStoreMock();
+		$this->stubEmptySemanticDataAndPropertySubjects( $storeMock );
+
+		$data = $this->runLoadNodes( [
+			'titles' => 'KGTestPropsEmptyFilterNode',
+			'properties' => json_encode( [] ),
+			'depth' => 1,
+		] );
+
+		$this->assertArrayHasKey( 'KGTestPropsEmptyFilterNode', $data );
 	}
 
 	/**

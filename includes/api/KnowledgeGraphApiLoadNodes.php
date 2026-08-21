@@ -31,8 +31,9 @@ class KnowledgeGraphApiLoadNodes extends ApiBase {
 	 * @inheritDoc
 	 */
 	protected function getPropertiesForTitle( array $params, Title $title_, string $titleText ): array {
-		if ( !empty( $params['properties'] ) ) {
-			return explode( '|', $params['properties'] );
+		$properties = json_decode( $params['properties'] ?? '', true );
+		if ( is_array( $properties ) && $properties !== [] ) {
+			return $properties;
 		}
 		return \KnowledgeGraph::getAllPropertiesForNode( $titleText );
 	}
