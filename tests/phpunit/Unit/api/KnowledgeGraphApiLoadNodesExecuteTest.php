@@ -16,7 +16,33 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
+
+		// SMW keeps several process-lifetime static caches/singletons
+		// (CachingSemanticDataLookup, StoreFactory, ServicesFactory, its
+		// DataValueFactory/Exporter, and cached DB connections held by the
+		// connection manager) that MediaWikiIntegrationTestCase's per-test
+		// service/DB resets never touch. Left in place, a real-store lookup
+		// here can silently return another test method's stale result (or a
+		// connection without this test's unittest_ table prefix) instead of
+		// hitting this test's own fixtures. Mirrors
+		// KnowledgeGraphApiLoadPropertiesExecuteTest::setUp() and SMW's own
+		// tests/phpunit/SMWIntegrationTestCase.php::resetSMWServices().
+		// SMW\Export\Exporter only exists since SMW 7.x (also class_exists-
+		// guarded here since the CI matrix includes SMW 6.0.1).
+		// releaseConnections() must run before ServicesFactory::clear(): that
+		// call discards the ServicesFactory-held ConnectionManager instance,
+		// so releasing connections on the *new* one afterwards is a no-op.
+		\SMW\Services\ServicesFactory::getInstance()->getConnectionManager()->releaseConnections();
+
+		\SMW\DataValueFactory::getInstance()->clear();
+		if ( class_exists( \SMW\Export\Exporter::class ) ) {
+			\SMW\Export\Exporter::clear();
+		}
+		\SMW\SQLStore\EntityStore\CachingSemanticDataLookup::clear();
 		\SMW\StoreFactory::clear();
+		\SMW\Services\ServicesFactory::clear();
+		\SMW\PropertyRegistry::clear();
+
 		\KnowledgeGraph::initSMW();
 	}
 
@@ -180,21 +206,43 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 	 * param, but it was dead code before this fix. It now honors `properties`
 	 * when given. The client (KnowledgeGraphNodes.js) sends this param as a
 	 * JSON-encoded array, not a pipe-delimited string.
+	 *
+	 * Uses a real, annotated fixture page (not the empty-store mock used by the
+	 * other tests in this class) so the assertion can actually distinguish
+	 * "filtered to the allow-list" from "there was nothing to filter in the first
+	 * place": the fixture carries two distinct properties, only one of which is
+	 * requested, so an unfiltered/inverted result would show up as a difference.
+	 * Same real-store-fixture pattern as KnowledgeGraphApiLoadPropertiesExecuteTest
+	 * ::testInversePropsIncludedWithRealStoreFixture(), including the same
+	 * environment-specific skip guard documented there.
 	 */
 	public function testPropertiesParamFiltersLoadedProperties() {
-		$this->insertPage( 'KGTestPropsFilterNode' );
+		$this->insertPage(
+			'KGTestPropsFilterNode',
+			'[[KGTestFilterKept::Value1]] [[KGTestFilterDropped::Value2]]'
+		);
 		\DeferredUpdates::doUpdates();
 
-		$storeMock = $this->injectStoreMock();
-		$this->stubEmptySemanticDataAndPropertySubjects( $storeMock );
+		\KnowledgeGraph::initSMW();
+
+		$subject = \SMW\DIWikiPage::newFromTitle( \MediaWiki\Title\Title::newFromText( 'KGTestPropsFilterNode' ) );
+		if ( \SMW\StoreFactory::getStore()->getSemanticData( $subject )->isEmpty() ) {
+			$this->markTestSkipped(
+				'SMW never wrote semantic data for the fixture page in this environment - ' .
+				'see KnowledgeGraphApiLoadPropertiesExecuteTest::testInversePropsIncludedWithRealStoreFixture() ' .
+				'for the known, environment-specific gap this guards against.'
+			);
+		}
 
 		$data = $this->runLoadNodes( [
 			'titles' => 'KGTestPropsFilterNode',
-			'properties' => json_encode( [ 'HasProperty1' ] ),
+			'properties' => json_encode( [ 'KGTestFilterKept' ] ),
 			'depth' => 1,
 		] );
 
-		$this->assertSame( [], $data['KGTestPropsFilterNode']['properties'] );
+		$properties = $data['KGTestPropsFilterNode']['properties'];
+		$this->assertArrayHasKey( 'KGTestFilterKept', $properties );
+		$this->assertArrayNotHasKey( 'KGTestFilterDropped', $properties );
 	}
 
 	/**
