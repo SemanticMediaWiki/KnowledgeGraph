@@ -344,22 +344,24 @@ KnowledgeGraph = function () {
 				break;
 			case 'export-graph':
 				{
-					const nodes = [];
+					// Export only what's currently visible in the graph -- not every
+					// title/property depth-recursion happened to load along the way
+					// (self.Data/self.Nodes/self.Edges hold all of that, hidden or not),
+					// since re-inserting the snippet should reproduce what the user
+					// actually sees, not silently re-expand the whole depth-3 traversal.
+					const nodes = self.Nodes.get()
+						.filter( ( node ) => !node.hidden && node.typeID === 9 )
+						.map( ( node ) => node.id );
+
 					const properties = [];
 					let propertyOptions = '';
-					for ( const i in self.Data ) {
-						if ( !nodes.includes( i ) ) {
-							nodes.push( i );
-						}
-						if ( self.Data[ i ] === null ) {
+					for ( const edge of self.Edges.get() ) {
+						if ( edge.hidden || !edge.canonicalLabel ) {
 							continue;
 						}
-						for ( const ii in self.Data[ i ].properties ) {
-							const property = self.Data[ i ].properties[ ii ];
-							if ( !properties.includes( property.canonicalLabel ) ) {
-								properties.push( property.canonicalLabel );
-								propertyOptions += `|property-options?${ property.canonicalLabel }=\n`;
-							}
+						if ( !properties.includes( edge.canonicalLabel ) ) {
+							properties.push( edge.canonicalLabel );
+							propertyOptions += `|property-options?${ edge.canonicalLabel }=\n`;
 						}
 					}
 
@@ -685,7 +687,11 @@ ${ propertyOptions }|show-property-type=true
 								self.addArticleNode( self.Data, built.targetId, { wanted: true }, 9 );
 							}
 
-							self.graphModel.addEdge( jQuery.extend( {}, built.edgeConfig, { label: legendLabel, wanted: true } ) );
+							self.graphModel.addEdge( jQuery.extend( {}, built.edgeConfig, {
+								label: legendLabel,
+								wanted: true,
+								canonicalLabel: property.canonicalLabel
+							} ) );
 
 							if ( !( legendLabel in self.PropIdPropLabelMap ) ) {
 								self.PropIdPropLabelMap[ legendLabel ] = [];

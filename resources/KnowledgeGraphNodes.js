@@ -341,6 +341,7 @@ KnowledgeGraphNodes = ( function () {
 					// exactly that original selection instead of showing every
 					// property depth-recursion happened to load along the way.
 					const wanted = !hidden;
+					const canonicalLabel = property.canonicalLabel;
 
 					switch ( property.typeId ) {
 						case '_wpg':
@@ -353,7 +354,7 @@ KnowledgeGraphNodes = ( function () {
 								const edgeConfig = jQuery.extend(
 									JSON.parse( JSON.stringify( self.Config.graphOptions.edges ) ),
 									built.edgeConfig,
-									{ label: propLabel, wanted }
+									{ label: propLabel, wanted, canonicalLabel }
 								);
 
 								self.graphModel.addEdge( edgeConfig );
@@ -383,7 +384,7 @@ KnowledgeGraphNodes = ( function () {
 								self.PropIdPropLabelMap[ legendLabel ].push( built.targetId );
 
 								const edgeConfig = jQuery.extend(
-									{}, built.edgeConfig, { label: propLabel, wanted }
+									{}, built.edgeConfig, { label: propLabel, wanted, canonicalLabel }
 								);
 								self.Edges.add( edgeConfig );
 

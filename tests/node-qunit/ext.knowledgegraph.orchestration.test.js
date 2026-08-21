@@ -1116,9 +1116,8 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			const ExportGraphTool = toolbarTools[ 'export-graph' ];
 			const clipboard = stubClipboardExport();
 
-			graph.self.Data = {
-				NodeA: { properties: { P1: { canonicalLabel: 'Has_Author' } } }
-			};
+			graph.self.Nodes.add( { id: 'NodeA', typeID: 9, hidden: false } );
+			graph.self.Edges.add( { id: 'e1', from: 'NodeA', to: 'AuthorValue', hidden: false, canonicalLabel: 'Has_Author' } );
 
 			const instance = new ExportGraphTool( {} );
 			instance.onSelect();
@@ -1133,6 +1132,28 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 					'alert() is called with the copied-to-clipboard message once the clipboard write resolves'
 				);
 			} ).finally( clipboard.restore );
+		} );
+
+		QUnit.test( "'export-graph' excludes hidden nodes/properties -- e.g. those never selected in the wizard, only loaded by depth-recursion", ( assert ) => {
+			const ExportGraphTool = toolbarTools[ 'export-graph' ];
+			const clipboard = stubClipboardExport();
+
+			graph.self.Nodes.add( { id: 'VisibleNode', typeID: 9, hidden: false } );
+			graph.self.Nodes.add( { id: 'HiddenNode', typeID: 9, hidden: true } );
+			graph.self.Nodes.add( { id: 'ValueNode#2', typeID: 2, hidden: false } );
+			graph.self.Edges.add( { id: 'e1', from: 'VisibleNode', to: 'ValueNode#2', hidden: false, canonicalLabel: 'Country' } );
+			graph.self.Edges.add( { id: 'e2', from: 'VisibleNode', to: 'HiddenNode', hidden: true, canonicalLabel: 'Main_Category' } );
+
+			const instance = new ExportGraphTool( {} );
+			instance.onSelect();
+
+			const copied = clipboard.getCopiedText();
+			assert.true( copied.includes( 'nodes=VisibleNode' ), 'the visible wikipage node is included' );
+			assert.false( copied.includes( 'HiddenNode' ), 'the hidden wikipage node is excluded' );
+			assert.true( copied.includes( 'properties=Country' ), 'the property behind a visible edge is included' );
+			assert.false( copied.includes( 'Main_Category' ), 'the property behind a hidden edge is excluded' );
+
+			return clipboard.restore();
 		} );
 
 		QUnit.test( "'export-graph' falls back to legacyCopy and alerts the localized failure message when execCommand throws", ( assert ) => {
@@ -1153,9 +1174,7 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				throw new Error( 'copy command is disabled' );
 			};
 
-			graph.self.Data = {
-				NodeA: { properties: {} }
-			};
+			graph.self.Nodes.add( { id: 'NodeA', typeID: 9, hidden: false } );
 
 			try {
 				const instance = new ExportGraphTool( {} );
@@ -1176,9 +1195,7 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			const ExportGraphTool = toolbarTools[ 'export-graph' ];
 			const clipboard = stubClipboardExport();
 			graph.self.Config.depth = 3;
-			graph.self.Data = {
-				NodeA: { properties: {} }
-			};
+			graph.self.Nodes.add( { id: 'NodeA', typeID: 9, hidden: false } );
 
 			const instance = new ExportGraphTool( {} );
 			instance.onSelect();
