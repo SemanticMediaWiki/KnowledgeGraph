@@ -4,6 +4,7 @@
 			"Volvox"
 		]
 	},
+	"knowledge-graph-wrapper-loading": "De Graph gëtt gelueden...",
 	"specialpages-group-knowledgegraph": "KnowledgeGraph",
 	"knowledgegraphdesigner": "KnowledgeGraph-Designer",
 	"knowledgegraph-toolbar-help": "Hëllef",
@@ -30,9 +31,12 @@
 	"knowledgegraph-dialog-results-existing-node": "Besteeënde Knuet",
 	"knowledgegraph-dialog-results-skipped-existing": "Déi follgend Kniet gëtt et schonn a goufen iwwersprongen:",
 	"knowledgegraph-dialog-results-no-new-nodes": "Keng nei Kniet fir derbäizesetzen.",
-	"knowledgegraph-dialog-results-has-properties": "Huet d'Eegenschaften:",
+	"knowledgegraph-dialog-results-has-properties": "Eegenschaften",
 	"knowledgegraph-dialog-results-importing-nodes": "Kniet importéieren:",
-	"knowledgegraph-copied-to-clipboard": "an den Tëschespäicher kopéiert!",
-	"knowledgegraph-toolbar-reset-network-confirm": "Sidd Dir sécher, datt Dir d'Netzwierk nei initialiséiere wëllt?",
-	"knowledgegraph-toolbar-add-node": "Knuet derbäisetzen"
+	"knowledgegraph-copied-to-clipboard": "An den Tëschespäicher kopéiert!",
+	"knowledgegraph-toolbar-reset-network": "Graph zerécksetzen",
+	"knowledgegraph-toolbar-reset-network-confirm": "Sidd Dir sécher, datt Dir de Graph nei initialiséiere wëllt?",
+	"knowledgegraph-toolbar-add-node": "Knuet derbäisetzen",
+	"knowledgegraph-toolbar-toggle-config": "Konfiguratioun änneren",
+	"knowledgegraph-toolbar-export-graph": "Wikitext exportéieren"
 }
