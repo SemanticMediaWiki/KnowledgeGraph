@@ -41,7 +41,7 @@
 	"knowledgegraph-dialog-results-skipped-existing": "De volgende knooppunten bestaan al en zijn overgeslagen:",
 	"knowledgegraph-dialog-results-no-new-nodes": "Er zijn geen nieuwe knooppunten om toe te voegen.",
 	"knowledgegraph-dialog-results-has-properties": "Eigenschappen",
-	"knowledgegraph-dialog-results-select-properties-hint": "Vink de eigenschappen aan die u in de grafiek wilt weergeven. Alle eigenschappen worden hoe dan ook geladen; de niet aangevinkte kunnen later alsnog worden getoond.",
+	"knowledgegraph-dialog-results-select-properties-hint": "Vink de eigenschappen aan die u in de grafiek wilt weergeven. Alle eigenschappen worden hoe dan ook geladen; de niet aangevinkte kunnen later alsnog worden weergegeven.",
 	"knowledgegraph-dialog-results-importing-nodes": "Importeren van knooppunten:",
 	"knowledgegraph-menu-no-properties": "(geen eigenschappen beschikbaar)",
 	"knowledgegraph-copied-to-clipboard": "Naar klembord gekopieerd!",

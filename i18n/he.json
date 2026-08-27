@@ -6,9 +6,11 @@
 			"YaronSh"
 		]
 	},
-	"knowledge-graph-wrapper-loading": "הגרף נטען...",
+	"knowledge-graph-wrapper-loading": "התרשים נטען...",
 	"specialpages-group-knowledgegraph": "גרף ידע",
+	"knowledgegraph-toolbar-info": "תודות",
 	"knowledgegraph-toolbar-help": "עזרה",
+	"knowledgegraph-menu-open-article": "פתיחת ערך",
 	"knowledgegraph-dialog-continue": "המשך",
 	"knowledgegraph-dialog-back": "חזרה",
 	"knowledgegraph-dialog-done": "סיום",
@@ -26,10 +28,12 @@
 	"knowledgegraph-dialog-tabs-by-categories": "לפי קטגוריות",
 	"knowledgegraph-dialog-results-no-properties": "אין מאפיינים",
 	"knowledgegraph-dialog-results-no-articles": "אין ערכים",
-	"knowledgegraph-dialog-results-has-properties": "עם המאפיינים:",
+	"knowledgegraph-dialog-results-has-properties": "מאפיינים",
 	"knowledgegraph-copied-to-clipboard": "הועתק ללוח!",
-	"knowledgegraph-toolbar-reset-network": "איפוס",
-	"knowledgegraph-toolbar-reset-network-confirm": "לאתחל את הרשת מחדש?",
+	"knowledgegraph-copy-failed": "ההעתקה נכשלה",
+	"knowledgegraph-toolbar-reset-network": "איפוס תרשים",
+	"knowledgegraph-toolbar-reset-network-confirm": "לאתחל את התרשים מחדש?",
+	"knowledgegraph-toolbar-toggle-config": "שינוי הגדרות",
 	"knowledgegraph-toolbar-export-graph": "ייצוא תרשים",
 	"knowledgegraph-credits": "תודות:"
 }

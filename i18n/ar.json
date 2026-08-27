@@ -1,16 +1,28 @@
 {
 	"@metadata": {
 		"authors": [
+			"Meno25",
 			"Mohammed Qays"
 		]
 	},
+	"knowledge-graph-desc": "يعرض الرسم البياني المعرفي في SemanticMediawiki باستخدام VisNetwork.js",
+	"knowledge-graph-wrapper-loading": "يتم تحميل الرسم البياني...",
+	"apihelp-knowledgegraph-load-nodes-summary": "استرجاع الخصائص الدلالية للمقالات المعطاة",
+	"specialpages-group-knowledgegraph": "مخطط المعرفة",
+	"knowledgegraphdesigner": "مصمم مخطط المعرفة",
+	"knowledgegraph-knowledgegraphdesigner-label": "مصمم مخطط المعرفة",
 	"knowledgegraph-toolbar-info": "الإئتمانات",
 	"knowledgegraph-toolbar-help": "المساعدة",
+	"knowledgegraph-menu-open-article": "مقال مفتوح",
+	"knowledgegraph-menu-delete-node": "حذف العقدة",
+	"knowledgegraph-delete-node-confirm": "هل أنت متأكد من رغبتك في حذف هذه العقدة؟",
 	"knowledgegraph-dialog-continue": "استمر",
 	"knowledgegraph-dialog-back": "العودة",
 	"knowledgegraph-dialog-done": "نفذ",
 	"knowledgegraph-dialog-cancel": "إلغاء",
 	"knowledgegraph-dialog-delete": "إزالة",
+	"knowledgegraph-dialog-select-article": "اختر مقالاً ذا خصائص دلالية",
+	"knowledgegraph-dialog-select-namespace": "حدد مساحة اسم",
 	"knowledgegraph-dialog-main-namespace": "(رئيس)",
 	"knowledgegraph-dialog-edit-depth": "العمق",
 	"knowledgegraph-dialog-edit-limit": "الحد",
@@ -25,7 +37,18 @@
 	"knowledgegraph-dialog-results-no-properties": "لا يوجد خصائص",
 	"knowledgegraph-dialog-results-no-articles": "لا توجد مقالات",
 	"knowledgegraph-dialog-results-existing-node": "العقدة الحالية",
+	"knowledgegraph-dialog-results-skipped-existing": "العقد التالية موجودة بالفعل وتم تخطيها:",
 	"knowledgegraph-dialog-results-no-new-nodes": "لا توجد عقد جديدة لإضافتها.",
-	"knowledgegraph-dialog-results-has-properties": "له خصائص:",
+	"knowledgegraph-dialog-results-has-properties": "ملكيات",
+	"knowledgegraph-dialog-results-select-properties-hint": "حدد أي خاصية تريد إظهارها في الرسم البياني. يتم تحميل جميع الخصائص بغض النظر عن ذلك؛ ويمكن عرض الخصائص غير المحددة لاحقًا.",
+	"knowledgegraph-dialog-results-importing-nodes": "استيراد العقد:",
+	"knowledgegraph-menu-no-properties": "(لا توجد عقارات متاحة)",
+	"knowledgegraph-copied-to-clipboard": "تم نسخها إلى الحافظة!",
+	"knowledgegraph-copy-failed": "فشلت عملية النسخ",
+	"knowledgegraph-toolbar-reset-network": "إعادة ضبط الرسم البياني",
+	"knowledgegraph-toolbar-reset-network-confirm": "هل أنت متأكد من رغبتك في إعادة تهيئة الرسم البياني؟",
+	"knowledgegraph-toolbar-add-node": "إضافة عقدة",
+	"knowledgegraph-toolbar-toggle-config": "تغيير الإعدادات",
+	"knowledgegraph-toolbar-export-graph": "تصدير نص ويكي",
 	"knowledgegraph-credits": "الائتمانات:"
 }
