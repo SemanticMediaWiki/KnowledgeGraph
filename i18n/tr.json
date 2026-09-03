@@ -3,7 +3,8 @@
 		"authors": [
 			"HakanIST",
 			"Hedda",
-			"SaldırganSincap"
+			"SaldırganSincap",
+			"Slickdaddy"
 		]
 	},
 	"knowledge-graph-name": "Bilgi Grafiği",
@@ -44,8 +45,9 @@
 	"knowledgegraph-dialog-results-no-new-nodes": "Eklenecek yeni düğüm yok.",
 	"knowledgegraph-dialog-results-has-properties": "Özellikler:",
 	"knowledgegraph-dialog-results-importing-nodes": "İçe aktarılan düğümler:",
-	"knowledgegraph-copied-to-clipboard": "panoya kopyalandı!",
-	"knowledgegraph-toolbar-reset-network": "sıfırla",
+	"knowledgegraph-copied-to-clipboard": "Panoya kopyalandı!",
+	"knowledgegraph-copy-failed": "Kopyalama başarısız oldu",
+	"knowledgegraph-toolbar-reset-network": "Grafiği sıfırla",
 	"knowledgegraph-toolbar-reset-network-confirm": "Ağı yeniden başlatmak istediğinizden emin misiniz?",
 	"knowledgegraph-toolbar-add-node": "düğüm ekle",
 	"knowledgegraph-toolbar-toggle-config": "yapılandırmayı değiştir",
