@@ -3,7 +3,8 @@
 		"authors": [
 			"Amire80",
 			"Neriah",
-			"YaronSh"
+			"YaronSh",
+			"המקיסט"
 		]
 	},
 	"knowledge-graph-wrapper-loading": "התרשים נטען...",
@@ -16,6 +17,7 @@
 	"knowledgegraph-dialog-done": "סיום",
 	"knowledgegraph-dialog-cancel": "ביטול",
 	"knowledgegraph-dialog-delete": "מחיקה",
+	"knowledgegraph-dialog-select-namespace": "בחירת מרחב שם",
 	"knowledgegraph-dialog-main-namespace": "(ראשי)",
 	"knowledgegraph-dialog-edit-depth": "עומק",
 	"knowledgegraph-dialog-edit-limit": "מגבלה",
@@ -34,6 +36,6 @@
 	"knowledgegraph-toolbar-reset-network": "איפוס תרשים",
 	"knowledgegraph-toolbar-reset-network-confirm": "לאתחל את התרשים מחדש?",
 	"knowledgegraph-toolbar-toggle-config": "שינוי הגדרות",
-	"knowledgegraph-toolbar-export-graph": "ייצוא תרשים",
+	"knowledgegraph-toolbar-export-graph": "ייצוא ויקיטקסט",
 	"knowledgegraph-credits": "תודות:"
 }
