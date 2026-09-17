@@ -6,6 +6,8 @@
 	},
 	"knowledgegraph-toolbar-help": "справка",
 	"knowledgegraph-menu-open-article": "открыть статью",
+	"knowledgegraph-menu-delete-node": "удалить узел",
+	"knowledgegraph-delete-node-confirm": "Вы уверены, что хотите удалить этот узел?",
 	"knowledgegraph-dialog-continue": "Продолжить",
 	"knowledgegraph-dialog-back": "Назад",
 	"knowledgegraph-dialog-done": "Готово",
@@ -21,6 +23,8 @@
 	"knowledgegraph-dialog-select-nodes": "Выберите одну или более страниц",
 	"knowledgegraph-dialog-results-no-properties": "Нет свойств",
 	"knowledgegraph-dialog-results-no-articles": "Нет статей",
-	"knowledgegraph-copied-to-clipboard": "скопировано в буфер обмена!",
-	"knowledgegraph-toolbar-reset-network": "сбросить"
+	"knowledgegraph-copied-to-clipboard": "Скопировано в буфер обмена!",
+	"knowledgegraph-copy-failed": "Не удалось скопировать",
+	"knowledgegraph-toolbar-reset-network": "сбросить",
+	"knowledgegraph-toolbar-add-node": "Добавить узел"
 }
