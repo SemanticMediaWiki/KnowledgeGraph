@@ -23,6 +23,7 @@
 	"knowledgegraph-dialog-select-nodes": "Выберите одну или более страниц",
 	"knowledgegraph-dialog-results-no-properties": "Нет свойств",
 	"knowledgegraph-dialog-results-no-articles": "Нет статей",
+	"knowledgegraph-dialog-results-has-properties": "Свойства",
 	"knowledgegraph-copied-to-clipboard": "Скопировано в буфер обмена!",
 	"knowledgegraph-copy-failed": "Не удалось скопировать",
 	"knowledgegraph-toolbar-reset-network": "сбросить",
