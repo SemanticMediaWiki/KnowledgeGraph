@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 
 ## [Unreleased]
 
+### Changed
+- Bumped transitive dev dependencies in `package-lock.json` to patched versions (axios 1.20.0, js-yaml 3.15.2 / 4.3.2, browserslist 4.29.3, baseline-browser-mapping 2.11.28), resolving the open Dependabot security alerts
+
 ## [3.1.0] - 2026-08-21
 
 Adds per-article property visibility control and DISPLAYTITLE-aware node labels, plus a large batch of graph-interaction, localization, and permission-check fixes.
