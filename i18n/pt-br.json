@@ -2,11 +2,12 @@
 	"@metadata": {
 		"authors": [
 			"Eduardoaddad",
+			"Fúlvio",
 			"Jaideraf"
 		]
 	},
 	"knowledge-graph-desc": "Visualiza o gráfico de conhecimento no Semantic MediaWiki com o VisNetwork.js",
-	"knowledge-graph-wrapper-loading": "o gráfico está sendo carregado...",
+	"knowledge-graph-wrapper-loading": "O gráfico está sendo carregado...",
 	"apihelp-knowledgegraph-load-nodes-summary": "retorna propriedade semânticas de páginas dadas",
 	"specialpages-group-knowledgegraph": "KnowledgeGraph",
 	"knowledgegraphdesigner": "KnowledgeGraph Designer",
@@ -40,13 +41,13 @@
 	"knowledgegraph-dialog-results-existing-node": "Nó existente",
 	"knowledgegraph-dialog-results-skipped-existing": "Os seguintes nós já existem e foram ignorados:",
 	"knowledgegraph-dialog-results-no-new-nodes": "Sem novos nós para adicionar.",
-	"knowledgegraph-dialog-results-has-properties": "Tem propriedades:",
+	"knowledgegraph-dialog-results-has-properties": "Propriedades",
 	"knowledgegraph-dialog-results-importing-nodes": "Importando nós:",
-	"knowledgegraph-copied-to-clipboard": "copiado para a área de transferência!",
-	"knowledgegraph-toolbar-reset-network": "redefinir",
-	"knowledgegraph-toolbar-reset-network-confirm": "Tem certeza de que deseja reiniciar a Rede?",
-	"knowledgegraph-toolbar-add-node": "adicionar nó",
-	"knowledgegraph-toolbar-toggle-config": "trocar configuração",
-	"knowledgegraph-toolbar-export-graph": "exportar gráfico",
+	"knowledgegraph-copied-to-clipboard": "Copiado para a área de transferência!",
+	"knowledgegraph-toolbar-reset-network": "Redefinir gráfico",
+	"knowledgegraph-toolbar-reset-network-confirm": "Tem certeza de que deseja reiniciar o gráfico?",
+	"knowledgegraph-toolbar-add-node": "Adicionar nó",
+	"knowledgegraph-toolbar-toggle-config": "Trocar configuração",
+	"knowledgegraph-toolbar-export-graph": "Exportar wikitexto",
 	"knowledgegraph-credits": "Créditos:"
 }
