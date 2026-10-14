@@ -37,6 +37,8 @@ nodes=Page A, Page B
 $wgKnowledgeGraphListSeparator = ';';
 ```
 
+Without `properties=`, only direct properties are loaded. To include inverse properties, list them with a `-` prefix, e.g. `|properties=HasProperty1,-HasProperty1`.
+
 ## For Developers
 
 ### Updating `vis-network` Library

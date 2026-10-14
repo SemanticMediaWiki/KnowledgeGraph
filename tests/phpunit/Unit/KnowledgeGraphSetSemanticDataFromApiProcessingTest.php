@@ -164,6 +164,28 @@ class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegr
 	}
 
 	/**
+	 * With an empty allow-list (parser function without `properties`) only
+	 * direct properties are loaded; inverse ones are opt-in via the
+	 * '-'-prefixed key, consistent with the non-empty allow-list case.
+	 */
+	public function testInversePropertyExcludedWhenAllowListIsEmpty() {
+		$target = 'KGProcInverseTarget3';
+		$source = 'KGProcInverseSource3';
+		$this->insertPage( $target, '[[KGProcDirectRel3::KGProcInverseSource3]]' );
+		$this->insertPage( $source, '[[KGProcInverseRel3::' . $target . ']]' );
+		\DeferredUpdates::doUpdates();
+
+		$targetTitle = Title::newFromText( $target );
+		$this->skipIfFixtureDidNotTakeEffect( $targetTitle );
+
+		$this->call( $targetTitle, [], 0, 1 );
+
+		$data = $this->getData( $target );
+		$this->assertArrayHasKey( 'KGProcDirectRel3', $data['properties'] );
+		$this->assertArrayNotHasKey( '-KGProcInverseRel3', $data['properties'] );
+	}
+
+	/**
 	 * dataitem type=9 (title link) entries assemble "$linkedTitle" via
 	 * NamespaceInfo::getCanonicalName() and the '_' -> ' ' replacement, and
 	 * enrich the property with real SMW metadata (typeId, canonicalLabel,
