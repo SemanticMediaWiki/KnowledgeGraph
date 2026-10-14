@@ -448,6 +448,7 @@ ${ propertyOptions }|show-property-type=true
 
 					self.createNodes( self.InitialData );
 					attachContextMenuListener();
+					fireInstanceHook();
 				}
 				break;
 		}
@@ -764,6 +765,23 @@ ${ propertyOptions }|show-property-type=true
 		self.Config = config;
 	}
 
+	// Announces this instance's live vis-network handles on the
+	// 'knowledgegraph.instance' hook, for debugging, tests and gadgets: they are
+	// otherwise unreachable from outside this closure. mw.hook() replays the last
+	// fire() to handlers added later, so listeners need not be registered before
+	// the graph is built. Deliberately a small read-only view -- no Config, no
+	// registry that would keep destroyed instances alive; a reload fires again
+	// with the replacement handles.
+	function fireInstanceHook() {
+		mw.hook( 'knowledgegraph.instance' ).fire( {
+			id: self.id,
+			container: self.Container,
+			network: self.Network,
+			nodes: self.Nodes,
+			edges: self.Edges
+		} );
+	}
+
 	function initialize( container, containerToolbar, containerOptions, config ) {
 		// set instance id from container (or generate)
 		self.id = container && container.id ? container.id : 'knowledgegraph-' + Date.now() + '-' + Math.random().toString( 36 ).slice( 2, 7 );
@@ -931,6 +949,8 @@ ${ propertyOptions }|show-property-type=true
 				}
 			}
 		} );
+
+		fireInstanceHook();
 	}
 
 	return {

@@ -129,6 +129,56 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 		mw.config.set( 'wgArticlePath', '/wiki/$1' );
 	} );
 
+	QUnit.module( 'knowledgegraph.instance hook', ( moduleHooks ) => {
+
+		moduleHooks.beforeEach( () => {
+			mw.hook.clear();
+		} );
+
+		QUnit.test( 'initialize() fires the hook once with the instance handles', ( assert ) => {
+			const fired = [];
+			mw.hook( 'knowledgegraph.instance' ).add( ( instance ) => {
+				fired.push( instance );
+			} );
+			const container = document.createElement( 'div' );
+			container.id = 'kg-hook-test';
+
+			graph.initialize( container, null, null, makeConfig( {
+				data: { Foo: { properties: {}, categories: [] } }
+			} ) );
+
+			assert.strictEqual( fired.length, 1, 'fired exactly once' );
+			assert.strictEqual( fired[ 0 ].id, 'kg-hook-test', 'carries the instance id' );
+			assert.strictEqual( fired[ 0 ].container, container, 'carries the container element' );
+			assert.strictEqual( fired[ 0 ].network, graph.self.Network, 'carries the vis.Network instance' );
+			assert.strictEqual( fired[ 0 ].nodes, graph.self.Nodes, 'carries the nodes DataSet' );
+			assert.strictEqual( fired[ 0 ].edges, graph.self.Edges, 'carries the edges DataSet' );
+			assert.deepEqual( fired[ 0 ].nodes.getIds(), [ 'Foo' ], 'the nodes are already populated when fired' );
+			assert.false( 'Config' in fired[ 0 ], 'does not expose the instance config' );
+		} );
+
+		QUnit.test( 'a handler added after initialize() still receives the instance', ( assert ) => {
+			const container = document.createElement( 'div' );
+			graph.initialize( container, null, null, makeConfig() );
+
+			let received = null;
+			mw.hook( 'knowledgegraph.instance' ).add( ( instance ) => {
+				received = instance;
+			} );
+
+			assert.strictEqual( received && received.network, graph.self.Network, 'the remembered instance is replayed' );
+		} );
+
+		QUnit.test( 'initialize() does not throw when nobody listens', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig() );
+
+			assert.strictEqual( typeof graph.self.Network, 'object', 'initialize() completed' );
+		} );
+
+	} );
+
 	QUnit.module( 'initialize', () => {
 
 		QUnit.test( 'uses container.id as self.id when present', ( assert ) => {
@@ -1090,6 +1140,30 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 				assert.deepEqual( graph.self.Data, {}, 'self.Data is reset to {}' );
 				assert.notStrictEqual( graph.self.Network, oldNetwork, 'a new Network instance replaces the old one' );
 				assert.strictEqual( graph.self.Network.listeners.oncontext.length, 1, 'the context menu listener is re-attached to the new Network' );
+			} finally {
+				global.confirm = originalConfirm;
+			}
+		} );
+
+		QUnit.test( "'reload' fires the knowledgegraph.instance hook again with the new Network", ( assert ) => {
+			const ReloadTool = toolbarTools.reload;
+			const received = [];
+			mw.hook( 'knowledgegraph.instance' ).add( ( instance ) => {
+				received.push( instance );
+			} );
+			const oldNetwork = graph.self.Network;
+			oldNetwork.destroy = () => {};
+
+			const originalConfirm = global.confirm;
+			global.confirm = () => true;
+
+			try {
+				new ReloadTool( {} ).onSelect();
+
+				const latest = received[ received.length - 1 ];
+				assert.notStrictEqual( latest.network, oldNetwork, 'the handles are not the destroyed Network' );
+				assert.strictEqual( latest.network, graph.self.Network, 'the handles point to the new Network' );
+				assert.strictEqual( latest.nodes, graph.self.Nodes, 'the handles point to the new nodes DataSet' );
 			} finally {
 				global.confirm = originalConfirm;
 			}
