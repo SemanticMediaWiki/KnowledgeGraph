@@ -6,19 +6,22 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 
 ## [Unreleased]
 
-### Added
-- `knowledgegraph.instance` `mw.hook`: fired after a graph is built, and again after the Designer's "Reset graph", with `{ id, container, network, nodes, edges }` (the instance's `vis.Network` and its node/edge `DataSet`s). These were previously unreachable from outside the module closure, which made inspecting a rendered graph (debugging, browser tests, gadgets) impractical. As with any `mw.hook`, the last fire is replayed to handlers registered later; the instance config is not exposed
+## [3.2.0] - 2026-10-14
 
-### Fixed
-- `KnowledgeGraph.buildConfig()`: `width` and `height` of the parser function were also passed to vis-network, which only accepts `px` and `%`. With e.g. `height=75vh` the wrapper got the requested height but the canvas fell back to 150px, so the rest stayed empty. The size is now applied to the wrapper only and vis-network keeps its `100%` default, so any CSS length works. The Designer's toolbar layout sets the size on its graph container for the same reason ([#108](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/108))
-- `KnowledgeGraph.buildConfig()`: a `graphOptions` or `propertyOptions` module string that failed to load (syntax error, no default export) stayed in the config as its raw source string; merging it then copied the string's character indices (`0`, `1`, …) into the vis-network options as bogus keys. A failed module now falls back to `{}`, i.e. the default options
-- `KnowledgeGraphNodes.js`'s `loadNodes()`: a response without an entry for the requested action (e.g. `{}`) made the `done()` callback throw a `TypeError` (`'data' in undefined`), and so did `JSON.parse()` on malformed `data`. An exception inside a jQuery `done()` callback is not turned into a rejection, so the returned promise stayed pending and the node context menu / Designer dialog kept waiting. Both cases now reject with an `Error` naming the action and the problem. The node-qunit `mw.Api` stub no longer defaults to such a malformed response either, which removes the `loadNodes TypeError` noise from the test output
-- `KnowledgeGraph.js`: the Designer's "Reset graph" replaced the `vis.Network` but only re-attached the context menu listener, so afterwards the `click` (hide child nodes), `hoverNode`/`hoverEdge`/`blurNode`/`blurEdge` (edge highlighting) and `doubleClick` (open the page) handlers were gone. The registration now lives in `attachNetworkListeners()`, called by both `initialize()` and the reset action ([#110](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/110))
-- `KnowledgeGraph::setSemanticDataFromApi()`: without a `properties` list (e.g. `{{#knowledgegraph:}}` without `properties=`), inverse properties were loaded too, because the inverse-direction check only ran inside the non-empty allow-list branch; a page linked from many others thus pulled in all of those pages, multiplied by the default `depth=3`. An empty list now loads direct properties only; inverse ones stay opt-in via the `-`-prefixed key (e.g. `properties=-HasProperty1`), as they already were with a non-empty list. The Designer is unaffected: its endpoints always pass an explicit list, and a node's right-click menu still offers inverse properties ([#106](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/106))
+Adds a JavaScript hook for accessing rendered graphs and fixes several graph sizing, loading and interaction issues.
+
+### Added
+- Add `knowledgegraph.instance` hook, fired after a graph is built and after "Reset graph", giving gadgets and browser tests access to the `vis.Network` instance and its node/edge data [`9bc003c`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/9bc003c)
 
 ### Changed
-- `KnowledgeGraph.js`: the module loader and the per-graph config assembly of the `$( document ).ready()` bootstrap now live in `KnowledgeGraph.loadModule()` and `KnowledgeGraph.buildConfig()`, attached to the constructor like `KnowledgeGraph.isPlainObject()`, so they can be unit-tested; behaviour is unchanged. The node-qunit `jQuery.extend()` stub now follows the real one (deep merge, `undefined` skipped)
-- Bumped transitive dev dependencies in `package-lock.json` to patched versions (axios 1.20.0, js-yaml 3.15.2 / 4.3.2, browserslist 4.29.3, baseline-browser-mapping 2.11.28), resolving the open Dependabot security alerts
+- Bump transitive dev dependencies to patched versions, resolving open security alerts [`d789488`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/d789488)
+
+### Fixed
+- Fix graph canvas ignoring `width`/`height` values such as `75vh`; any CSS length now works [`f9696a9`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/f9696a9) ([#108](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/108))
+- Fix broken `graphOptions`/`propertyOptions` modules adding bogus options; the default options are used instead [`b72a5f4`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/b72a5f4)
+- Fix the node context menu and Designer dialog waiting forever when the API returns a malformed response [`43978fb`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/43978fb)
+- Fix node click, hover highlighting and double-click being lost after "Reset graph" in the Designer [`d041b16`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/d041b16) ([#110](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/110))
+- Fix `{{#knowledgegraph:}}` without `properties=` loading inverse properties and pulling in all linking pages; inverse properties remain opt-in via `-Property` [`d48f76f`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/d48f76f) ([#106](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/106))
 
 ## [3.1.0] - 2026-08-21
 
@@ -145,3 +148,6 @@ Adds per-article property visibility control and DISPLAYTITLE-aware node labels,
 - CI now covers MW 1.44-1.45 instead of 1.39-1.42
 - `includes/KnowledgeGraph.php`, `includes/specials/SpecialKnowledgeGraphDesigner.php`, `includes/api/KnowledgeGraphApiLoadProperties.php`, `includes/api/KnowledgeGraphApiLoadNodes.php`, `includes/api/KnowledgeGraphApiLoadCategories.php`: replaced the extension's own `Aliases\Title`/`Aliases\Category` compatibility shims with MediaWiki core's `MediaWiki\Title\Title` and `MediaWiki\Category\Category`, then removed the now-unused `includes/aliases/Title.php` and `includes/aliases/Category.php`
 - `KnowledgeGraph::articlesInCategories()`: fixed support for MW 1.45 ([#46](https://github.com/SemanticMediaWiki/KnowledgeGraph/pull/46))
+
+[Unreleased]: https://github.com/SemanticMediaWiki/KnowledgeGraph/compare/3.2.0...HEAD
+[3.2.0]: https://github.com/SemanticMediaWiki/KnowledgeGraph/compare/3.1.0...3.2.0
