@@ -1032,10 +1032,9 @@ KnowledgeGraph.loadModule = async function ( str ) {
 KnowledgeGraph.buildConfig = async function ( graphData ) {
 	// graphOptions may be a JS module string or an object; handle both cleanly
 	if ( typeof graphData.graphOptions === 'string' ) {
-		const result = await KnowledgeGraph.loadModule( graphData.graphOptions );
-		if ( result ) {
-			graphData.graphOptions = result;
-		}
+		// a module that fails to load must not leave its source string behind:
+		// $.extend() would copy that string's character indices into the options
+		graphData.graphOptions = await KnowledgeGraph.loadModule( graphData.graphOptions ) || {};
 	} else if ( !KnowledgeGraph.isPlainObject( graphData.graphOptions ) ) {
 		graphData.graphOptions = {};
 	}
@@ -1046,10 +1045,7 @@ KnowledgeGraph.buildConfig = async function ( graphData ) {
 			const value = graphData.propertyOptions[ key ];
 
 			if ( typeof value === 'string' ) {
-				const result = await KnowledgeGraph.loadModule( value );
-				if ( result ) {
-					graphData.propertyOptions[ key ] = result;
-				}
+				graphData.propertyOptions[ key ] = await KnowledgeGraph.loadModule( value ) || {};
 			} else if ( !KnowledgeGraph.isPlainObject( value ) ) {
 				graphData.propertyOptions[ key ] = {};
 			}

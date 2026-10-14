@@ -146,6 +146,28 @@ QUnit.module( 'ext.knowledgegraph bootstrap helpers', ( hooks ) => {
 			);
 		} );
 
+		QUnit.test( 'falls back to the default options when the graphOptions module fails to load', async ( assert ) => {
+			let config;
+			await captureConsoleError( async () => {
+				config = await KnowledgeGraph.buildConfig( { graphOptions: 'export default {' } );
+			} );
+
+			assert.deepEqual(
+				asData( config.graphOptions ),
+				asData( KnowledgeGraphOptions.getDefaultOptions() ),
+				'no character-index keys from the source string leak into the options'
+			);
+		} );
+
+		QUnit.test( 'uses {} for a propertyOptions module that fails to load', async ( assert ) => {
+			let config;
+			await captureConsoleError( async () => {
+				config = await KnowledgeGraph.buildConfig( { propertyOptions: { Broken: 'export default {' } } );
+			} );
+
+			assert.deepEqual( config.propertyOptions, { Broken: {} }, 'the entry is an empty object, not the source string' );
+		} );
+
 		QUnit.test( 'applies a requested width and height to graphOptions only when given', async ( assert ) => {
 			const defaults = KnowledgeGraphOptions.getDefaultOptions();
 
