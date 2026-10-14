@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 
 ## [Unreleased]
 
+### Fixed
+- `KnowledgeGraph::setSemanticDataFromApi()`: without a `properties` list (e.g. `{{#knowledgegraph:}}` without `properties=`), inverse properties were loaded too, because the inverse-direction check only ran inside the non-empty allow-list branch; a page linked from many others thus pulled in all of those pages, multiplied by the default `depth=3`. An empty list now loads direct properties only; inverse ones stay opt-in via the `-`-prefixed key (e.g. `properties=-HasProperty1`), as they already were with a non-empty list. The Designer is unaffected: its endpoints always pass an explicit list, and a node's right-click menu still offers inverse properties ([#106](https://github.com/SemanticMediaWiki/KnowledgeGraph/issues/106))
+
 ### Changed
 - Bumped transitive dev dependencies in `package-lock.json` to patched versions (axios 1.20.0, js-yaml 3.15.2 / 4.3.2, browserslist 4.29.3, baseline-browser-mapping 2.11.28), resolving the open Dependabot security alerts
 

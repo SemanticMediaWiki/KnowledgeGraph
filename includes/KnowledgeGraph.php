@@ -890,6 +890,11 @@ nodes=TestPage
 				if ( !$allowed ) {
 					continue;
 				}
+			} elseif ( $isInverse ) {
+				// No allow-list: load direct properties only. Inverse ones are
+				// opt-in via the '-'-prefixed key, otherwise a page linked from
+				// many others would pull in all of them, multiplied by depth.
+				continue;
 			}
 
 			if ( !isset( $output['properties'][$propKey] ) ) {
