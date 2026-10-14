@@ -448,6 +448,7 @@ ${ propertyOptions }|show-property-type=true
 
 					self.createNodes( self.InitialData );
 					attachContextMenuListener();
+					attachNetworkListeners();
 					fireInstanceHook();
 				}
 				break;
@@ -765,6 +766,64 @@ ${ propertyOptions }|show-property-type=true
 		self.Config = config;
 	}
 
+	// Binds the click/hover/blur/double-click handlers to the current self.Network.
+	// Must run for every Network instance, i.e. also after the toolbar's reload
+	// action replaces it (the context menu has its own attachContextMenuListener()).
+	function attachNetworkListeners() {
+		// events bound to this instance's network
+		self.Network.on( 'click', ( params ) => {
+			if ( !params.nodes.length ) {
+				return;
+			}
+			self.HideNodesRec( params.nodes[ 0 ] );
+		} );
+
+		self.Network.on( 'hoverNode', ( params ) => {
+			const nodeId = params.node;
+			if ( self.SelectedNode !== nodeId ) {
+				self.SelectedNode = nodeId;
+			}
+		} );
+
+		self.Network.on( 'hoverEdge', ( params ) => {
+			const edgeId = params.edge;
+			if ( self.SelectedNode !== edgeId ) {
+				self.SelectedNode = edgeId;
+				self.Network.selectEdges( [ edgeId ] );
+			}
+		} );
+
+		self.Network.on( 'blurNode', () => {
+			self.Network.unselectAll();
+		} );
+
+		self.Network.on( 'blurEdge', () => {
+			self.SelectedNode = null;
+			self.Network.unselectAll();
+		} );
+
+		self.Network.on( 'doubleClick', ( params ) => {
+			if ( !params.nodes.length ) {
+				return;
+			}
+
+			const nodeId = params.nodes[ 0 ];
+			if ( nodeId !== undefined ) {
+				const titleLabel = nodeId.split( '#' )[ 0 ];
+				const node = self.Nodes.get( nodeId );
+				const nodeTypeId = node ? node.typeID : null;
+
+				const url = nodeTypeId === 9 ?
+					mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel ) :
+					KnowledgeGraphNodes.resolveFormattedLink( node, titleLabel );
+
+				if ( url ) {
+					window.open( url, '_blank' );
+				}
+			}
+		} );
+	}
+
 	// Announces this instance's live vis-network handles on the
 	// 'knowledgegraph.instance' hook, for debugging, tests and gadgets: they are
 	// otherwise unreachable from outside this closure. mw.hook() replays the last
@@ -896,60 +955,7 @@ ${ propertyOptions }|show-property-type=true
 		self.createNodes( self.Config.data || {} );
 		// attach context menu (per-instance)
 		attachContextMenuListener();
-
-		// events bound to this instance's network
-		self.Network.on( 'click', ( params ) => {
-			if ( !params.nodes.length ) {
-				return;
-			}
-			self.HideNodesRec( params.nodes[ 0 ] );
-		} );
-
-		self.Network.on( 'hoverNode', ( params ) => {
-			const nodeId = params.node;
-			if ( self.SelectedNode !== nodeId ) {
-				self.SelectedNode = nodeId;
-			}
-		} );
-
-		self.Network.on( 'hoverEdge', ( params ) => {
-			const edgeId = params.edge;
-			if ( self.SelectedNode !== edgeId ) {
-				self.SelectedNode = edgeId;
-				self.Network.selectEdges( [ edgeId ] );
-			}
-		} );
-
-		self.Network.on( 'blurNode', () => {
-			self.Network.unselectAll();
-		} );
-
-		self.Network.on( 'blurEdge', () => {
-			self.SelectedNode = null;
-			self.Network.unselectAll();
-		} );
-
-		self.Network.on( 'doubleClick', ( params ) => {
-			if ( !params.nodes.length ) {
-				return;
-			}
-
-			const nodeId = params.nodes[ 0 ];
-			if ( nodeId !== undefined ) {
-				const titleLabel = nodeId.split( '#' )[ 0 ];
-				const node = self.Nodes.get( nodeId );
-				const nodeTypeId = node ? node.typeID : null;
-
-				const url = nodeTypeId === 9 ?
-					mw.config.get( 'wgArticlePath' ).replace( '$1', titleLabel ) :
-					KnowledgeGraphNodes.resolveFormattedLink( node, titleLabel );
-
-				if ( url ) {
-					window.open( url, '_blank' );
-				}
-			}
-		} );
-
+		attachNetworkListeners();
 		fireInstanceHook();
 	}
 

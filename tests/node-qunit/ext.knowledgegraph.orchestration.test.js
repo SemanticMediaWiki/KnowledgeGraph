@@ -1145,6 +1145,33 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			}
 		} );
 
+		QUnit.test( "'reload' re-attaches the click/hover/blur/doubleClick listeners to the new Network", ( assert ) => {
+			const ReloadTool = toolbarTools.reload;
+			const events = [ 'click', 'hoverNode', 'hoverEdge', 'blurNode', 'blurEdge', 'doubleClick' ];
+			const oldNetwork = graph.self.Network;
+			oldNetwork.destroy = () => {};
+			events.forEach( ( event ) => {
+				assert.strictEqual( oldNetwork.listeners[ event ].length, 1, `the initial Network has one '${ event }' listener` );
+			} );
+
+			const originalConfirm = global.confirm;
+			global.confirm = () => true;
+
+			try {
+				new ReloadTool( {} ).onSelect();
+
+				events.forEach( ( event ) => {
+					assert.strictEqual(
+						( graph.self.Network.listeners[ event ] || [] ).length,
+						1,
+						`the new Network has one '${ event }' listener`
+					);
+				} );
+			} finally {
+				global.confirm = originalConfirm;
+			}
+		} );
+
 		QUnit.test( "'reload' fires the knowledgegraph.instance hook again with the new Network", ( assert ) => {
 			const ReloadTool = toolbarTools.reload;
 			const received = [];
