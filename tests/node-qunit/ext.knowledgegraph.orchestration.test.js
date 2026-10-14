@@ -355,6 +355,33 @@ QUnit.module( 'ext.knowledgegraph orchestration', ( hooks ) => {
 			assert.strictEqual( graph.self.SelectedNode, 'NodeA', 'self.SelectedNode is updated to the hovered node' );
 		} );
 
+		QUnit.test( 'the "hoverNode" handler leaves self.SelectedNode untouched when that node is already selected', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig() );
+			graph.self.SelectedNode = 'NodeA';
+
+			graph.self.Network.listeners.hoverNode[ 0 ]( { node: 'NodeA' } );
+
+			assert.strictEqual( graph.self.SelectedNode, 'NodeA', 'self.SelectedNode is unchanged' );
+		} );
+
+		QUnit.test( 'the "hoverEdge" handler does not re-select an edge that is already selected', ( assert ) => {
+			const container = document.createElement( 'div' );
+
+			graph.initialize( container, null, null, makeConfig() );
+			graph.self.SelectedNode = 'EdgeA';
+
+			let selectEdgesCalls = 0;
+			graph.self.Network.selectEdges = () => {
+				selectEdgesCalls++;
+			};
+
+			graph.self.Network.listeners.hoverEdge[ 0 ]( { edge: 'EdgeA' } );
+
+			assert.strictEqual( selectEdgesCalls, 0, 'Network.selectEdges is not called again' );
+		} );
+
 		QUnit.test( 'the "hoverEdge" handler sets self.SelectedNode and calls selectEdges', ( assert ) => {
 			const container = document.createElement( 'div' );
 
