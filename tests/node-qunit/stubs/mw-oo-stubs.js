@@ -530,8 +530,39 @@ function installJQueryStub() {
 		return makeJQueryWrapper( selector );
 	}
 
-	$.extend = function ( target, ...sources ) {
-		return Object.assign( target, ...sources );
+	// Follows jQuery.extend(): an optional leading `true` makes the merge deep
+	// (plain objects and arrays are merged recursively, everything else is
+	// copied), `undefined` source values are skipped, and sources are read with
+	// for...in -- so a string source copies its indices, as with the real thing.
+	$.extend = function ( ...args ) {
+		let deep = false;
+		if ( typeof args[ 0 ] === 'boolean' ) {
+			deep = args.shift();
+		}
+		const target = args.shift();
+		const isMergeable = ( v ) => Array.isArray( v ) || ( v !== null && typeof v === 'object' && v.constructor === Object );
+
+		args.forEach( ( source ) => {
+			if ( source === null || source === undefined ) {
+				return;
+			}
+			for ( const name in source ) {
+				const copy = source[ name ];
+				if ( copy === undefined || copy === target ) {
+					continue;
+				}
+				if ( deep && isMergeable( copy ) ) {
+					const src = target[ name ];
+					const base = Array.isArray( copy ) ?
+						( Array.isArray( src ) ? src : [] ) :
+						( isMergeable( src ) && !Array.isArray( src ) ? src : {} );
+					target[ name ] = $.extend( true, base, copy );
+				} else {
+					target[ name ] = copy;
+				}
+			}
+		} );
+		return target;
 	};
 
 	// eslint-disable-next-line no-jquery/variable-pattern

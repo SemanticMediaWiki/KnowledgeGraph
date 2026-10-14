@@ -988,43 +988,110 @@ KnowledgeGraph.isPlainObject = function ( value ) {
 	);
 };
 
+// Caches loaded modules to avoid repeated dynamic imports
+KnowledgeGraph.moduleCache = new Map();
+
+// Loads a JS module given as a source string (e.g. a graph-options page's
+// content) and returns its default export, or null if the input is empty/not
+// a string, the module has no default export or it fails to load. Attached to
+// the constructor, like isPlainObject(), so it is reachable for testing.
+KnowledgeGraph.loadModule = async function ( str ) {
+	// Empty or non-string input should be ignored early
+	if ( typeof str !== 'string' || str.trim() === '' ) {
+		return null;
+	}
+
+	// Return from cache if already loaded
+	if ( KnowledgeGraph.moduleCache.has( str ) ) {
+		return KnowledgeGraph.moduleCache.get( str );
+	}
+
+	try {
+		// Convert JS string to Base64 ES module and load it
+		const module = await import( `data:text/javascript;base64,${ btoa( str ) }` );
+
+		// Use "default" export if available
+		const result = module.default ?? null;
+
+		// Store only successful results in cache
+		KnowledgeGraph.moduleCache.set( str, result );
+
+		return result;
+
+	} catch ( error ) {
+		// Log errors to help debugging faulty JS blocks in wiki pages
+		// eslint-disable-next-line no-console
+		console.error( 'KnowledgeGraph: Failed to load module:', error );
+		return null;
+	}
+};
+
+// Builds the final graph config from one graph's raw parser-function data:
+// resolves graphOptions / propertyOptions given as JS module strings, fills
+// in defaults and applies the requested width/height to graphOptions.
+KnowledgeGraph.buildConfig = async function ( graphData ) {
+	// graphOptions may be a JS module string or an object; handle both cleanly
+	if ( typeof graphData.graphOptions === 'string' ) {
+		const result = await KnowledgeGraph.loadModule( graphData.graphOptions );
+		if ( result ) {
+			graphData.graphOptions = result;
+		}
+	} else if ( !KnowledgeGraph.isPlainObject( graphData.graphOptions ) ) {
+		graphData.graphOptions = {};
+	}
+
+	// propertyOptions contains a map of property → JS module string or object
+	if ( KnowledgeGraph.isPlainObject( graphData.propertyOptions ) ) {
+		for ( const key in graphData.propertyOptions ) {
+			const value = graphData.propertyOptions[ key ];
+
+			if ( typeof value === 'string' ) {
+				const result = await KnowledgeGraph.loadModule( value );
+				if ( result ) {
+					graphData.propertyOptions[ key ] = result;
+				}
+			} else if ( !KnowledgeGraph.isPlainObject( value ) ) {
+				graphData.propertyOptions[ key ] = {};
+			}
+		}
+	} else {
+		graphData.propertyOptions = {};
+	}
+
+	graphData.graphOptions = $.extend(
+		KnowledgeGraphOptions.getDefaultOptions(),
+		graphData.graphOptions
+	);
+
+	const config = $.extend(
+		true,
+		{
+			data: {},
+			propertyOptions: {},
+			properties: [],
+			depth: '',
+			width: '',
+			height: '',
+			'show-toolbar': false,
+			'show-property-type': false,
+			context: 'parserfunction'
+		},
+		graphData
+	);
+
+	if ( config.width !== '' ) {
+		config.graphOptions.width = config.width;
+	}
+	if ( config.height !== '' ) {
+		config.graphOptions.height = config.height;
+	}
+
+	return config;
+};
+
 $( document ).ready( async () => {
 
-	// Caches loaded modules to avoid repeated dynamic imports
-	const moduleCache = new Map();
-
 	const semanticGraphs = JSON.parse( mw.config.get( 'knowledgegraphs' ) );
-
-	async function getModule( str ) {
-		// Empty or non-string input should be ignored early
-		if ( typeof str !== 'string' || str.trim() === '' ) {
-			return null;
-		}
-
-		// Return from cache if already loaded
-		if ( moduleCache.has( str ) ) {
-			return moduleCache.get( str );
-		}
-
-		try {
-			// Convert JS string to Base64 ES module and load it
-			const module = await import( `data:text/javascript;base64,${ btoa( str ) }` );
-
-			// Use "default" export if available
-			const result = module.default ?? null;
-
-			// Store only successful results in cache
-			moduleCache.set( str, result );
-
-			return result;
-
-		} catch ( error ) {
-			// Log errors to help debugging faulty JS blocks in wiki pages
-			// eslint-disable-next-line no-console
-			console.error( 'KnowledgeGraph: Failed to load module:', error );
-			return null;
-		}
-	}
 
 	$( '.KnowledgeGraph' ).each( async function ( index ) {
 		// Retrieve semantic graph config by index
@@ -1048,61 +1115,7 @@ $( document ).ready( async () => {
 		try {
 			const graph = new KnowledgeGraph();
 
-			// graphOptions may be a JS module string or an object; handle both cleanly
-			if ( typeof graphData.graphOptions === 'string' ) {
-				const result = await getModule( graphData.graphOptions );
-				if ( result ) {
-					graphData.graphOptions = result;
-				}
-			} else if ( !KnowledgeGraph.isPlainObject( graphData.graphOptions ) ) {
-				graphData.graphOptions = {};
-			}
-
-			// propertyOptions contains a map of property → JS module string or object
-			if ( KnowledgeGraph.isPlainObject( graphData.propertyOptions ) ) {
-				for ( const key in graphData.propertyOptions ) {
-					const value = graphData.propertyOptions[ key ];
-
-					if ( typeof value === 'string' ) {
-						const result = await getModule( value );
-						if ( result ) {
-							graphData.propertyOptions[ key ] = result;
-						}
-					} else if ( !KnowledgeGraph.isPlainObject( value ) ) {
-						graphData.propertyOptions[ key ] = {};
-					}
-				}
-			} else {
-				graphData.propertyOptions = {};
-			}
-
-			graphData.graphOptions = $.extend(
-				KnowledgeGraphOptions.getDefaultOptions(),
-				graphData.graphOptions
-			);
-
-			const config = $.extend(
-				true,
-				{
-					data: {},
-					propertyOptions: {},
-					properties: [],
-					depth: '',
-					width: '',
-					height: '',
-					'show-toolbar': false,
-					'show-property-type': false,
-					context: 'parserfunction'
-				},
-				graphData
-			);
-
-			if ( config.width !== '' ) {
-				config.graphOptions.width = config.width;
-			}
-			if ( config.height !== '' ) {
-				config.graphOptions.height = config.height;
-			}
+			const config = await KnowledgeGraph.buildConfig( graphData );
 
 			container = this;
 			let containerToolbar = null;
