@@ -269,6 +269,60 @@ class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {
 	}
 
 	/**
+	 * Real-store fixture where $target only receives a relation ($source sets
+	 * it), i.e. the relation is an inverse one from $target's perspective.
+	 * Skips under the same environment-specific condition documented on
+	 * testPropertiesParamFiltersLoadedProperties().
+	 */
+	private function insertInverseFixture( string $target, string $source, string $relation ): void {
+		$this->insertPage( $target );
+		$this->insertPage( $source, '[[' . $relation . '::' . $target . ']]' );
+		\DeferredUpdates::doUpdates();
+
+		\KnowledgeGraph::initSMW();
+
+		$subject = \SMW\DIWikiPage::newFromTitle( \MediaWiki\Title\Title::newFromText( $target ) );
+		if ( \SMW\StoreFactory::getStore()->getSemanticData( $subject )->isEmpty() ) {
+			$this->markTestSkipped(
+				'SMW never wrote semantic data for the fixture page in this environment - ' .
+				'see KnowledgeGraphApiLoadPropertiesExecuteTest::testInversePropsIncludedWithRealStoreFixture() ' .
+				'for the known, environment-specific gap this guards against.'
+			);
+		}
+	}
+
+	/**
+	 * The Designer's node context menu sends `properties=[]` and relies on this
+	 * endpoint to list every property of the node, inverse ones included
+	 * (offered as "-Property (inverse)"). The empty-list default of
+	 * KnowledgeGraph::setSemanticDataFromApi() (direct properties only) must
+	 * not leak into this endpoint, which resolves its own explicit list.
+	 */
+	public function testEmptyPropertiesParamStillLoadsInverseProperties() {
+		$this->insertInverseFixture( 'KGTestInvMenuTarget', 'KGTestInvMenuSource', 'KGTestInvMenuRel' );
+
+		$data = $this->runLoadNodes( [
+			'titles' => 'KGTestInvMenuTarget',
+			'properties' => json_encode( [] ),
+			'depth' => 1,
+		] );
+
+		$this->assertArrayHasKey( '-KGTestInvMenuRel', $data['KGTestInvMenuTarget']['properties'] );
+	}
+
+	public function testExplicitInversePropertyInPropertiesParamIsLoaded() {
+		$this->insertInverseFixture( 'KGTestInvExplTarget', 'KGTestInvExplSource', 'KGTestInvExplRel' );
+
+		$data = $this->runLoadNodes( [
+			'titles' => 'KGTestInvExplTarget',
+			'properties' => json_encode( [ '-KGTestInvExplRel' ] ),
+			'depth' => 1,
+		] );
+
+		$this->assertArrayHasKey( '-KGTestInvExplRel', $data['KGTestInvExplTarget']['properties'] );
+	}
+
+	/**
 	 * A title listed twice in the same request's `titles` list must not be
 	 * reprocessed the second time: setSemanticDataFromApi() must not be
 	 * invoked again once the accumulated $data already holds the entry from
