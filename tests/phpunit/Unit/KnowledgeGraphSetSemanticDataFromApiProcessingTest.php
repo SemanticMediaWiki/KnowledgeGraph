@@ -12,6 +12,14 @@ use MediaWiki\Title\Title;
  * category population, and property-metadata enrichment.
  *
  * @covers KnowledgeGraph::setSemanticDataFromApi
+ * @covers KnowledgeGraph::getDisplayTitle
+ * @covers KnowledgeGraph::getLinkFormatterInfo
+ * @covers KnowledgeGraph::formatLinkForValue
+ * @covers KnowledgeGraph::getWikiPage
+ * @covers KnowledgeGraph::makeRelationKey
+ * @covers KnowledgeGraph::newDerivativeApiContext
+ * @covers KnowledgeGraph::newFauxRequest
+ * @covers KnowledgeGraph::getMainRequestContext
  * @group Database
  */
 class KnowledgeGraphSetSemanticDataFromApiProcessingTest extends MediaWikiIntegrationTestCase {

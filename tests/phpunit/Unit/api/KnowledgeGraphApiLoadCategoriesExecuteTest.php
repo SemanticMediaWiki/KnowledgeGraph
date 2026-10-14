@@ -7,7 +7,7 @@
  * (needsToken(), mustBePosted()), so these tests extend ApiTestCase rather than mocking
  * ApiMain by hand.
  *
- * @covers KnowledgeGraphApiLoadCategories::execute
+ * @covers KnowledgeGraphApiLoadCategories
  * @group Database
  */
 class KnowledgeGraphApiLoadCategoriesExecuteTest extends ApiTestCase {

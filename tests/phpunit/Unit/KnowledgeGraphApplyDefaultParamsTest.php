@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @covers KnowledgeGraph::applyDefaultParams
+ * @covers KnowledgeGraph::validateOrFallback
  */
 class KnowledgeGraphApplyDefaultParamsTest extends TestCase {
 

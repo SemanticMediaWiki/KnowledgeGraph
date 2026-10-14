@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
  * thread their own local $data (and $relationsSeen) through the call.
  *
  * @covers KnowledgeGraph::setSemanticDataFromApi
+ * @covers KnowledgeGraph::getDisplayTitle
  */
 class KnowledgeGraphSetSemanticDataFromApiTest extends TestCase {
 

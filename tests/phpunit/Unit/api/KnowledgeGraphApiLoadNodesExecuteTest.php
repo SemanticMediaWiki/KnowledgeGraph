@@ -6,7 +6,7 @@
  * smwbrowse API requests via FauxRequest/ApiMain against the real SMW store,
  * so these tests extend ApiTestCase rather than mocking ApiMain by hand.
  *
- * @covers KnowledgeGraphApiLoadNodes::execute
+ * @covers KnowledgeGraphApiLoadNodes
  * @group Database
  */
 class KnowledgeGraphApiLoadNodesExecuteTest extends ApiTestCase {

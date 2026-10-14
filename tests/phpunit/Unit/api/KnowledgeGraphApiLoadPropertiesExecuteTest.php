@@ -6,7 +6,7 @@
  * against the real SMW store, so these tests extend ApiTestCase rather than
  * mocking ApiMain by hand.
  *
- * @covers KnowledgeGraphApiLoadProperties::execute
+ * @covers KnowledgeGraphApiLoadProperties
  * @group Database
  */
 class KnowledgeGraphApiLoadPropertiesExecuteTest extends ApiTestCase {

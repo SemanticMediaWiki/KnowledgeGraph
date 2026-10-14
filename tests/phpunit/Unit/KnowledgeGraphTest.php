@@ -13,7 +13,7 @@ class KnowledgeGraphTest extends TestCase {
 	}
 
 	/**
-	 * @covers KnowledgeGraph::exclude
+	 * @coversNothing
 	 */
 	public function testExcludeArray() {
 		$this->assertContains( '_SOBJ', KnowledgeGraph::$exclude, 'Exclude array should contain _SOBJ' );

@@ -13,6 +13,7 @@ use MediaWiki\Title\Title;
  * doesn't trigger unless a test explicitly overrides it.
  *
  * @covers KnowledgeGraph::parserFunctionKnowledgeGraph
+ * @covers KnowledgeGraph::getWikipageContent
  * @group Database
  */
 class KnowledgeGraphParserFunctionKnowledgeGraphTest extends MediaWikiIntegrationTestCase {
