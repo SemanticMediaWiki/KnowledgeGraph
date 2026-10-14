@@ -904,6 +904,33 @@ function installMwStub() {
 		}
 	};
 
+	// Minimal mw.hook(): like the real one, a fire() is remembered and replayed to
+	// handlers added later; clear() (stub-only) drops all state between tests.
+	const hookRegistry = {};
+	mw.hook = function ( name ) {
+		const entry = hookRegistry[ name ] = hookRegistry[ name ] || { handlers: [], memory: null };
+		const api = {
+			add( handler ) {
+				entry.handlers.push( handler );
+				if ( entry.memory ) {
+					handler( ...entry.memory );
+				}
+				return api;
+			},
+			fire( ...args ) {
+				entry.memory = args;
+				entry.handlers.slice().forEach( ( handler ) => handler( ...args ) );
+				return api;
+			}
+		};
+		return api;
+	};
+	mw.hook.clear = function () {
+		Object.keys( hookRegistry ).forEach( ( name ) => {
+			delete hookRegistry[ name ];
+		} );
+	};
+
 	mw.Api = function () {};
 	mw.Api.prototype.get = function () {
 		return makeResolvedThenable( {} );

@@ -41,6 +41,17 @@ Without `properties=`, only direct properties are loaded. To include inverse pro
 
 ## For Developers
 
+### Accessing a rendered graph
+
+After a graph is built (and again after the Designer's "Reset graph"), the `knowledgegraph.instance` hook fires with the instance's `vis-network` handles. Handlers registered later still receive the last fire:
+
+```js
+mw.hook( 'knowledgegraph.instance' ).add( ( instance ) => {
+	// instance: { id, container, network, nodes, edges }
+	console.log( instance.nodes.get(), instance.edges.get() );
+} );
+```
+
 ### Updating `vis-network` Library
 
 This extension uses the [`vis-network`](https://www.npmjs.com/package/vis-network) JavaScript library for rendering network diagrams. The version is managed via `npm` and bundled into the extension using a post-install script.
