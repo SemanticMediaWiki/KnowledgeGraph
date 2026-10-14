@@ -76,11 +76,19 @@ KnowledgeGraphNodes = ( function () {
 					new mw.Api()
 						.postWithToken( 'csrf', payload )
 						.done( ( thisRes ) => {
-							if ( 'data' in thisRes[ payload.action ] ) {
-								const parsedData = JSON.parse( thisRes[ payload.action ].data );
-								resolve( parsedData );
-							} else {
-								reject();
+							// Settle the promise explicitly on every shape: an exception
+							// thrown inside a jQuery done() callback is not turned into a
+							// rejection, it would leave the caller waiting forever.
+							const actionResult = thisRes && thisRes[ payload.action ];
+							if ( !actionResult || !( 'data' in actionResult ) ) {
+								reject( new Error( `${ payload.action }: response has no data` ) );
+								return;
+							}
+
+							try {
+								resolve( JSON.parse( actionResult.data ) );
+							} catch ( e ) {
+								reject( new Error( `${ payload.action }: response data is not valid JSON` ) );
 							}
 						} )
 						.fail( ( thisRes ) => {

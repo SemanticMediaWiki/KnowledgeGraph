@@ -231,10 +231,53 @@ QUnit.module( 'ext.knowledgegraph', ( hooks ) => {
 			);
 		} );
 
+		QUnit.test( 'rejects with a descriptive error when the response lacks the payload action entirely', ( assert ) => {
+			api = stubApi( { postResponse: {} } );
+			graph.setConfig( { properties: [] } );
+
+			return graph.loadNodes( { title: 'Foo', properties: null, depth: 1 } ).then(
+				() => {
+					assert.true( false, 'the promise should not resolve without an action entry' );
+				},
+				( reason ) => {
+					assert.false( reason instanceof TypeError, 'the reason is not a TypeError from probing undefined' );
+					assert.strictEqual(
+						String( reason && reason.message ),
+						'knowledgegraph-load-nodes: response has no data',
+						'the reason names the action and the problem'
+					);
+				}
+			);
+		} );
+
+		QUnit.test( 'rejects with a descriptive error when the response data is not valid JSON', ( assert ) => {
+			api = stubApi( { postResponse: { 'knowledgegraph-load-nodes': { data: '{not json' } } } );
+			graph.setConfig( { properties: [] } );
+
+			return graph.loadNodes( { title: 'Foo', properties: null, depth: 1 } ).then(
+				() => {
+					assert.true( false, 'the promise should not resolve on malformed data' );
+				},
+				( reason ) => {
+					assert.strictEqual(
+						String( reason && reason.message ),
+						'knowledgegraph-load-nodes: response data is not valid JSON',
+						'the reason names the action and the problem'
+					);
+				}
+			);
+		} );
+
 		QUnit.test( 'rejects with the failure response on API failure', ( assert ) => {
 			const failureResponse = { error: 'boom' };
 			api = stubApi( { postResponse: failureResponse, postFails: true } );
 			graph.setConfig( { properties: [] } );
+			/* eslint-disable no-console */
+			const originalConsoleError = console.error;
+			const logged = [];
+			console.error = ( ...args ) => {
+				logged.push( args );
+			};
 
 			return graph.loadNodes( { title: 'Foo', properties: null, depth: 1 } ).then(
 				() => {
@@ -242,8 +285,16 @@ QUnit.module( 'ext.knowledgegraph', ( hooks ) => {
 				},
 				( reason ) => {
 					assert.deepEqual( reason, failureResponse, 'the promise rejects with the failure response' );
+					assert.deepEqual(
+						logged,
+						[ [ 'knowledgegraph-load-nodes', failureResponse ] ],
+						'the failure is logged with the action name'
+					);
 				}
-			);
+			).finally( () => {
+				console.error = originalConsoleError;
+			} );
+			/* eslint-enable no-console */
 		} );
 
 	} );

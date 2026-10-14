@@ -940,12 +940,12 @@ function installMwStub() {
 	};
 	// Default for loadNodes()'s postWithToken() call site (e.g. the
 	// context-menu property-toggle handler, invoked on every node right-click) --
-	// resolves with an empty body so loadNodes() cleanly rejects (missing
-	// `data` key) instead of throwing, for tests that right-click a node
-	// without caring about its properties. Tests that DO care override this
-	// via their own mw.Api stub.
-	mw.Api.prototype.postWithToken = function () {
-		return makeResolvedThenable( {} );
+	// resolves with a valid but empty `data` payload for the requested action, so
+	// tests that right-click a node without caring about its properties get an
+	// empty result instead of a rejection that the caller would log as an error.
+	// Tests that DO care override this via their own mw.Api stub.
+	mw.Api.prototype.postWithToken = function ( tokenType, params ) {
+		return makeResolvedThenable( { [ params.action ]: { data: '{}' } } );
 	};
 
 	global.mw = mw;
