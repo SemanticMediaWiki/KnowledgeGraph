@@ -168,16 +168,14 @@ QUnit.module( 'ext.knowledgegraph bootstrap helpers', ( hooks ) => {
 			assert.deepEqual( config.propertyOptions, { Broken: {} }, 'the entry is an empty object, not the source string' );
 		} );
 
-		QUnit.test( 'applies a requested width and height to graphOptions only when given', async ( assert ) => {
+		QUnit.test( 'keeps the requested width and height off graphOptions, which vis-network only accepts as px or %', async ( assert ) => {
 			const defaults = KnowledgeGraphOptions.getDefaultOptions();
 
-			const without = await KnowledgeGraph.buildConfig( {} );
-			assert.strictEqual( without.graphOptions.width, defaults.width, 'no width requested: the default stays' );
-			assert.strictEqual( without.graphOptions.height, defaults.height, 'no height requested: the default stays' );
-
-			const withSize = await KnowledgeGraph.buildConfig( { width: '50%', height: '400px' } );
-			assert.strictEqual( withSize.graphOptions.width, '50%', 'the requested width is applied' );
-			assert.strictEqual( withSize.graphOptions.height, '400px', 'the requested height is applied' );
+			const withSize = await KnowledgeGraph.buildConfig( { width: '80vw', height: '75vh' } );
+			assert.strictEqual( withSize.width, '80vw', 'the requested width stays on the config for the wrapper' );
+			assert.strictEqual( withSize.height, '75vh', 'the requested height stays on the config for the wrapper' );
+			assert.strictEqual( withSize.graphOptions.width, defaults.width, 'vis-network keeps the default width' );
+			assert.strictEqual( withSize.graphOptions.height, defaults.height, 'vis-network keeps the default height' );
 		} );
 
 		QUnit.test( 'keeps plain-object propertyOptions and resolves module strings', async ( assert ) => {

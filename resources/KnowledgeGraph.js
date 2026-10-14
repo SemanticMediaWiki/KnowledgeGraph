@@ -1075,13 +1075,6 @@ KnowledgeGraph.buildConfig = async function ( graphData ) {
 		graphData
 	);
 
-	if ( config.width !== '' ) {
-		config.graphOptions.width = config.width;
-	}
-	if ( config.height !== '' ) {
-		config.graphOptions.height = config.height;
-	}
-
 	return config;
 };
 
@@ -1154,6 +1147,10 @@ $( document ).ready( async () => {
 					container = $container.get( 0 );
 					containerToolbar = $table.find( '.KnowledgeGraph-toolbar' ).get( 0 );
 					containerOptions = $table.find( '.KnowledgeGraph-options' ).get( 0 );
+
+					// vis-network sizes its canvas to 100% of this element, so it needs the requested size
+					container.style.width = config.width;
+					container.style.height = config.height;
 				}
 			} else {
 				config.graphOptions.configure.enabled = false;
