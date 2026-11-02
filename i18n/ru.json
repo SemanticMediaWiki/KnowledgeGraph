@@ -4,6 +4,7 @@
 			"Yurina Tatiana"
 		]
 	},
+	"knowledge-graph-wrapper-loading": "Загрузка графа...",
 	"knowledgegraph-toolbar-help": "справка",
 	"knowledgegraph-menu-open-article": "открыть статью",
 	"knowledgegraph-menu-delete-node": "удалить узел",
@@ -33,6 +34,6 @@
 	"knowledgegraph-menu-no-properties": "(нет доступных свойств)",
 	"knowledgegraph-copied-to-clipboard": "Скопировано в буфер обмена!",
 	"knowledgegraph-copy-failed": "Не удалось скопировать",
-	"knowledgegraph-toolbar-reset-network": "сбросить",
+	"knowledgegraph-toolbar-reset-network": "Сбросить граф",
 	"knowledgegraph-toolbar-add-node": "Добавить узел"
 }

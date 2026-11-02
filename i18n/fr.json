@@ -2,7 +2,8 @@
 	"@metadata": {
 		"authors": [
 			"Derugon",
-			"JLTRY"
+			"JLTRY",
+			"SleaY"
 		]
 	},
 	"knowledge-graph-desc": "Visualise le graphe de connaissances dans SemanticMediawiki avec VisNetwork.js",
@@ -43,7 +44,7 @@
 	"knowledgegraph-dialog-results-has-properties": "A les propriétés :",
 	"knowledgegraph-dialog-results-importing-nodes": "Import des nœuds :",
 	"knowledgegraph-copied-to-clipboard": "copié dans le presse-papiers !",
-	"knowledgegraph-toolbar-reset-network": "réinitialiser",
+	"knowledgegraph-toolbar-reset-network": "Réinitialiser le graphique",
 	"knowledgegraph-toolbar-reset-network-confirm": "Êtes-vous sûr(e) de vouloir réinitialiser le graphe ?",
 	"knowledgegraph-toolbar-add-node": "ajouter un nœud",
 	"knowledgegraph-toolbar-toggle-config": "activer/désactiver la configuration",
