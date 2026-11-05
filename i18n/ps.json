@@ -13,6 +13,7 @@
 	"knowledgegraph-knowledgegraphdesigner-label": "پوهې‌گراف سکښتگر",
 	"knowledgegraph-toolbar-info": "کرېډټونه",
 	"knowledgegraph-toolbar-help": "لارښود",
+	"knowledgegraph-graph-options-message": "لاندې تڼۍ کېکاږئ او د \"بهروتنو\" او \"څنډو\" د کونجيانو منځپانگه په يوه ليکنه کې <a target=\"_blank\" href=\"$1\">د دې په څېر</a> ولمېسئ/ولېښئ. بيا يې د پوهې‌گراپ ټوټه‌کوونکې کړنچارې د \"گراپ-خوښنو\" يا \"ځانتيا-خوښنو؟ [ځانتيا نښکې] ارزښتونو په توگه واوڼئ.",
 	"knowledgegraph-menu-open-article": "ليکنه پرانېستل",
 	"knowledgegraph-menu-delete-node": "غوټه ړنگول",
 	"knowledgegraph-delete-node-confirm": "ايا تاسو ډاډه ياست چې دا غوټه ړنگول غواړئ؟",
@@ -40,6 +41,7 @@
 	"knowledgegraph-dialog-results-skipped-existing": "لاندې غوټې له مخکې څخه شتون لري او له پامه غورځول شوې دي:",
 	"knowledgegraph-dialog-results-no-new-nodes": "ورگډولو لپاره هېڅ غوټه نشته.",
 	"knowledgegraph-dialog-results-has-properties": "ځانتياوې",
+	"knowledgegraph-dialog-results-select-properties-hint": "هر هغه ځانتيا چې تاسو يې واړئ په گراپ کې ښکاره شي، وگورئ. ټولې ځانتياوې پرته له دې چې راپورته شي؛ هغه چې سم‌کتل‌شوې نه دي بيا هم وروسته ښودل کېدی شي.",
 	"knowledgegraph-dialog-results-importing-nodes": "رالېږدېدونکې غوټې:",
 	"knowledgegraph-menu-no-properties": "(هېڅ ځانتياوې شتون نلري)",
 	"knowledgegraph-copied-to-clipboard": "ټينگدړې ته ولمېسل شو!",
@@ -48,5 +50,7 @@
 	"knowledgegraph-toolbar-reset-network-confirm": "ايا تاسو ډاډه یاست چې شبکه بيا پيلول غواړئ؟",
 	"knowledgegraph-toolbar-add-node": "غوټه ورگډول",
 	"knowledgegraph-toolbar-toggle-config": "بدلولو ترتيب",
-	"knowledgegraph-toolbar-export-graph": "ويکي‌ليک بهرلېږل"
+	"knowledgegraph-toolbar-export-graph": "ويکي‌ليک بهرلېږل",
+	"knowledgegraph-credits": "کرېديتونه:",
+	"knowledgegraph-credits-list": "<ul><li><a target=\"_blank\" href=\"https://km-a.net/consulting/knowledge-wiki\">KM-A</a></li><li><a target=\"_blank\" href=\"https://gesinn.it/de/Hauptseite\">gesinn.it</a></ul>"
 }
