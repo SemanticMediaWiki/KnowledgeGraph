@@ -81,6 +81,20 @@ After running `npm install`, the following happens automatically:
    ```
 
 
+### Browser tests
+
+`tests/e2e` contains Playwright tests that check the bundled `vis-network` library in a real browser: rendering, hover, the context menu, double-click and the Designer. They run in CI on the coverage leg, after the PHP and JavaScript tests, and are what makes a `vis-network` upgrade safe to merge. Run them locally against a test wiki on `http://localhost:8080` (the port has to be published, e.g. with a `build/docker-compose.override.yml`, see `build/docker-compose.override.yml.SAMPLE`):
+
+```bash
+tests/e2e/seed-wiki.sh knowledgegraph-mysql-wiki-1   # creates the pages the tests use
+cd tests/e2e
+npm ci
+npx playwright install chromium
+npx playwright test
+```
+
+The checks of the committed `vis-network` bundle (`npm run libs:check`) and of the library API used by the extension (`tests/node-qunit/ext.knowledgegraph.vis-contract.test.js`) need no wiki.
+
 ## Credits
 https://github.com/OpenSemanticLab/mediawiki-extensions-InteractiveSemanticGraph
 
