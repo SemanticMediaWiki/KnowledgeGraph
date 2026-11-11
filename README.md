@@ -83,7 +83,7 @@ After running `npm install`, the following happens automatically:
 
 ### Browser tests
 
-`tests/e2e` contains Playwright tests that check the bundled `vis-network` library in a real browser: rendering, hover, the context menu, double-click and the Designer. They run in CI on the coverage leg, after the PHP and JavaScript tests, and are what makes a `vis-network` upgrade safe to merge. Run them locally against a test wiki on `http://localhost:8080` (the port has to be published, e.g. with a `build/docker-compose.override.yml`, see `build/docker-compose.override.yml.SAMPLE`):
+`tests/e2e` contains Playwright tests that check the bundled `vis-network` library in a real browser: rendering, hover, the context menu, double-click, collapsing neighbors on click and the Designer (Add node dialog, wikitext export, Reset graph). They run in CI on the coverage leg, after the PHP and JavaScript tests, and are what makes a `vis-network` upgrade safe to merge. Run them locally against a test wiki on `http://localhost:8080` (the port has to be published, e.g. with a `build/docker-compose.override.yml`, see `build/docker-compose.override.yml.SAMPLE`):
 
 ```bash
 tests/e2e/seed-wiki.sh knowledgegraph-mysql-wiki-1   # creates the pages the tests use
