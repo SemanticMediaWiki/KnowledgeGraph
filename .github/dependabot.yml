@@ -11,6 +11,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # eslint-config-wikimedia does not support eslint 10 yet (npm ERESOLVE)
+      - dependency-name: "eslint"
+        update-types: [ "version-update:semver-major" ]
 
   - package-ecosystem: "github-actions"
     directory: "/" # Dependabot scans .github/workflows from the root
