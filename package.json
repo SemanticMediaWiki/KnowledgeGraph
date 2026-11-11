@@ -41,7 +41,7 @@
   "devDependencies": {
     "copy-files-from-to": "^4.0.1",
     "eslint": "^8.57.1",
-    "eslint-config-wikimedia": "^0.32.4",
+    "eslint-config-wikimedia": "^0.32.6",
     "insert-line": "^1.1.0",
     "nyc": "^18.0.0",
     "qunit": "^2.22.0"
