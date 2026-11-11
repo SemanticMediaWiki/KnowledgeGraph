@@ -80,6 +80,13 @@ jobs:
         run: make ci
         if: matrix.coverage == false
 
+      # The browser tests run on the runner against the wiki of the coverage leg. The CI stack
+      # does not publish a port, but build/Makefile picks up this override file automatically.
+      - name: Publish the wiki port for the browser tests
+        run: |
+          printf 'services:\n  wiki:\n    ports:\n      - 8080:8080\n' > build/docker-compose.override.yml
+        if: matrix.coverage == true
+
       - name: Run tests with coverage
         run: mkdir -p build/coverage && make ci-coverage
         if: matrix.coverage == true
@@ -92,3 +99,27 @@ jobs:
           files: build/coverage/php/coverage.xml,build/coverage/js/clover.xml
           disable_search: true
         if: matrix.coverage == true
+
+      - name: Seed the wiki for the browser tests
+        run: tests/e2e/seed-wiki.sh knowledgegraph-${{ matrix.database_type }}-wiki-1
+        if: matrix.coverage == true
+
+      - name: Install the browser tests
+        working-directory: tests/e2e
+        run: npm ci && npx playwright install --with-deps chromium
+        if: matrix.coverage == true
+
+      - name: Run the browser tests
+        working-directory: tests/e2e
+        run: npx playwright test
+        if: matrix.coverage == true
+
+      - name: Upload the browser test report
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
+          if-no-files-found: ignore
+        if: failure() && matrix.coverage == true
