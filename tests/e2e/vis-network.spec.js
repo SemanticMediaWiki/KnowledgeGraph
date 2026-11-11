@@ -15,6 +15,7 @@ const { test, expect } = require( '@playwright/test' );
 const pkg = require( '../../package.json' );
 
 const GRAPH_PAGE = '/index.php?title=KG_e2e_graph';
+const COLLAPSE_PAGE = '/index.php?title=KG_e2e_collapse';
 const DESIGNER_PAGE = '/index.php?title=Special:KnowledgeGraphDesigner';
 
 /**
@@ -35,26 +36,73 @@ function collectErrors( page ) {
 }
 
 /**
- * Opens a page and resolves with the vis.Network handles announced on the
- * 'knowledgegraph.instance' hook. The hook is registered before any page script runs.
+ * Records the vis.Network handles announced on the 'knowledgegraph.instance' hook in
+ * `window.__kgInstance` (latest) and counts the announcements in `window.__kgFires`. The hook
+ * is registered before any page script runs, so no announcement is missed.
  *
  * @param {import('@playwright/test').Page} page
- * @param {string} url
  */
-async function openGraph( page, url ) {
+async function trackInstances( page ) {
 	await page.addInitScript( () => {
 		window.__kgInstance = null;
+		window.__kgFires = 0;
 		const timer = setInterval( () => {
 			if ( window.mw && window.mw.hook ) {
 				clearInterval( timer );
 				window.mw.hook( 'knowledgegraph.instance' ).add( ( instance ) => {
 					window.__kgInstance = instance;
+					window.__kgFires++;
 				} );
 			}
 		}, 5 );
 	} );
+}
+
+/**
+ * Opens a page with a graph and waits until it has nodes.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} url
+ */
+async function openGraph( page, url ) {
+	await trackInstances( page );
 	await page.goto( url );
 	await page.waitForFunction( () => window.__kgInstance && window.__kgInstance.nodes.length > 0 );
+}
+
+/**
+ * Opens the Designer. It starts with an empty graph; native confirm() and alert() dialogs
+ * (used by "Reset graph" and "Export wikitext") are accepted.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+async function openDesigner( page ) {
+	page.on( 'dialog', ( dialog ) => dialog.accept() );
+	await trackInstances( page );
+	await page.goto( DESIGNER_PAGE );
+	await page.waitForFunction( () => window.__kgInstance !== null );
+}
+
+/**
+ * Adds an article and its properties to the Designer graph through the "Add node" dialog.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title article to add
+ * @param {string} property label of the property to show, as listed in step 2 of the dialog
+ */
+async function addNodeViaDialog( page, title, property ) {
+	const dialog = page.locator( '.oo-ui-window-active' );
+
+	await page.locator( '.oo-ui-tool-name-add-node .oo-ui-tool-link' ).click();
+	await dialog.locator( '.oo-ui-comboBoxInputWidget input.oo-ui-inputWidget-input' ).fill( title );
+	// The suggestions are loaded from the API while typing. Options of a dialog opened earlier
+	// stay in the DOM (hidden), so only look at visible ones inside the active dialog.
+	await dialog.locator( '.oo-ui-optionWidget:visible', { hasText: new RegExp( `^${ title }$` ) } ).click();
+	await dialog.getByText( 'Continue', { exact: true } ).click();
+	await dialog.locator( 'label', { hasText: property } ).first().click();
+	await dialog.getByText( 'Done', { exact: true } ).click();
+
+	await expect( dialog ).toHaveCount( 0 );
 }
 
 /**
@@ -197,25 +245,102 @@ test.describe( 'vis-network in the browser', () => {
 		expect( ( await popup ).url() ).toMatch( /\/(index\.php\?title=)?Bob$/ );
 	} );
 
-	test( 'handles a click on a node without errors', async ( { page } ) => {
+	test( 'collapses and expands the neighbors of a node on click', async ( { page } ) => {
 		const errors = collectErrors( page );
-		await openGraph( page, GRAPH_PAGE );
+		// depth=1: Bob and Carol are only neighbors of Alice, so clicking Alice toggles them.
+		await openGraph( page, COLLAPSE_PAGE );
 		await waitForSettledLayout( page );
+
+		const hiddenNodes = () => page.evaluate( () => window.__kgInstance.nodes.get( { filter: ( node ) => node.hidden } )
+			.map( ( node ) => node.id ).sort() );
+		const hiddenEdges = () => page.evaluate( () => window.__kgInstance.edges.get( { filter: ( edge ) => edge.hidden } )
+			.length );
+		expect( await hiddenNodes() ).toEqual( [] );
 
 		const { x, y } = await nodeCenter( page, 'Alice' );
 		await page.mouse.click( x, y );
-		await page.waitForTimeout( 500 );
+		await expect.poll( hiddenNodes ).toEqual( [ 'Bob', 'Carol' ] );
+		expect( await hiddenEdges() ).toBe( 2 );
 
+		await page.mouse.click( x, y );
+		await expect.poll( hiddenNodes ).toEqual( [] );
+		expect( await hiddenEdges() ).toBe( 0 );
 		expect( errors ).toEqual( [] );
 	} );
+} );
 
-	test( 'loads the Designer without errors', async ( { page } ) => {
+test.describe( 'Designer', () => {
+
+	test( 'loads without errors', async ( { page } ) => {
 		const errors = collectErrors( page );
 
-		await page.goto( DESIGNER_PAGE );
+		await openDesigner( page );
 
 		await expect( page.locator( '.oo-ui-toolbar' ).first() ).toBeVisible();
 		await expect( page.locator( '.vis-network canvas' ).first() ).toBeVisible();
+		expect( errors ).toEqual( [] );
+	} );
+
+	test( 'adds an article with its linked pages through the Add node dialog', async ( { page } ) => {
+		const errors = collectErrors( page );
+		await openDesigner( page );
+
+		await addNodeViaDialog( page, 'Alice', 'Knows (Page)' );
+
+		await expect.poll( () => page.evaluate( () => window.__kgInstance.nodes.getIds().sort() ) )
+			.toEqual( [ 'Alice', 'Bob', 'Carol' ] );
+		expect( await page.evaluate( () => window.__kgInstance.edges.length ) ).toBe( 3 );
+		expect( errors ).toEqual( [] );
+	} );
+
+	test.describe( 'export', () => {
+		test.use( { permissions: [ 'clipboard-read', 'clipboard-write' ] } );
+
+		test( 'copies the visible graph as #knowledgegraph wikitext', async ( { page } ) => {
+			await openDesigner( page );
+			await addNodeViaDialog( page, 'Alice', 'Knows (Page)' );
+			await expect.poll( () => page.evaluate( () => window.__kgInstance.nodes.length ) ).toBe( 3 );
+
+			await page.locator( '.oo-ui-tool-name-export-graph .oo-ui-tool-link' ).click();
+
+			await expect.poll( () => page.evaluate( () => navigator.clipboard.readText() ) )
+				.toContain( 'nodes=Alice, Bob, Carol' );
+			const wikitext = await page.evaluate( () => navigator.clipboard.readText() );
+			expect( wikitext ).toMatch( /^\{\{#knowledgegraph:/ );
+			expect( wikitext ).toContain( '|properties=Knows' );
+		} );
+	} );
+
+	test( 'keeps the graph interactive after "Reset graph"', async ( { page } ) => {
+		const errors = collectErrors( page );
+		await openDesigner( page );
+		await addNodeViaDialog( page, 'Alice', 'Knows (Page)' );
+		await expect.poll( () => page.evaluate( () => window.__kgInstance.nodes.length ) ).toBe( 3 );
+		const firesBefore = await page.evaluate( () => {
+			window.__kgInstance.network.__beforeReset = true;
+			return window.__kgFires;
+		} );
+
+		await page.locator( '.oo-ui-tool-name-reload .oo-ui-tool-link' ).click();
+
+		await expect.poll( () => page.evaluate( () => window.__kgFires ) ).toBe( firesBefore + 1 );
+		expect( await page.evaluate( () => window.__kgInstance.network.__beforeReset ), 'new network' )
+			.toBeUndefined();
+		expect( await page.evaluate( () => window.__kgInstance.nodes.length ), 'graph was emptied' ).toBe( 0 );
+
+		// The click, hover, double-click and context menu handlers have to be bound to the new network.
+		await addNodeViaDialog( page, 'Alice', 'Knows (Page)' );
+		await expect.poll( () => page.evaluate( () => window.__kgInstance.nodes.length ) ).toBe( 3 );
+		await waitForSettledLayout( page );
+		const { x, y } = await nodeCenter( page, 'Bob' );
+
+		await page.mouse.click( x, y, { button: 'right' } );
+		await expect( page.locator( '.kg-node-properties-menu' ) ).toBeVisible();
+		await page.mouse.click( 5, 5 );
+
+		const popup = page.context().waitForEvent( 'page' );
+		await page.mouse.dblclick( x, y );
+		expect( ( await popup ).url() ).toMatch( /\/(index\.php\?title=)?Bob$/ );
 		expect( errors ).toEqual( [] );
 	} );
 } );

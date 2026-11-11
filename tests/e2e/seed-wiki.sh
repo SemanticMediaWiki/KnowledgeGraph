@@ -16,5 +16,6 @@ printf 'Alice. [[Knows::Bob]] [[Knows::Carol]]' | edit 'Alice'
 printf 'Bob. [[Knows::Carol]]' | edit 'Bob'
 printf 'Carol.' | edit 'Carol'
 printf '{{#knowledgegraph:nodes=Alice|properties=Knows|depth=2|width=100%%|height=400px}}' | edit 'KG e2e graph'
+printf '{{#knowledgegraph:nodes=Alice|properties=Knows|depth=1|width=100%%|height=400px}}' | edit 'KG e2e collapse'
 
 docker exec "$container" sudo -u www-data php maintenance/run.php runJobs >/dev/null
