@@ -1,5 +1,6 @@
 <?php
 
+use MediaWiki\MediaWikiServices;
 use PHPUnit\Framework\TestCase;
 
 class SpecialKnowledgeGraphDesignerTest extends TestCase {
@@ -27,6 +28,15 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 	}
 
 	/**
+	 * @covers SpecialKnowledgeGraphDesigner::__construct
+	 */
+	public function testDesignerIsListedOnSpecialPages() {
+		$specialPage = MediaWikiServices::getInstance()->getSpecialPageFactory()->getPage( 'KnowledgeGraphDesigner' );
+
+		$this->assertTrue( $specialPage->isListed() );
+	}
+
+	/**
 	 * @covers SpecialKnowledgeGraphDesigner::execute
 	 */
 	public function testExecuteSetsHeadersAndOutput() {
@@ -36,7 +46,7 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 		$output = $specialPage->getOutput();
 
 		$this->assertInstanceOf( OutputPage::class, $output );
-		$this->assertSame( $specialPage->getDescription()->text(), $output->getPageTitle() );
+		$this->assertSame( wfMessage( 'knowledgegraphdesigner' )->text(), $output->getPageTitle() );
 	}
 
 	/**
