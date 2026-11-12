@@ -10,8 +10,7 @@ class SpecialKnowledgeGraphDesigner extends SpecialPage {
 	 * @inheritDoc
 	 */
 	public function __construct() {
-		$listed = true;
-		parent::__construct( 'KnowledgeGraphDesigner', '', $listed );
+		parent::__construct( 'KnowledgeGraphDesigner' );
 	}
 
 	/**
