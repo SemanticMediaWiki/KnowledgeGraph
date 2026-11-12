@@ -46,7 +46,7 @@ class SpecialKnowledgeGraphDesignerTest extends TestCase {
 		$output = $specialPage->getOutput();
 
 		$this->assertInstanceOf( OutputPage::class, $output );
-		$this->assertSame( $specialPage->getDescription()->text(), $output->getPageTitle() );
+		$this->assertSame( wfMessage( 'knowledgegraphdesigner' )->text(), $output->getPageTitle() );
 	}
 
 	/**
