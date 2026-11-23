@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](https://semver.org/) and
 ### Changed
 - Bump bundled `vis-network` from 9.1.13 to 10.1.4 [`8807e01`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/8807e01)
 
+### Fixed
+- Fix Special:KnowledgeGraphDesigner breaking Special:SpecialPages on MediaWiki 1.47 and causing a deprecation warning on 1.46 [`767c80e`](https://github.com/SemanticMediaWiki/KnowledgeGraph/commit/767c80e)
+
 ## [3.2.0] - 2026-10-14
 
 Adds a JavaScript hook for accessing rendered graphs and fixes several graph sizing, loading and interaction issues.
