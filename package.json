@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "vis-network": "10.1.4"
+    "vis-network": "10.1.5"
   },
   "scripts": {
     "postinstall": "copy-files-from-to && node resources/utility/inject-nomin.js",
